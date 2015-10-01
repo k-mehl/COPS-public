@@ -26,8 +26,7 @@ class Vehicle(object):
         return self.position
 
     def set_destination(self, pos_x, pos_y):
-        self.destination[0] += pos_x
-        self.destination[1] += pos_y
+        self.destination = [pos_x, pos_y]
         self._shortest_path()
         return self.destination
 
