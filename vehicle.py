@@ -1,7 +1,9 @@
 
 class Vehicle(object):
-    """ Vehicle object """
 
+    """ Vehicle object """
+    # TODO: add more setters and getters, but only after the class design is
+    # finished
     def __init__(self):
         self.position = [0,0]
         self.destination = [0,0]
@@ -74,7 +76,7 @@ class Vehicle(object):
                 self.shortest_path.append(list(start))
         
         # check if we already traversed that path and plan accordingly
-        # for now if we have a path we move diagonally
+        # for now if we have a self.checked we move diagonally
         if len(self.checked) != 0:
             while start != self.destination:
                 if (start[0] - 2) not in self.checked or \
@@ -87,10 +89,11 @@ class Vehicle(object):
                     go_vertical()
                 else:
                     print("You shouldnt be here!! Vertical if")
-        # car can not get stuck since it will end up here if both conditions
+
+        # Vehicle can not get stuck since it will end up here if both conditions
         # are not valid so it will move horizontally first and then vertically
-        # thus avoiding calculating cost (which is not necessary in this case
-        # since all costs are 1
+        # thus avoiding calculating cost, which is not necessary in this case
+        # since all costs are 1.
         else: 
             while start[0] != self.destination[0]:
                 go_horizontal()
