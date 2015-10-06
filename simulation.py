@@ -1,3 +1,4 @@
+from __future__ import print_function
 from vehicle import *
 import matplotlib.pyplot as plt
 from matplotlib import animation
