@@ -1,5 +1,3 @@
-#use numpy to speed things up
-
 
 class Vehicle(object):
 
@@ -12,6 +10,7 @@ class Vehicle(object):
         self.shortest_path = []
 
         #bad solution but play with it
+        self.checked = []
         self.last_node = []
         self.next_node = []
 
@@ -50,26 +49,48 @@ class Vehicle(object):
         # make the grid to be div into parts of 2, but car must start at coords
         # that are divisible by 2, as a test this will do and x > 0, y > 0
         # silly but will do for now
-        # self.shortest_path.append(self.position) # why would i need my position here?
+        # self.shortest_path.append(self.position) # why would I need my 
+        # position here?
+
         start = list(self.position)
-        if start[0] < self.destination[0]:
-            while start[0] < self.destination[0]:
+        def go_horizontal():
+            if start[0] < self.destination[0]:
                 start[0] += 2
                 self.shortest_path.append(list(start))
-        elif start[0] > self.destination[0]:
-            while start[0] > self.destination[0]:
+            elif start[0] > self.destination[0]:
                 start[0] -= 2
                 self.shortest_path.append(list(start))
 
         # go to y coord when x is ok
-        if start[1] < self.destination[1]:
-            while start[1] < self.destination[1]:
+        def go_vertical():
+            if start[1] < self.destination[1]:
                 start[1] += 2
                 self.shortest_path.append(list(start))
-        elif start[1] > self.destination[1]:
-            while start[1] > self.destination[1]:
+            elif start[1] > self.destination[1]:
                 start[1] -= 2
                 self.shortest_path.append(list(start))
+        
+        # check if we already traversed that path and plan accordingly
+        # for now if we have a path we move diagonally
+        if len(self.checked) != 0:
+            while start != self.destination:
+                if (start[0] - 2) not in self.checked or \
+                        (start[0] + 2) not in self.checked:
+                    go_horizontal()
+                else:
+                    print("You shouldnt be here!! Horizontal if")
+                if (start[1] - 2) not in self.checked or \
+                        (start[1] + 2) not in self.checked:
+                    go_vertical()
+                else:
+                    print("You shouldnt be here!! Vertical if")
+        # car can not get stuck since it will end up here if both conditions
+        # are not valid so it will move horizontally first and then vertically
+        else: 
+            while start[0] != self.destination[0]:
+                go_horizontal()
+            while start[1] != self.destination[1]:
+                go_vertical()
 
     def update(self):
         # whole logic of sim is happening here, not very good should just 
@@ -102,7 +123,7 @@ class Vehicle(object):
                     self.next_node = list(self.shortest_path[0])
                 
 if __name__ == "__main__":
-
+    #TODO add checks for shortest path when we have a path already
     vec = Vehicle()
     assert vec.get_position() == [0,0]
     vec.set_position(2,2)
