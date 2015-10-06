@@ -20,5 +20,6 @@ To resolve the certificate problems follow this [link](https://scm.in.tu-clausth
 [ ] Graph  
 [ ] Conversion of graph to adjacency matrix  
 [ ] Shortest paths calculation on adjacency matrix  
+[ ] Car following model (when there are many drivers)  
 [ ] OSM import  
 [ ] Conversion of OSM to our Graph structure  
