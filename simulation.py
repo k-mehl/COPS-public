@@ -22,7 +22,13 @@ path2, = ax.plot([], [], 'r-', lw=2)
 vec = Vehicle()
 vec.set_destination(18,18)
 vec1 = Vehicle()
+
+# the following like should be commented to see what happens when there is no
+# information exchange
+# it gives the information to vec1 about the route that vec plans to traverse
+# hence vec1 changes the route it would otherwise traverse
 vec1.checked = vec.shortest_path
+
 vec1.set_position(18,0)
 vec1.set_destination(2,18)
 

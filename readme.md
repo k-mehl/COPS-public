@@ -16,6 +16,9 @@ git clone https://scm.in.tu-clausthal.de/git/parking
 
 To resolve the certificate problems follow this [link](https://scm.in.tu-clausthal.de/projects/redmine-git-svn-help/wiki/Resolve_SSL_certificate_error_with_Git).
 
+To run the simulation Matplotlib is necessary. Running ``simulation.py`` will
+give the basic impression of simulation.
+
 # TODO
 [ ] Graph  
 [ ] Conversion of graph to adjacency matrix  
