@@ -32,7 +32,8 @@ class Vehicle(object):
         return self.destination
 
     def update_position(self, pos_x = 0, pos_y = 0):
-        # this update method is for more general case for now simpler update will do
+        # this update method is for more general case for now simpler update 
+        # will do
         self.position[0] = round(self.position[0] + pos_x, 2)
         self.position[1] = round(self.position[1] + pos_y, 2)
         return self.position
@@ -97,17 +98,17 @@ class Vehicle(object):
                 go_vertical()
 
     def update(self):
-        # whole logic of sim is happening here, not very good should just 
-        # update position and some other part should check for logic
-        # also an ugly solution....
+        """ Update position """
+        # TODO clean up
+        # ugly solution....
         if len(self.shortest_path) == 0:
             return
         if len(self.last_node) == 0 and len(self.next_node) == 0:
             self.last_node = list(self.route[-1])
             self.next_node = list(self.shortest_path[0])
+        
         #if true than we have some work to do
-        if self.last_node[0] != self.next_node[0] or \
-                self.last_node[1] != self.next_node[1]:
+        if self.last_node != self.next_node:
 
             if self.last_node[0] < self.next_node[0]:
                 self.update_position(0.2, 0)
@@ -118,8 +119,8 @@ class Vehicle(object):
                 self.update_position(0, 0.2)
             elif self.last_node[1] > self.next_node[1]:
                 self.update_position(0, -0.2)
-            if self.position[0] == self.next_node[0] and \
-                    self.position[1] == self.next_node[1]:
+
+            if self.position == self.next_node:
                 self.route.append(list(self.next_node))
                 self.shortest_path = self.shortest_path[1:]
                 self.last_node = list(self.route[-1])
