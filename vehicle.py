@@ -1,7 +1,6 @@
 
 class Vehicle(object):
-
-    """Docstring for Vehicle. """
+    """ Vehicle object """
 
     def __init__(self):
         self.position = [0,0]
@@ -49,11 +48,14 @@ class Vehicle(object):
         # make the grid to be div into parts of 2, but car must start at coords
         # that are divisible by 2, as a test this will do and x > 0, y > 0
         # silly but will do for now
-        # self.shortest_path.append(self.position) # why would I need my 
+        # self.shortest_path.append(self.position) # why would I need my starting
         # position here?
+        # TODO separate shortest path from vehicle object
 
+        # keep track of position while moving
         start = list(self.position)
         def go_horizontal():
+            """ Move horizontally """
             if start[0] < self.destination[0]:
                 start[0] += 2
                 self.shortest_path.append(list(start))
@@ -61,8 +63,8 @@ class Vehicle(object):
                 start[0] -= 2
                 self.shortest_path.append(list(start))
 
-        # go to y coord when x is ok
         def go_vertical():
+            """ Move vertically """
             if start[1] < self.destination[1]:
                 start[1] += 2
                 self.shortest_path.append(list(start))
@@ -86,6 +88,8 @@ class Vehicle(object):
                     print("You shouldnt be here!! Vertical if")
         # car can not get stuck since it will end up here if both conditions
         # are not valid so it will move horizontally first and then vertically
+        # thus avoiding calculating cost (which is not necessary in this case
+        # since all costs are 1
         else: 
             while start[0] != self.destination[0]:
                 go_horizontal()
