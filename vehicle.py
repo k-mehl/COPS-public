@@ -78,28 +78,27 @@ class Vehicle(object):
         
         # check if we already traversed that path and plan accordingly
         # for now if we have a self.checked we move diagonally
-        if len(self.checked) != 0:
-            while start != self.destination:
-                if (start[0] - 2) not in self.checked or \
-                        (start[0] + 2) not in self.checked:
-                    go_horizontal()
-                else:
-                    print("You shouldnt be here!! Horizontal if")
-                if (start[1] - 2) not in self.checked or \
-                        (start[1] + 2) not in self.checked:
-                    go_vertical()
-                else:
-                    print("You shouldnt be here!! Vertical if")
+        while start != self.destination: #why check every time??
+            print(start, " ", self.destination)
+            if len(self.checked) != 0:
+                if start[0] != self.destination[0] and \
+                    ([start[0] - 2,start[1]] not in self.checked or \
+                        [start[0] + 2,start[1]] not in self.checked):
+                        go_horizontal()
+                elif start[1] != self.destination[1] and \
+                    ([start[0], start[1] - 2] not in self.checked or \
+                            [start[0],start[1] + 2] not in self.checked): 
+                        go_vertical()
 
         # Vehicle can not get stuck since it will end up here if both conditions
         # are not valid so it will move horizontally first and then vertically
         # thus avoiding calculating cost, which is not necessary in this case
         # since all costs are 1.
-        else: 
-            while start[0] != self.destination[0]:
-                go_horizontal()
-            while start[1] != self.destination[1]:
-                go_vertical()
+            else: 
+                if start[0] != self.destination[0]:
+                    go_horizontal()
+                elif start[1] != self.destination[1]:
+                    go_vertical()
 
     def update(self):
         """ Update position """

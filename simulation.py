@@ -30,6 +30,7 @@ path4, = ax1.plot([], [], 'r-', lw=2)
 
 # add vehicle objects, 2 for now
 vec = Vehicle()
+print("first vec")
 vec.set_destination(18,18)
 vec1 = Vehicle()
 
@@ -37,6 +38,7 @@ vec1 = Vehicle()
 # information exchange
 # it gives the information to vec1 about the route that vec plans to traverse
 # hence vec1 changes the route it would otherwise traverse
+print("second vec")
 vec1.checked = vec.shortest_path
 vec1.set_position(18,0)
 vec1.set_destination(2,18)
