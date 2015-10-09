@@ -74,7 +74,7 @@ def animate(i):
 # make smooth animation of traversed paths less expensive but doesnt work on
 # Mac
 anim = animation.FuncAnimation(fig, animate, init_func=init,
-                               frames=60, interval=40, blit=True)
+                               frames=60, interval=40)
 
 # doesnt work on my sys properly at the moment, codec...
 # anim.save('race.mp4', fps=30)
