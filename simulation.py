@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from __future__ import print_function
 from vehicle import *
 import matplotlib.pyplot as plt
@@ -48,7 +49,7 @@ vec1.set_destination(2,18)
 vec2 = Vehicle()
 vec2.set_position(18,0)
 vec2.set_destination(2,18)
-# dot1, = ax1.plot([], []) this gives an interesting plot connected with
+# dot1, = ax1.plot([], []) #this gives an interesting plot connected with
 # agreement protocol idea
 
 # initialization function: plot the background of each frame
