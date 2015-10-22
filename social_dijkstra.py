@@ -1,6 +1,25 @@
 #!usr/bin/env python3
 from __future__ import print_function
 
+def reconstruct_path(path):
+    """
+    Reconstruct all paths pairs i.e. if start = 0 and number of nodes is 4
+    it will output paths: 0-0; 0-1; 0-2; 0-3.
+    """
+    start = path.index("start")
+    destination = 0
+    num_of_destinations = len(path)
+    temp_path = []
+    while destination != num_of_destinations:
+        temp_dest = destination
+        temp_path.append(destination)
+        while start != temp_dest:
+            temp_dest = path[temp_dest]
+            temp_path.append(temp_dest)
+        print("From", start, "to", destination, ":", temp_path[::-1])
+        temp_path = []
+        destination +=1
+
 def neighbors(output, bool_list, *args):
     """ Get the closest neighbor """
     # inefficient since it raises the complexity to O(V^3)
@@ -21,13 +40,14 @@ def inner(graph, output, bool_list, path, penalty = 2):
     #TODO the edge that is penalized should be the shortest one, not the last one
     #TODO proper returning and printing
     #TODO reconstruct path automatically from path list
+    max_size = 424242
     min_dist = neighbors(output, bool_list)
     bool_list[min_dist] = True
 
     temp = None # dont change the graph all the time
     for j in range(len(graph)):
         if (not bool_list[j]) and graph[min_dist][j] \
-                and output[min_dist] != 424242 \
+                and output[min_dist] != max_size \
                 and output[min_dist] + graph[min_dist][j] < output[j]:
                     output[j] = output[min_dist] + graph[min_dist][j]
                     # set the parent
@@ -50,6 +70,7 @@ def shortest(graph, cars = [0,0,0], *args):
     cars[0] is the starting position for first car, cars[1] for second and so
     on. 
     """
+    max_size = 424242
     # cars contains starting positions in a graph
     output_lst = []
     path_lst = []
@@ -59,26 +80,32 @@ def shortest(graph, cars = [0,0,0], *args):
         path_lst.append([])
         bool_lst.append([])
 
-    #prepare the output and bool_list starting conditions
+    #prepare the output_list and bool_list starting conditions
     for car in range(len(cars)):
         for elem in range(len(graph)):
-            output_lst[car].append(424242)
-            path_lst[car].append(-1)
+            output_lst[car].append(max_size)
+            path_lst[car].append("start")
             bool_lst[car].append(False)
             if elem == cars[car]:
                 output_lst[car][elem] = 0
 
+    len_to_check = len(graph) - 1
+    while len_to_check != 0:
+        # Check step-wise for every car
+        num_of_steps = len(cars)
+        step = 0
+        while step != num_of_steps:
+            graph, output_lst[step], bool_lst[step], path_lst[step] = inner(graph, output_lst[step], bool_lst[step], path_lst[step])
+            step += 1
+        len_to_check -= 1
 
-    for i in range(len(graph)-1):
-        # recursive function?
-        for blah in range(len(cars)):
-            graph, output_lst[blah], bool_lst[blah], path_lst[blah] = inner(graph, output_lst[blah], bool_lst[blah], path_lst[blah])
-
-    print(list(range(len(graph))))
-    for dum in output_lst:
-        print(dum)
-    for dum_ag in path_lst:
-        print(dum_ag)
+#    print("Shortest paths lengths from chosen starting point:")
+#    for dum in output_lst:
+#        print(dum)
+#    print("Path lists for all the agents:")
+#    for dum_ag in path_lst:
+#        print(dum_ag)
+    return path_lst
 
 if __name__ == "__main__":
     # TODO add proper tests
@@ -111,7 +138,10 @@ if __name__ == "__main__":
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0],\
                 ]
 
-    shortest(graph)
+    first = shortest(graph)
+    print("reconstruct path for:", first[0])
+    reconstruct_path(first[0])
+
     shortest(graph_ort, [0, 12])
 else:
     print("Imported of social dijkstra alg")
