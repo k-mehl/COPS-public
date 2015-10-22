@@ -24,7 +24,8 @@ def neighbors(output, bool_list, *args):
     """ Get the closest neighbor """
     # inefficient since it raises the complexity to O(V^3)
     minimum = 424242
-
+    # use python collections or lambda with min function and benchmark all 
+    # solutions
     for i in range(len(output)):
         if bool_list[i] == False and output[i] <= minimum:
             minimum = output[i]
@@ -45,17 +46,17 @@ def inner(graph, output, bool_list, path, penalty = 2):
     bool_list[min_dist] = True
 
     temp = None # dont change the graph all the time
-    for j in range(len(graph)):
-        if (not bool_list[j]) and graph[min_dist][j] \
+    for node in range(len(graph)):
+        if (not bool_list[node]) and graph[min_dist][node] \
                 and output[min_dist] != max_size \
-                and output[min_dist] + graph[min_dist][j] < output[j]:
-                    output[j] = output[min_dist] + graph[min_dist][j]
+                and output[min_dist] + graph[min_dist][node] < output[node]:
+                    output[node] = output[min_dist] + graph[min_dist][node]
                     # set the parent
-                    path[j] = min_dist
+                    path[node] = min_dist
                     # remember only the last traversed node and increase the cost
                     # not the proper way to construct this but it is the same
                     # in principle
-                    temp = j
+                    temp = node
         if temp:
             # penalty increases exponentially, probably not so good
             graph[min_dist][temp] = graph[min_dist][temp] * penalty
