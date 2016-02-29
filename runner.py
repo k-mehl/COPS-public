@@ -15,8 +15,9 @@ try:
         os.path.dirname("__file__"), "..", "..")), "tools"))  # tutorial in docs
     from sumolib import checkBinary
 except ImportError:
-    sys.exit(
-        "please declare environment variable 'SUMO_HOME' as the root directory of your sumo installation (it should contain folders 'bin', 'tools' and 'docs')")
+    sys.exit("please declare environment variable 'SUMO_HOME' as the root"+ \
+    "directory of your sumo installation (it should contain folders 'bin'," + \
+    "'tools' and 'docs')")
 
 import traci
 import sumolib
@@ -26,19 +27,22 @@ from parkingSearchVehicle import *
 from parkingSpace import *
 from vehicleFactory import *
 
-# use first command line argument as number of available parking spaces (20 if no argument given)
+# use first command line argument as number of available parking spaces (20 if
+# no argument given)
 if len(sys.argv) > 1:
 	NUMBER_OF_PARKING_SPACES = int(sys.argv[1])
 else:
 	NUMBER_OF_PARKING_SPACES = 20
 
-# use second command line argument as number of parking search vehicles (10 if no argument given)
+# use second command line argument as number of parking search vehicles (10 if
+# no argument given)
 if len(sys.argv) > 2:
     NUMBER_OF_PSV = int(sys.argv[2])
 else:
     NUMBER_OF_PSV = 10
 
-# for the static simulation (no parking spaces are vacated during the simulation):
+# for the static simulation (no parking spaces are vacated during the
+# simulation):
 # check whether sufficient parking spaces are available
 if NUMBER_OF_PSV > NUMBER_OF_PARKING_SPACES:
     print("ERROR: more vehicles than parking spaces available")
@@ -75,7 +79,10 @@ def run():
     	for otherEdge in edges:
     		# if from/to nodes of one edge match to/from of the other edge
     		# those two are opposite edges, create the dictionary entry
-    		if (net.getEdge(edge).getToNode().getID()==net.getEdge(otherEdge).getFromNode().getID()) and (net.getEdge(edge).getFromNode().getID()==net.getEdge(otherEdge).getToNode().getID()):
+                if ((net.getEdge(edge).getToNode().getID() ==
+                    net.getEdge(otherEdge).getFromNode().getID()) and
+                    (net.getEdge(edge).getFromNode().getID() ==
+                        net.getEdge(otherEdge).getToNode().getID())):
     			oppositeEdgeID[edge] = otherEdge
 
     # counter for parking spaces during creation
@@ -83,32 +90,43 @@ def run():
     # create empty list for parking spaces
     parkingSpaces = []
     for edge in edges:
-    	# get length of each edge (somehow TraCI can only get lane lengths, therefore the id string modification)
+        # get length of each edge (somehow TraCI can only get lane lengths,
+        # therefore the id string modification)
         length = traci.lane.getLength(edge+"_0")
         # if an edge is at least 40 meters long, start at 18 meters and 
-        # create parking spaces every 7 meters until up to 10 meters before the edge ends.
-        #     (vehicles can only 'see' parking spaces once they are on the same edge;
-        #     starting at 18 meters ensures the vehicles can safely stop at the first
+        # create parking spaces every 7 meters until up to 10 meters before the
+        # edge ends.
+        #     (vehicles can only 'see' parking spaces once they are on the same
+        #     edge;
+        #     starting at 18 meters ensures the vehicles can safely stop at the
+        #     first
         #     parking space if it is available)
         if length > 40.0:
             position = 18.0
-            # as long as there are more than 10 meters left on the edge, add another parking space
+            # as long as there are more than 10 meters left on the edge, add
+            # another parking space
             while position < (traci.lane.getLength(edge+"_0")-10.0):
-                parkingSpaces.append(ParkingSpace(parkingSpaceNumber, edge, position))
+                parkingSpaces.append(ParkingSpace(parkingSpaceNumber, edge,
+                    position))
                 # also add SUMO poi for better visualization in the GUI
-                traci.poi.add("ParkingSpace"+str(parkingSpaceNumber),traci.simulation.convert2D(edge,(position-2.0))[0],traci.simulation.convert2D(edge,(position-2.0))[1],(255,0,0,0))
+                traci.poi.add("ParkingSpace" + str(parkingSpaceNumber),
+                    traci.simulation.convert2D(edge,(position-2.0))[0],
+                    traci.simulation.convert2D(edge,(position-2.0))[1],
+                    (255,0,0,0))
                 # increment counter
                 parkingSpaceNumber+=1
                 # go seven meters ahead on the edge
                 position+=7.0
     
-    # mark a number parking spaces as available as specified per command line argument
+    # mark a number parking spaces as available as specified per command line
+    # argument
     for i in range(0, NUMBER_OF_PARKING_SPACES):
     	# check whether we still have enough parking spaces to make available
         if NUMBER_OF_PARKING_SPACES > parkingSpaceNumber:
             print("Too many parking spaces for network.")
             exit()
-        # select a random parking space which is not yet available, and make it available
+        # select a random parking space which is not yet available, and make it
+        # available
         success = False
         while not success:
             availableParkingSpaceID = int(random.random()*parkingSpaceNumber)
@@ -126,17 +144,23 @@ def run():
         traci.simulationStep()
         # increase local time counter
         step += 1
-        # every 1000 steps: ensure local time still corresponds to SUMO simulation time
+        # every 1000 steps: ensure local time still corresponds to SUMO
+        # simulation time
         # (just a safety check for now, can possibly be removed later)
         if step != (traci.simulation.getCurrentTime()/1000):
-        	print("TIMESTEP ERROR", step, "getCurrentTime", traci.simulation.getCurrentTime())
-        # if a new vehicle has departed in SUMO, create the corresponding Python representation
+        	print("TIMESTEP ERROR", step, "getCurrentTime", 
+        	        traci.simulation.getCurrentTime())
+        # if a new vehicle has departed in SUMO, create the corresponding Python
+        # representation
         for vehID in traci.simulation.getDepartedIDList():
         	parkingSearchVehicles.append(ParkingSearchVehicle(vehID, step))
-        # if a vehicle has disappeared in SUMO, remove the corresponding Python representation
+        # if a vehicle has disappeared in SUMO, remove the corresponding Python
+        # representation
         for vehID in traci.simulation.getArrivedIDList():
-        	# for now: output to console that the vehicle disappeared upon reaching the destination
-            print(str(vehID), "did not find an available parking space during phase 2.")
+                # for now: output to console that the vehicle disappeared upon
+                # reaching the destination
+            print(str(vehID), 
+                    "did not find an available parking space during phase 2.")
             parkingSearchVehicles.remove(ParkingSearchVehicle(vehID))
         # update status of all vehicles
         # TODO: differentiate this update method into e.g.
@@ -158,8 +182,8 @@ def run():
 ## Get additional command line arguments (from SUMO examples)
 def get_options():
     optParser = optparse.OptionParser()
-    optParser.add_option("--nogui", action="store_true",
-                         default=False, help="run the commandline version of sumo")
+    optParser.add_option("--nogui", action="store_true", default=False,
+                        help="run the commandline version of sumo")
     options, args = optParser.parse_args()
     return options
 
@@ -183,7 +207,10 @@ if __name__ == "__main__":
     # (from SUMO examples:)
     # this is the normal way of using traci. sumo is started as a
     # subprocess and then the python script connects and runs
-    sumoProcess = subprocess.Popen([sumoBinary, "-c", "reroute.sumo.cfg", "--tripinfo-output", 
-                                    "tripinfo.xml", "--gui-settings-file", "gui-settings.cfg", "--remote-port", str(PORT)], stdout=sys.stdout, stderr=sys.stderr)
+    sumoProcess = subprocess.Popen(
+                [sumoBinary, "-c", "reroute.sumo.cfg", "--tripinfo-output", 
+                    "tripinfo.xml", "--gui-settings-file", "gui-settings.cfg", 
+                    "--remote-port", str(PORT)], stdout=sys.stdout, 
+                stderr=sys.stderr)
     run()
     sumoProcess.wait()

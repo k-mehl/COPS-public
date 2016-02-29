@@ -2,7 +2,8 @@ import random
 import sumolib
 
 
-## Generate a random demand of vehicles for the parking space search and create the corresponding XML file
+## Generate a random demand of vehicles for the parking space search and create
+#the corresponding XML file
 #  @param num Number of vehicles
 def generatePsvDemand(num):
     # create seperate lists for possible origin or destination edges
