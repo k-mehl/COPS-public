@@ -1,0 +1,137 @@
+<edges>
+
+<!-- HORIZONTAL EDGES -->
+
+    <edge from="1" id="1to2" to="2" />
+	<edge from="2" id="2to1" to="1" />
+	
+    <edge from="2" id="2to3" to="3" />
+	<edge from="3" id="3to2" to="2" />
+	
+	<edge from="3" id="3to4" to="4" />
+	<edge from="4" id="4to3" to="3" />
+
+	<edge from="4" id="4to5" to="5" />
+	<edge from="5" id="5to4" to="4" />
+	
+	<edge from="5" id="5to6" to="6" />
+	<edge from="6" id="6to5" to="5" />
+	
+	
+	<edge from="7" id="7to8" to="8" />
+	<edge from="8" id="8to7" to="7" />
+
+	<edge from="8" id="8to9" to="9" />
+	<edge from="9" id="9to8" to="8" />
+
+	<edge from="9" id="9to10" to="10" />
+	<edge from="10" id="10to9" to="9" />
+
+	<edge from="10" id="10to11" to="11" />
+	<edge from="11" id="11to10" to="10" />
+
+	<edge from="11" id="11to12" to="12" />
+	<edge from="12" id="12to11" to="11" />
+
+
+	<edge from="13" id="13to14" to="14" />
+	<edge from="14" id="14to13" to="13" />
+
+	<edge from="14" id="14to15" to="15" />
+	<edge from="15" id="15to14" to="14" />
+
+	<edge from="15" id="15to16" to="16" />
+	<edge from="16" id="16to15" to="15" />
+
+	<edge from="16" id="16to17" to="17" />
+	<edge from="17" id="17to16" to="16" />
+
+	<edge from="17" id="17to18" to="18" />
+	<edge from="18" id="18to17" to="17" />
+
+
+	<edge from="19" id="19to20" to="20" />
+	<edge from="20" id="20to19" to="19" />
+
+	<edge from="20" id="20to21" to="21" />
+	<edge from="21" id="21to20" to="20" />
+
+	<edge from="21" id="21to22" to="22" />
+	<edge from="22" id="22to21" to="21" />
+
+	<edge from="22" id="22to23" to="23" />
+	<edge from="23" id="23to22" to="22" />
+
+	<edge from="23" id="23to24" to="24" />
+	<edge from="24" id="24to23" to="23" />
+
+<!-- VERTICAL EDGES -->
+
+	<edge from="1" id="1to7" to="7" />
+	<edge from="7" id="7to1" to="1" />
+
+	<edge from="7" id="7to13" to="13" />
+	<edge from="13" id="13to7" to="7" />
+
+	<edge from="13" id="13to19" to="19" />
+	<edge from="19" id="19to13" to="13" />
+
+
+	<edge from="2" id="2to8" to="8" />
+	<edge from="8" id="8to2" to="2" />
+
+	<edge from="8" id="8to14" to="14" />
+	<edge from="14" id="14to8" to="8" />
+
+	<edge from="14" id="14to20" to="20" />
+	<edge from="20" id="20to14" to="14" />
+
+
+	<edge from="3" id="3to9" to="9" />
+	<edge from="9" id="9to3" to="3" />
+
+	<edge from="9" id="9to15" to="15" />
+	<edge from="15" id="15to9" to="9" />
+
+	<edge from="15" id="15to21" to="21" />
+	<edge from="21" id="21to15" to="15" />
+
+
+	<edge from="4" id="4to10" to="10" />
+	<edge from="10" id="10to4" to="4" />
+
+	<edge from="10" id="10to16" to="16" />
+	<edge from="16" id="16to10" to="10" />
+
+	<edge from="16" id="16to22" to="22" />
+	<edge from="22" id="22to16" to="16" />
+
+
+	<edge from="5" id="5to11" to="11" />
+	<edge from="11" id="11to5" to="5" />
+
+	<edge from="11" id="11to17" to="17" />
+	<edge from="17" id="17to11" to="11" />
+
+	<edge from="17" id="17to23" to="23" />
+	<edge from="23" id="23to17" to="17" />
+
+
+	<edge from="6" id="6to12" to="12" />
+	<edge from="12" id="12to6" to="6" />
+
+	<edge from="12" id="12to18" to="18" />
+	<edge from="18" id="18to12" to="12" />
+
+	<edge from="18" id="18to24" to="24" />
+	<edge from="24" id="24to18" to="18" />
+
+<!-- ENTRY EDGES -->
+
+	<edge from="entrypoint1" id="entry1to1" to="1" />
+	<edge from="entrypoint6" id="entry6to6" to="6" />
+	<edge from="entrypoint19" id="entry19to19" to="19" />
+	<edge from="entrypoint24" id="entry24to24" to="24" />
+	
+
+</edges>
