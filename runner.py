@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
 import os
 import sys
 import optparse
@@ -129,14 +129,14 @@ def run():
         # every 1000 steps: ensure local time still corresponds to SUMO simulation time
         # (just a safety check for now, can possibly be removed later)
         if step != (traci.simulation.getCurrentTime()/1000):
-        	print "TIMESTEP ERROR", step, "getCurrentTime", traci.simulation.getCurrentTime()
+        	print("TIMESTEP ERROR", step, "getCurrentTime", traci.simulation.getCurrentTime())
         # if a new vehicle has departed in SUMO, create the corresponding Python representation
         for vehID in traci.simulation.getDepartedIDList():
         	parkingSearchVehicles.append(ParkingSearchVehicle(vehID, step))
         # if a vehicle has disappeared in SUMO, remove the corresponding Python representation
         for vehID in traci.simulation.getArrivedIDList():
         	# for now: output to console that the vehicle disappeared upon reaching the destination
-            print str(vehID), "did not find an available parking space during phase 2."
+            print(str(vehID), "did not find an available parking space during phase 2.")
             parkingSearchVehicles.remove(ParkingSearchVehicle(vehID))
         # update status of all vehicles
         # TODO: differentiate this update method into e.g.
