@@ -99,8 +99,7 @@ def run():
         #     (vehicles can only 'see' parking spaces once they are on the same
         #     edge;
         #     starting at 18 meters ensures the vehicles can safely stop at the
-        #     first
-        #     parking space if it is available)
+        #     first parking space if it is available)
         if length > 40.0:
             position = 18.0
             # as long as there are more than 10 meters left on the edge, add

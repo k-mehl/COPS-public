@@ -59,9 +59,9 @@ class ParkingSearchVehicle(object):
 
     ## Update vehicle state in the Python representation
     #  @param parkingSpaces Information about (currently all) available parking
-    #  spaces
+    #                       spaces
     #  @param oppositeEdgeID Contains a dictionary for identification of the
-    #  current opposite direction edge
+    #                        current opposite direction edge
     #  @param timestep Information about the current simulation time
     def update(self, parkingSpaces, oppositeEdgeID, timestep=-1001):
         # get all relevant information about the vehicle from SUMO via TraCI
@@ -139,7 +139,10 @@ class ParkingSearchVehicle(object):
 
         # if the vehicle has stopped besides found parking space, basically
         # block the road for a while
-        if (self.activity == VEHICLE_FOUND_PARKING_SPACE and self.speed == 0.0 and (abs(self.currentLanePosition-self.assignedParkingPosition)<0.1)):
+        if (self.activity == VEHICLE_FOUND_PARKING_SPACE and 
+                self.speed == 0.0 and 
+                (abs(self.currentLanePosition-self.assignedParkingPosition)<0.1)
+                ):
             self.activity = VEHICLE_MANEUVERING_TO_PARK
             # memorize the time when maneuvering begins
             self.timeBeginManeuvering=timestep
