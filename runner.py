@@ -62,16 +62,42 @@ def run():
     traci.init(PORT)
     # internal clock variable, start with 0
     step = 0
-    # create a list for all network edges
+    # create lists for all network nodes and edges
+    nodes = []
     edges = []
+    # use sumolib to parse the nodes XML file and write node IDs to the list
+    for node in sumolib.output.parse('reroute.nod.xml', ['node']):
+    	nodes.append(str(node.id))
 	# use sumolib to parse the edges XML file and write edge IDs to the list
     for edge in sumolib.output.parse('reroute.edg.xml', ['edge']):
     	edges.append(str(edge.id))
-    # full number of edges in the network
+    # full numbers of nodes and edges in the network
+    numberOfNodesinNetwork = len(nodes)
     numberOfEdgesinNetwork = len(edges)
-
     # use sumolib to read the network XML file
     net = sumolib.net.readNet('reroute.net.xml')
+
+    # create dictionaries for easy lookup of node indices and IDs (names)
+    convertNodeIDtoNodeIndex = {}
+    convertNodeIndexToNodeID = {}
+    # create an adjacency matrix of the road network
+    # for routing and cooperation purposes
+    # matrix elements contain edge length for existing edges, 0 otherwise
+    adjacencyMatrix = [[0 for x in range(numberOfNodesinNetwork)] \
+        for x in range(numberOfNodesinNetwork)]
+    for fromNode in range(numberOfNodesinNetwork):
+    	fromNodeID = nodes[fromNode]
+    	# fill node dictionaries by the way
+    	convertNodeIndexToNodeID[fromNode]=fromNodeID
+    	convertNodeIDtoNodeIndex[fromNodeID]=fromNode
+    	for toNode in range(numberOfNodesinNetwork):
+    		toNodeID   = nodes[toNode]
+    		for edge in edges:
+    			if (net.getEdge(edge).getFromNode().getID()==fromNodeID and
+    			    net.getEdge(edge).getToNode().getID()==toNodeID):
+    			    adjacencyMatrix[fromNode][toNode] = \
+    			        net.getEdge(edge).getLength()
+    
     # create a dictionary for easy lookup of opposite edges to any edge
     oppositeEdgeID = {}
     # iterate twice over all edges
