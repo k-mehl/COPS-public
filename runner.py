@@ -168,6 +168,23 @@ def run():
     # create empty list for parking search vehicles
     parkingSearchVehicles=[]
 
+    # prepare dictionaries with vehicle O/D data (IDs and indices)
+    # by parsing the generated route XML file
+    vehicleOriginNode = {}
+    vehicleOriginNodeIndex = {}
+    vehicleDestinationNode = {}
+    vehicleDestinationNodeIndex = {}
+    for trip in sumolib.output.parse_fast( \
+    	"reroute.rou.xml", 'trip', ['id','from','to']):
+    	vehicleOriginNode[trip.id] =  \
+    		net.getEdge(trip.attr_from).getFromNode().getID()
+    	vehicleOriginNodeIndex[trip.id] = \
+    		convertNodeIDtoNodeIndex[vehicleOriginNode[trip.id]]
+    	vehicleDestinationNode[trip.id] = \
+    		net.getEdge(trip.to).getToNode().getID()
+    	vehicleDestinationNodeIndex[trip.id] = \
+    		convertNodeIDtoNodeIndex[vehicleDestinationNode[trip.id]]
+
     # do simulation time steps as long as vehicles are present in the network
     while traci.simulation.getMinExpectedNumber() > 0:
     	# tell SUMO to do a simulation step
