@@ -85,6 +85,9 @@ def run():
     # matrix elements contain edge length for existing edges, 0 otherwise
     adjacencyMatrix = [[0 for x in range(numberOfNodesinNetwork)] \
         for x in range(numberOfNodesinNetwork)]
+    # create additional adjacency matrix containing the corresponding edge IDs
+    adjacencyEdgeID = [["" for x in range(numberOfNodesinNetwork)] \
+        for x in range(numberOfNodesinNetwork)]
     for fromNode in range(numberOfNodesinNetwork):
     	fromNodeID = nodes[fromNode]
     	# fill node dictionaries by the way
@@ -97,6 +100,8 @@ def run():
     			    net.getEdge(edge).getToNode().getID()==toNodeID):
     			    adjacencyMatrix[fromNode][toNode] = \
     			        net.getEdge(edge).getLength()
+    			    adjacencyEdgeID[fromNode][toNode] = \
+    			        str(net.getEdge(edge).getID())
     
     # create a dictionary for easy lookup of opposite edges to any edge
     oppositeEdgeID = {}
