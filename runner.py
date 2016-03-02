@@ -23,6 +23,7 @@ import traci
 import sumolib
 import random
 
+from cooperativeSearch import *
 from parkingSearchVehicle import *
 from parkingSpace import *
 from vehicleFactory import *
@@ -40,6 +41,13 @@ if len(sys.argv) > 2:
     NUMBER_OF_PSV = int(sys.argv[2])
 else:
     NUMBER_OF_PSV = 10
+
+# use third command line argument as switch for cooperative routing
+if len(sys.argv) > 3:
+	if sys.argv[3]=="coop":
+		COOP_ROUTING=True
+else:
+	COOP_ROUTING=False
 
 # for the static simulation (no parking spaces are vacated during the
 # simulation):
@@ -174,8 +182,12 @@ def run():
     vehicleOriginNodeIndex = {}
     vehicleDestinationNode = {}
     vehicleDestinationNodeIndex = {}
+    allVehicleIDs = []
+    allOriginNodeIndices = []
+    allDestinationNodeIndices = []
     for trip in sumolib.output.parse_fast( \
     	"reroute.rou.xml", 'trip', ['id','from','to']):
+    	allVehicleIDs.append(trip.id)
     	vehicleOriginNode[trip.id] =  \
     		net.getEdge(trip.attr_from).getFromNode().getID()
     	vehicleOriginNodeIndex[trip.id] = \
@@ -184,6 +196,20 @@ def run():
     		net.getEdge(trip.to).getToNode().getID()
     	vehicleDestinationNodeIndex[trip.id] = \
     		convertNodeIDtoNodeIndex[vehicleDestinationNode[trip.id]]
+    	allOriginNodeIndices.append(vehicleOriginNodeIndex[trip.id])
+    	allDestinationNodeIndices.append(vehicleDestinationNodeIndex[trip.id])
+
+    # use Aleksandar's Cooperative Search Router to create a dictionary
+    # containing all cooperative vehicle routes (only once in advance)
+    cooperativeRoutes = {}
+    coopRouter = CooperativeSearch(adjacencyMatrix, allOriginNodeIndices)
+    shortestNeighbors = coopRouter.shortest()
+    for trip in range(len(allVehicleIDs)):
+    	cooperativeRoutes[allVehicleIDs[trip]] = \
+    		convertNodeSequenceToEdgeSequence( \
+    		adjacencyEdgeID,coopRouter.reconstruct_path( \
+    		shortestNeighbors[trip],allDestinationNodeIndices[trip], \
+    		allOriginNodeIndices[trip]))
 
     # do simulation time steps as long as vehicles are present in the network
     while traci.simulation.getMinExpectedNumber() > 0:
@@ -201,6 +227,9 @@ def run():
         # representation
         for vehID in traci.simulation.getDepartedIDList():
         	parkingSearchVehicles.append(ParkingSearchVehicle(vehID, step))
+        	# store initial cooperative routing information
+        	parkingSearchVehicles[-1].setCooperativeRoute( \
+        		cooperativeRoutes[vehID],COOP_ROUTING)
         # if a vehicle has disappeared in SUMO, remove the corresponding Python
         # representation
         for vehID in traci.simulation.getArrivedIDList():
@@ -218,7 +247,6 @@ def run():
         #       setVehicleData() ..... all TraCI setSomething commands
         for psv in parkingSearchVehicles:
         	psv.update(parkingSpaces, oppositeEdgeID, step)
-        	
 
     # (from SUMO examples):
     # close the TraCI control loop
@@ -241,6 +269,7 @@ def convertNodeSequenceToEdgeSequence(adjacencyEdgeID, nodeSequence):
 		else:
 			edgeSequence.append(nextEdge)
 	return edgeSequence
+
 
 ## Get additional command line arguments (from SUMO examples)
 def get_options():

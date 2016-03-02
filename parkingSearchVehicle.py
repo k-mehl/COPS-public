@@ -50,6 +50,7 @@ class ParkingSearchVehicle(object):
         self.currentRouteIndex = -1
         self.activeRoute = []
         self.traversedRoute = []
+        self.cooperativeRoute = []
         
 
     ## Check for equivalence by name attribute
@@ -227,7 +228,18 @@ class ParkingSearchVehicle(object):
                             return self.oppositeEdgeID
         return ""
 
-                
+    ## Retrieve stored cooperative routing information
+    def getCooperativeRoute(self):
+        return self.cooperativeRoute
+
+    ## Store cooperative routing information
+    #  @param coopRoute list with route information (edge IDs)
+    #  @param useCoopRouting if true, tell SUMO to set the cooperative routing
+    def setCooperativeRoute(self, coopRoute, useCoopRouting):
+        self.cooperativeRoute = coopRoute
+        if useCoopRouting:
+            traci.vehicle.setRoute(self.name, self.cooperativeRoute)
+             
 if __name__ == "__main__":
     print("Nothing to do.")
 #else:
