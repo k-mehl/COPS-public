@@ -23,6 +23,7 @@ import traci
 import sumolib
 import random
 
+from cooperativeSearch import *
 from parkingSearchVehicle import *
 from parkingSpace import *
 from vehicleFactory import *
@@ -102,7 +103,7 @@ def run():
     			        net.getEdge(edge).getLength()
     			    adjacencyEdgeID[fromNode][toNode] = \
     			        str(net.getEdge(edge).getID())
-    
+
     # create a dictionary for easy lookup of opposite edges to any edge
     oppositeEdgeID = {}
     # iterate twice over all edges
@@ -208,6 +209,22 @@ def run():
     traci.close()
     sys.stdout.flush()
 
+
+## Convert a route given as sequence of node indices into the corresponding
+#  sequence of edge IDs
+#  @param adjacencyEdgeID adjacency matrix containing the edge IDs 
+#  @param nodeSequence route given as node index list
+#  @return edgeSequence route given as edge ID list
+def convertNodeSequenceToEdgeSequence(adjacencyEdgeID, nodeSequence):
+	edgeSequence = []
+	for segment in range(0, len(nodeSequence)-1):
+		nextEdge=adjacencyEdgeID[nodeSequence[segment]][nodeSequence[segment+1]]
+		if nextEdge=="":
+			print("ERROR: could not convert node sequence to edge sequence.")
+			exit()
+		else:
+			edgeSequence.append(nextEdge)
+	return edgeSequence
 
 ## Get additional command line arguments (from SUMO examples)
 def get_options():
