@@ -48,14 +48,14 @@ if len(sys.argv) > 3:
 		COOP_ROUTING=True
 else:
 	COOP_ROUTING=False
-
+"""
 # for the static simulation (no parking spaces are vacated during the
 # simulation):
 # check whether sufficient parking spaces are available
 if NUMBER_OF_PSV > NUMBER_OF_PARKING_SPACES:
     print("ERROR: more vehicles than parking spaces available")
     exit()
-
+"""
 # (from SUMO examples)
 # the port used for communicating with your sumo instance
 PORT = 8873
