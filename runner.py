@@ -293,7 +293,7 @@ if __name__ == "__main__":
 
     # generate the route file for this simulation run
     # using the given number of parking search vehicles
-    #generatePsvDemand(NUMBER_OF_PSV)
+    generatePsvDemand(NUMBER_OF_PSV)
 
     # (from SUMO examples:)
     # this is the normal way of using traci. sumo is started as a
