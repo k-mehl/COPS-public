@@ -21,7 +21,6 @@ except ImportError:
 
 import traci
 import sumolib
-import random
 
 from cooperativeSearch import *
 from parkingSearchVehicle import *
@@ -42,12 +41,11 @@ if len(sys.argv) > 2:
 else:
     NUMBER_OF_PSV = 10
 
-# use third command line argument as switch for cooperative routing
+# use third command line argument as ratio of cooperative drivers
 if len(sys.argv) > 3:
-	if sys.argv[3]=="coop":
-		COOP_ROUTING=True
+	COOP_RATIO = float(sys.argv[3])
 else:
-	COOP_ROUTING=False
+    COOP_RATIO = 0.0
 """
 # for the static simulation (no parking spaces are vacated during the
 # simulation):
@@ -226,10 +224,11 @@ def run():
         # if a new vehicle has departed in SUMO, create the corresponding Python
         # representation
         for vehID in traci.simulation.getDepartedIDList():
-        	parkingSearchVehicles.append(ParkingSearchVehicle(vehID, step))
+        	parkingSearchVehicles.append(ParkingSearchVehicle(vehID, \
+                COOP_RATIO, step))
         	# store initial cooperative routing information
         	parkingSearchVehicles[-1].setCooperativeRoute( \
-        		cooperativeRoutes[vehID],COOP_ROUTING)
+        		cooperativeRoutes[vehID])
         # if a vehicle has disappeared in SUMO, remove the corresponding Python
         # representation
         for vehID in traci.simulation.getArrivedIDList():
@@ -294,7 +293,7 @@ if __name__ == "__main__":
 
     # generate the route file for this simulation run
     # using the given number of parking search vehicles
-    generatePsvDemand(NUMBER_OF_PSV)
+    #generatePsvDemand(NUMBER_OF_PSV)
 
     # (from SUMO examples:)
     # this is the normal way of using traci. sumo is started as a

@@ -15,9 +15,10 @@ class ParkingSearchVehicle(object):
     ## Constructor for searching vehicles, initializes vehicle attributes
     #  @param name Corresponds to the vehicle ID obtained from the route XML
     #  file
+    #  @param coopRatio The fraction of cooperative drivers
     #  @param timestep For memorizing the simulation time when a vehicle is
     #  created
-    def __init__(self, name, timestep=-1001):
+    def __init__(self, name, coopRatio, timestep=-1001):
         self.name = name
         self.speed = 0.0
         # allow for differentiation between searching and non-searching vehicles
@@ -28,6 +29,10 @@ class ParkingSearchVehicle(object):
         # information about vehicle activity status, initially vehicle cruises
         # without searching ("phase 1")
         self.activity = VEHICLE_CRUISING
+        # set individual preference for cooperation
+        self.driverCooperates = False
+        if random.random()<=coopRatio:
+        	self.driverCooperates = True
         # information about relevant simulation times; -1001 seems to be used
         # for unset values in SUMO examples
         self.timeCreated = timestep
@@ -235,9 +240,9 @@ class ParkingSearchVehicle(object):
     ## Store cooperative routing information
     #  @param coopRoute list with route information (edge IDs)
     #  @param useCoopRouting if true, tell SUMO to set the cooperative routing
-    def setCooperativeRoute(self, coopRoute, useCoopRouting):
+    def setCooperativeRoute(self, coopRoute):
         self.cooperativeRoute = coopRoute
-        if useCoopRouting:
+        if self.driverCooperates:
             traci.vehicle.setRoute(self.name, self.cooperativeRoute)
              
 if __name__ == "__main__":
