@@ -103,6 +103,8 @@ class CooperativeSearch(object):
             if temp:
                 self.dynamic_graph[min_dist][temp] += \
                         self.graph[min_dist][temp] * self.penalty
+                self.dynamic_graph[temp][min_dist] += \
+                        self.graph[temp][min_dist] * self.penalty
                 #temp = None # this was missing from the first version... why?
 
     def _OLD_inner(graph_original, graph, output, bool_list, path, history, penalty = 1):
