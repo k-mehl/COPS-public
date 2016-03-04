@@ -334,10 +334,15 @@ if __name__ == "__main__":
     # this is the normal way of using traci. sumo is started as a
     # subprocess and then the python script connects and runs
     sumoProcess = subprocess.Popen(
-                [sumoBinary, "-c", "reroute.sumo.cfg", "--tripinfo-output", 
-                    "tripinfo.xml", "--gui-settings-file", "gui-settings.cfg",
+                #[sumoBinary, "-c", "reroute.sumo.cfg",
+                [sumoBinary,
+                	"-n", "reroute.net.xml",
+                	"-r", "reroute.rou.xml",
+                    "--tripinfo-output", "tripinfo.xml", 
+                    "--gui-settings-file", "gui-settings.cfg",
                     "--no-step-log",
-                    "--remote-port", str(PORT)], stdout=sys.stdout, 
-                stderr=sys.stderr)
+                    "--remote-port", str(PORT)], 
+                    stdout=sys.stdout, 
+                	stderr=sys.stderr)
     run()
     sumoProcess.wait()
