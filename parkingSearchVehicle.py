@@ -244,6 +244,12 @@ class ParkingSearchVehicle(object):
         self.cooperativeRoute = coopRoute
         if self.driverCooperates:
             traci.vehicle.setRoute(self.name, self.cooperativeRoute)
+
+    ## Query whether vehicle has successfully parked
+    def getParkedStatus(self):
+        if self.activity == VEHICLE_PARKED:
+            return True
+        return False
              
 if __name__ == "__main__":
     print("Nothing to do.")
