@@ -247,6 +247,14 @@ def run():
         for psv in parkingSearchVehicles:
         	psv.update(parkingSpaces, oppositeEdgeID, step)
 
+        # break the while-loop if all remaining SUMO vehicles have 
+        # successfully parked
+        if getNumberOfRemainingVehicles(parkingSearchVehicles)==0:
+        	print("SUCCESSFULLY PARKED:", \
+        		getNumberOfParkedVehicles(parkingSearchVehicles), \
+        		"OUT OF", NUMBER_OF_PSV)
+        	break
+
     # (from SUMO examples):
     # close the TraCI control loop
     traci.close()
@@ -268,6 +276,33 @@ def convertNodeSequenceToEdgeSequence(adjacencyEdgeID, nodeSequence):
 		else:
 			edgeSequence.append(nextEdge)
 	return edgeSequence
+
+## Get number of remaining searching vehicles
+#  @param psvList List of parking search vehicle objects
+#  @return Number of remaining vehicles which are not parked
+def getNumberOfRemainingVehicles(psvList):
+	if not psvList:
+		return 0
+	else:
+		remainingVehicles = 0
+		for psv in psvList:
+			if not psv.getParkedStatus():
+				remainingVehicles += 1
+	return remainingVehicles
+
+
+## Get number of successfully parked vehicles
+#  @param psvList List of parking search vehicle objects
+#  @return Number of parked vehicles
+def getNumberOfParkedVehicles(psvList):
+	if not psvList:
+		return 0
+	else:
+		parkedVehicles = 0
+		for psv in psvList:
+			if  psv.getParkedStatus():
+				parkedVehicles += 1
+	return parkedVehicles
 
 
 ## Get additional command line arguments (from SUMO examples)
@@ -300,7 +335,8 @@ if __name__ == "__main__":
     # subprocess and then the python script connects and runs
     sumoProcess = subprocess.Popen(
                 [sumoBinary, "-c", "reroute.sumo.cfg", "--tripinfo-output", 
-                    "tripinfo.xml", "--gui-settings-file", "gui-settings.cfg", 
+                    "tripinfo.xml", "--gui-settings-file", "gui-settings.cfg",
+                    "--no-step-log",
                     "--remote-port", str(PORT)], stdout=sys.stdout, 
                 stderr=sys.stderr)
     run()
