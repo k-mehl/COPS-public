@@ -27,33 +27,6 @@ from parkingSearchVehicle import *
 from parkingSpace import *
 from vehicleFactory import *
 
-# use first command line argument as number of available parking spaces (20 if
-# no argument given)
-if len(sys.argv) > 1:
-	NUMBER_OF_PARKING_SPACES = int(sys.argv[1])
-else:
-	NUMBER_OF_PARKING_SPACES = 20
-
-# use second command line argument as number of parking search vehicles (10 if
-# no argument given)
-if len(sys.argv) > 2:
-    NUMBER_OF_PSV = int(sys.argv[2])
-else:
-    NUMBER_OF_PSV = 10
-
-# use third command line argument as ratio of cooperative drivers
-if len(sys.argv) > 3:
-	COOP_RATIO = float(sys.argv[3])
-else:
-    COOP_RATIO = 0.0
-"""
-# for the static simulation (no parking spaces are vacated during the
-# simulation):
-# check whether sufficient parking spaces are available
-if NUMBER_OF_PSV > NUMBER_OF_PARKING_SPACES:
-    print("ERROR: more vehicles than parking spaces available")
-    exit()
-"""
 # (from SUMO examples)
 # the port used for communicating with your sumo instance
 PORT = 8873
@@ -62,7 +35,7 @@ PORT = 8873
 random.seed()
 
 ## Runs the simulation on both SUMO and Python layers
-def run():
+def run(NUMBER_OF_PARKING_SPACES, NUMBER_OF_PSV, COOP_RATIO):
     # (from SUMO examples):
     # execute the TraCI control loop
     traci.init(PORT)
@@ -260,6 +233,9 @@ def run():
     traci.close()
     sys.stdout.flush()
 
+    # Return results (for now: number of successful parkings)
+    return getNumberOfParkedVehicles(parkingSearchVehicles)
+
 
 ## Convert a route given as sequence of node indices into the corresponding
 #  sequence of edge IDs
@@ -314,9 +290,37 @@ def get_options():
     return options
 
 
-# Main entry point of the simulation script (from SUMO examples)
+## Main entry point if called from wrapper module
+def wrapper(numPark, numVehicles, coop):
+    # when called by wrapper, assume no GUI necessary
+    sumoBinary = checkBinary('sumo')
+    # generate the route file for this simulation run
+    # using the given number of parking search vehicles
+    generatePsvDemand(numVehicles)
+    # (from SUMO examples:)
+
+    # this is the normal way of using traci. sumo is started as a
+    # subprocess and then the python script connects and runs
+    sumoProcess = subprocess.Popen(
+                [sumoBinary,
+                    "-n", "reroute.net.xml",
+                    "-r", "reroute.rou.xml",
+                    "--tripinfo-output", "tripinfo.xml", 
+                    "--gui-settings-file", "gui-settings.cfg",
+                    "--no-step-log",
+                    "--remote-port", str(PORT)], 
+                    stdout=sys.stdout, 
+                    stderr=sys.stderr)
+    result = run(numPark, numVehicles, coop)
+    sumoProcess.wait()
+    return result
+
+
+## Main entry point of the simulation script from command line
+## (from SUMO examples)
 if __name__ == "__main__":
-	# get additional command line arguments (from SUMO examples)
+
+    # get additional command line arguments (from SUMO examples)
     options = get_options()
 
     # this script has been called from the command line. It will start sumo as a
@@ -326,23 +330,42 @@ if __name__ == "__main__":
     else:
         sumoBinary = checkBinary('sumo-gui')
 
+    # use first command line argument as number of available parking spaces
+    # (20 if no argument given)
+    if len(sys.argv) > 1:
+        numPark = int(sys.argv[1])
+    else:
+        numPark = 20
+
+    # use second command line argument as number of parking search vehicles
+    # (10 if no argument given)
+    if len(sys.argv) > 2:
+        numVehicles = int(sys.argv[2])
+    else:
+        numVehicles = 10
+
+    # use third command line argument as ratio of cooperative drivers
+    if len(sys.argv) > 3:
+        coop = float(sys.argv[3])
+    else:
+        coop = 0.0
+
     # generate the route file for this simulation run
     # using the given number of parking search vehicles
-    generatePsvDemand(NUMBER_OF_PSV)
+    generatePsvDemand(numVehicles)
 
     # (from SUMO examples:)
     # this is the normal way of using traci. sumo is started as a
     # subprocess and then the python script connects and runs
     sumoProcess = subprocess.Popen(
-                #[sumoBinary, "-c", "reroute.sumo.cfg",
                 [sumoBinary,
-                	"-n", "reroute.net.xml",
-                	"-r", "reroute.rou.xml",
+                    "-n", "reroute.net.xml",
+                    "-r", "reroute.rou.xml",
                     "--tripinfo-output", "tripinfo.xml", 
                     "--gui-settings-file", "gui-settings.cfg",
                     "--no-step-log",
                     "--remote-port", str(PORT)], 
                     stdout=sys.stdout, 
-                	stderr=sys.stderr)
-    run()
+                    stderr=sys.stderr)
+    run(numPark, numVehicles, coop)
     sumoProcess.wait()
