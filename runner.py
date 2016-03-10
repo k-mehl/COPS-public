@@ -182,6 +182,18 @@ def run(NUMBER_OF_PARKING_SPACES, NUMBER_OF_PSV, COOP_RATIO):
     		shortestNeighbors[trip],allDestinationNodeIndices[trip], \
     		allOriginNodeIndices[trip]))
 
+    # use Aleksandar's Cooperative Search Router to create a dictionary
+    # containing all non-cooperative vehicle routes (only once in advance)
+    individualRoutes = {}
+    indyRouter = CooperativeSearch(adjacencyMatrix, allOriginNodeIndices, 0)
+    indyShortestNeighbors = indyRouter.shortest()
+    for trip in range(len(allVehicleIDs)):
+        individualRoutes[allVehicleIDs[trip]] = \
+            convertNodeSequenceToEdgeSequence( \
+            adjacencyEdgeID,indyRouter.reconstruct_path( \
+            indyShortestNeighbors[trip],allDestinationNodeIndices[trip], \
+            allOriginNodeIndices[trip]))
+
     # do simulation time steps as long as vehicles are present in the network
     while traci.simulation.getMinExpectedNumber() > 0:
     	# tell SUMO to do a simulation step
@@ -197,11 +209,14 @@ def run(NUMBER_OF_PARKING_SPACES, NUMBER_OF_PSV, COOP_RATIO):
         # if a new vehicle has departed in SUMO, create the corresponding Python
         # representation
         for vehID in traci.simulation.getDepartedIDList():
-        	parkingSearchVehicles.append(ParkingSearchVehicle(vehID, \
+            parkingSearchVehicles.append(ParkingSearchVehicle(vehID, \
                 COOP_RATIO, step))
-        	# store initial cooperative routing information
-        	parkingSearchVehicles[-1].setCooperativeRoute( \
-        		cooperativeRoutes[vehID])
+            # store initial cooperative routing information
+            parkingSearchVehicles[-1].setCooperativeRoute( \
+                cooperativeRoutes[vehID])
+            # store initial non-coop ("individual") routing information
+            parkingSearchVehicles[-1].setIndividualRoute( \
+                individualRoutes[vehID])
         # if a vehicle has disappeared in SUMO, remove the corresponding Python
         # representation
         for vehID in traci.simulation.getArrivedIDList():

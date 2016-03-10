@@ -56,6 +56,7 @@ class ParkingSearchVehicle(object):
         self.activeRoute = []
         self.traversedRoute = []
         self.cooperativeRoute = []
+        self.individualRoute = []
         
 
     ## Check for equivalence by name attribute
@@ -244,6 +245,18 @@ class ParkingSearchVehicle(object):
         self.cooperativeRoute = coopRoute
         if self.driverCooperates:
             traci.vehicle.setRoute(self.name, self.cooperativeRoute)
+
+	## Retrieve stored individual routing information
+    def getIndividualRoute(self):
+        return self.individualRoute
+
+    ## Store individual routing information
+    #  @param indyRoute list with route information (edge IDs)
+    #  @param useCoopRouting if false, tell SUMO to set the individual routing
+    def setIndividualRoute(self, indyRoute):
+        self.individualRoute = indyRoute
+        if not self.driverCooperates:
+            traci.vehicle.setRoute(self.name, self.individualRoute)
 
     ## Query whether vehicle has successfully parked
     def getParkedStatus(self):
