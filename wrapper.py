@@ -32,14 +32,19 @@ if len(sys.argv) > 4:
 # For now: starts repetitive simulation runs with identical parameters, 
 # and presents the results afterwards.
 if __name__ == "__main__":
-	resultSum = 0
+	successesSum       = 0
+	searchTimesSum     = 0
+	searchDistancesSum = 0.0
 	for run in range(NUMBER_OF_RUNS):
 		print("RUN:", run, "OF", NUMBER_OF_RUNS)
-		result = runner.wrapper(NUMBER_OF_PARKING_SPACES, \
+		successes, searchTimes, searchDistances = \
+			runner.wrapper(NUMBER_OF_PARKING_SPACES, \
 			NUMBER_OF_PSV, \
 			COOP_RATIO)
-		resultSum += result
-	successRate = 100*resultSum/(NUMBER_OF_RUNS*NUMBER_OF_PSV)
+		successesSum += successes
+		searchTimesSum += sum(searchTimes) #/ float(len(searchTimes))
+		searchDistancesSum += sum(searchDistances) #/ float(len(searchDistances))
+	successRate = 100*successesSum/(NUMBER_OF_RUNS*NUMBER_OF_PSV)
 	print("")
 	print("==== SUMMARY AFTER", NUMBER_OF_RUNS, "RUNS ====")
 	print("PARAMETERS:        ", NUMBER_OF_PARKING_SPACES, "parking spaces")
@@ -47,4 +52,9 @@ if __name__ == "__main__":
 	print("                   ", COOP_RATIO*100, "percent of drivers cooperate")
 	print("TOTAL SUCCESS RATE:", successRate, "percent",
 		"of cars found an available parking space")
+	if successesSum:
+		searchTimesAvg = searchTimesSum / float(successesSum)
+		searchDistancesAvg = searchDistancesSum / float(successesSum)
+		print("AVG SEARCH TIME    ", searchTimesAvg, "seconds")
+		print("AVG SEARCH DISTANCE", searchDistancesAvg, "meters")
 	print("")
