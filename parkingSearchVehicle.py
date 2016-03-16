@@ -177,6 +177,10 @@ class ParkingSearchVehicle(object):
             print(self.name, "parked after", (self.timeParked -
                 self.timeBeginSearch), "seconds,",
                 traci.vehicle.getDistance(self.name), "meters.")
+            return [self.name, (self.timeParked -
+                self.timeBeginSearch), traci.vehicle.getDistance(self.name)]
+
+        return(0)
             
 
     ## Lookout for available parking spaces by checking vehicle position
