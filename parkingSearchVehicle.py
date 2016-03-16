@@ -270,6 +270,14 @@ class ParkingSearchVehicle(object):
     
     def getVehicleID(self):
         return self.name
+    
+    def getVehicleRoute(self):
+        return self.currentRoute
+    
+    def setNextRouteSegment(self, edgeID):
+        self.activeRoute.append(edgeID)
+        traci.vehicle.setRoute(self.name, self.activeRoute)
+        
 
     ## Query whether vehicle is on last segment of planned route
     def isOnLastRouteSegment(self):

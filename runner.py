@@ -237,10 +237,26 @@ def run(NUMBER_OF_PARKING_SPACES, NUMBER_OF_PSV, COOP_RATIO):
         #       selectRouting() ...... select whether to cooperate or not
         #       setVehicleData() ..... all TraCI setSomething commands
         for psv in parkingSearchVehicles:
-        	result = psv.update(parkingSpaces, oppositeEdgeID, step)
-        	if result:
-        		searchTimes.append(result[1])
-        		searchDistances.append(result[2])
+            result = psv.update(parkingSpaces, oppositeEdgeID, step)
+            # if result values could be obtained, the vehicle found
+            # a parking space in the last time step
+            if result:
+                searchTimes.append(result[1])
+                searchDistances.append(result[2])
+            else:
+                # if the vehicle is on the last route segment,
+                # choose one of the possible next edges to continue
+                if psv.isOnLastRouteSegment():
+                    currentRoute = psv.getVehicleRoute()
+                    succEdges = \
+                        net.getEdge(currentRoute[-1]).getToNode().getOutgoing()
+                    succEdgeIDs = []
+                    for edge in succEdges:
+                        succEdgeIDs.append(str(edge.getID()))
+                    if currentRoute[-1] in oppositeEdgeID:
+                        succEdgeIDs.remove(oppositeEdgeID[currentRoute[-1]])
+                    nextRouteSegment = random.choice(succEdgeIDs)
+                    psv.setNextRouteSegment(nextRouteSegment)
 
         # break the while-loop if all remaining SUMO vehicles have 
         # successfully parked
