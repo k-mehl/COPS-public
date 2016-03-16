@@ -263,7 +263,16 @@ class ParkingSearchVehicle(object):
         if self.activity == VEHICLE_PARKED:
             return True
         return False
-             
+    
+    def getVehicleID(self):
+        return self.name
+
+    ## Query whether vehicle is on last segment of planned route
+    def isOnLastRouteSegment(self):
+        if self.currentRouteIndex == len(self.currentRoute)-1:
+            return True
+        return False
+
 if __name__ == "__main__":
     print("Nothing to do.")
 #else:
