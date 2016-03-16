@@ -96,7 +96,7 @@ class ParkingSearchVehicle(object):
         # create a copy of the currentRoute for further modification
         # and divide current route into remaining segments ('active') and
         # traversed segments
-        self.activeRoute = self.currentRoute
+        self.activeRoute = self.currentRoute[:]
         self.traversedRoute = []
         if self.currentRouteIndex > 0:
             for i in range (0, self.currentRouteIndex):
