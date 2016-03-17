@@ -325,11 +325,11 @@ class Runtime(object):
     def getNumberOfRemainingVehicles(self, psvList):
         if not psvList:
             return 0
-        else:
-            remainingVehicles = 0
-            for psv in psvList:
-                if not psv.getParkedStatus():
-                    remainingVehicles += 1
+
+        remainingVehicles = 0
+        for psv in psvList:
+            if not psv.getParkedStatus():
+                remainingVehicles += 1
         return remainingVehicles
 
 
@@ -339,11 +339,11 @@ class Runtime(object):
     def getNumberOfParkedVehicles(self, psvList):
         if not psvList:
             return 0
-        else:
-            parkedVehicles = 0
-            for psv in psvList:
-                if  psv.getParkedStatus():
-                    parkedVehicles += 1
+
+        parkedVehicles = 0
+        for psv in psvList:
+            if  psv.getParkedStatus():
+                parkedVehicles += 1
         return parkedVehicles
 
 
