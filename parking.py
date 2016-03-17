@@ -27,22 +27,22 @@ if __name__ == "__main__":
     l_searchTimesSum     = 0
     l_searchDistancesSum = 0.0
 
-    l_runtime = runner.Runtime(args)
+    l_runtime = runner.Runtime(l_args)
 
-    for i_run in xrange(args.runs):
-        print("RUN:", i_run+1, "OF", args.runs)
+    for i_run in xrange(l_args.runs):
+        print("RUN:", i_run+1, "OF", l_args.runs)
         l_successes, l_searchTimes, l_searchDistances = l_runtime.run()
 
         l_successesSum += l_successes
         l_searchTimesSum += sum(l_searchTimes) #/ float(len(searchTimes))
         l_searchDistancesSum += sum(l_searchDistances) #/ float(len(searchDistances))
 
-    l_successRate = 100*l_resultSum/(args.runs*args.psv)
+    l_successRate = 100*l_resultSum/(l_args.runs*l_args.psv)
     print("")
-    print("==== SUMMARY AFTER", args.runs, "RUNS ====")
-    print("PARAMETERS:        ", args.parkingspaces, "parking spaces")
-    print("                   ", args.psv, "searching vehicles")
-    print("                   ", args.coopratio*100, "percent of drivers cooperate")
+    print("==== SUMMARY AFTER", l_args.runs, "RUNS ====")
+    print("PARAMETERS:        ", l_args.parkingspaces, "parking spaces")
+    print("                   ", l_args.psv, "searching vehicles")
+    print("                   ", l_args.coopratio*100, "percent of drivers cooperate")
     print("TOTAL SUCCESS RATE:", l_successRate, "percent",
         "of cars found an available parking space")
     print("")
