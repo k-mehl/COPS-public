@@ -19,7 +19,7 @@ if __name__ == "__main__":
     l_mutexgroup.add_argument("-g","--gui", dest="gui", default=False, action='store_true', help="start simulation with SUMO GUI")
     l_mutexgroup.add_argument("-r","--runs", dest="runs", type=int, default=1, help="number of iterations to run")
 
-    args = l_parser.parse_args()
+    l_args = l_parser.parse_args()
 
     l_resultSum = 0
 
