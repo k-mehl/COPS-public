@@ -29,15 +29,15 @@ from vehicleFactory import *
 
 class Runtime(object):
 
-    def __init__(self,args):
+    def __init__(self,p_args):
 
-        self._args = args
+        self._args = p_args
         # seed for random number generator, random for now
         random.seed()
 
         # generate the route file for this simulation run
         # using the given number of parking search vehicles
-        generatePsvDemand(args.psv)
+        generatePsvDemand(p_args.psv)
 
         # this script has been called from the command line. It will start sumo as a
         # server, then connect and run
