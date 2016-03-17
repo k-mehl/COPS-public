@@ -18,7 +18,7 @@ class ParkingSearchVehicle(object):
     #  @param coopRatio The fraction of cooperative drivers
     #  @param timestep For memorizing the simulation time when a vehicle is
     #  created
-    def __init__(self, name, coopRatio=0.0, timestep=-1001):
+    def __init__(self, name, coopRatio=0.0, timestep=-1001, p_cooperativeRoute=[], p_individualRoute=[]):
         self.name = name
         self.speed = 0.0
         # allow for differentiation between searching and non-searching vehicles
@@ -55,8 +55,8 @@ class ParkingSearchVehicle(object):
         self.currentRouteIndex = -1
         self.activeRoute = []
         self.traversedRoute = []
-        self.cooperativeRoute = []
-        self.individualRoute = []
+        self.cooperativeRoute = p_cooperativeRoute
+        self.individualRoute = p_individualRoute
         
 
     ## Check for equivalence by name attribute
