@@ -4,6 +4,7 @@ import os
 import sys
 import subprocess
 import random
+import itertools
 
 # (from SUMO examples:)
 # we need to import python modules from the $SUMO_HOME/tools directory
@@ -107,17 +108,11 @@ class Runtime(object):
                             str(net.getEdge(edge).getID())
 
         # create a dictionary for easy lookup of opposite edges to any edge
-        oppositeEdgeID = {}
-        # iterate twice over all edges
-        for edge in edges:
-            for otherEdge in edges:
-                # if from/to nodes of one edge match to/from of the other edge
-                # those two are opposite edges, create the dictionary entry
-                    if ((net.getEdge(edge).getToNode().getID() ==
-                        net.getEdge(otherEdge).getFromNode().getID()) and
-                        (net.getEdge(edge).getFromNode().getID() ==
-                            net.getEdge(otherEdge).getToNode().getID())):
-                        oppositeEdgeID[edge] = otherEdge
+        oppositeEdgeID = dict( filter(
+                lambda (x,y): net.getEdge(x).getToNode().getID() == net.getEdge(y).getFromNode().getID() and
+                              net.getEdge(x).getFromNode().getID() == net.getEdge(y).getToNode().getID(),
+                itertools.permutations(edges, 2)
+                ))
 
         # counter for parking spaces during creation
         parkingSpaceNumber=0
@@ -169,7 +164,7 @@ class Runtime(object):
             parkingSpaces[availableParkingSpaceID].unassign()
 
         # create empty list for parking search vehicles
-        parkingSearchVehicles=[]
+        l_parkingSearchVehicles=[]
 
         # prepare dictionaries with vehicle O/D data (IDs and indices)
         # by parsing the generated route XML file
@@ -235,15 +230,15 @@ class Runtime(object):
                         traci.simulation.getCurrentTime())
             # if a new vehicle has departed in SUMO, create the corresponding Python
             # representation
-            for vehID in traci.simulation.getDepartedIDList():
-                parkingSearchVehicles.append(ParkingSearchVehicle(vehID, \
-                    self._args.coopratio, step))
-                # store initial cooperative routing information
-                parkingSearchVehicles[-1].setCooperativeRoute( \
-                    cooperativeRoutes[vehID])
-                # store initial non-coop ("individual") routing information
-                parkingSearchVehicles[-1].setIndividualRoute( \
-                    individualRoutes[vehID])
+            l_departedVehicles = traci.simulation.getDepartedIDList()
+            l_parkingSearchVehicles.extend(map(
+                    lambda vehID: ParkingSearchVehicle(
+                            vehID, self._args.coopratio,
+                            step, cooperativeRoutes[vehID],
+                            individualRoutes[vehID]),
+                    l_departedVehicles
+            ))
+
             # if a vehicle has disappeared in SUMO, remove the corresponding Python
             # representation
             for vehID in traci.simulation.getArrivedIDList():
@@ -251,7 +246,7 @@ class Runtime(object):
                     # reaching the destination
                 print(str(vehID),
                         "did not find an available parking space during phase 2.")
-                parkingSearchVehicles.remove(ParkingSearchVehicle(vehID))
+                l_parkingSearchVehicles.remove(ParkingSearchVehicle(vehID))
             # update status of all vehicles
             # TODO: differentiate this update method into e.g.
             #       getVehicleData() ..... all TraCI getSomething commands
@@ -259,7 +254,7 @@ class Runtime(object):
             #       computeCoopRouting() . cooperative routing
             #       selectRouting() ...... select whether to cooperate or not
             #       setVehicleData() ..... all TraCI setSomething commands
-            for psv in parkingSearchVehicles:
+            for psv in l_parkingSearchVehicles:
                 result = psv.update(parkingSpaces, oppositeEdgeID, step)
                 # if result values could be obtained, the vehicle found
                 # a parking space in the last time step
@@ -283,9 +278,9 @@ class Runtime(object):
 
             # break the while-loop if all remaining SUMO vehicles have
             # successfully parked
-            if self.getNumberOfRemainingVehicles(parkingSearchVehicles)==0:
+            if self.getNumberOfRemainingVehicles(l_parkingSearchVehicles)==0:
                 print("SUCCESSFULLY PARKED:",
-                    self.getNumberOfParkedVehicles(parkingSearchVehicles),
+                    self.getNumberOfParkedVehicles(l_parkingSearchVehicles),
                     "OUT OF", self._args.psv)
                 break
 
@@ -297,7 +292,7 @@ class Runtime(object):
         l_sumoProcess.wait()
 
         # Return results
-        return self.getNumberOfParkedVehicles(parkingSearchVehicles), searchTimes, searchDistances
+        return self.getNumberOfParkedVehicles(l_parkingSearchVehicles), searchTimes, searchDistances
 
 
     ## Convert a route given as sequence of node indices into the corresponding
