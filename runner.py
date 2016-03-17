@@ -232,10 +232,8 @@ class Runtime(object):
             # representation
             l_departedVehicles = traci.simulation.getDepartedIDList()
             l_parkingSearchVehicles.extend(map(
-                    lambda vehID: ParkingSearchVehicle(
-                            vehID, self._args.coopratio,
-                            step, cooperativeRoutes[vehID],
-                            individualRoutes[vehID]),
+                    lambda vehID: ParkingSearchVehicle( vehID, self._args.coopratio, step,
+                                                        cooperativeRoutes[vehID], individualRoutes[vehID] ),
                     l_departedVehicles
             ))
 
