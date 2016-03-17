@@ -18,10 +18,18 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     resultSum = 0
+
+    successesSum       = 0
+    searchTimesSum     = 0
+    searchDistancesSum = 0.0
+
     for run in xrange(args.runs):
         print("RUN:", run, "OF", args.runs)
-        result = runner.wrapper(args.parkingspaces, args.psv, args.coopratio)
-        resultSum += result
+        successes, searchTimes, searchDistances = runner.wrapper(args.parkingspaces, args.psv, args.coopratio)
+        successesSum += successes
+        searchTimesSum += sum(searchTimes) #/ float(len(searchTimes))
+        searchDistancesSum += sum(searchDistances) #/ float(len(searchDistances))
+
     successRate = 100*resultSum/(args.runs*args.psv)
     print("")
     print("==== SUMMARY AFTER", args.runs, "RUNS ====")
@@ -31,3 +39,11 @@ if __name__ == "__main__":
     print("TOTAL SUCCESS RATE:", successRate, "percent",
         "of cars found an available parking space")
     print("")
+
+    if successesSum:
+        searchTimesAvg = searchTimesSum / float(successesSum)
+        searchDistancesAvg = searchDistancesSum / float(successesSum)
+        print("AVG SEARCH TIME    ", searchTimesAvg, "seconds")
+        print("AVG SEARCH DISTANCE", searchDistancesAvg, "meters")
+    print("")
+
