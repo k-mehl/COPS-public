@@ -177,6 +177,10 @@ class ParkingSearchVehicle(object):
             print(self.name, "parked after", (self.timeParked -
                 self.timeBeginSearch), "seconds,",
                 traci.vehicle.getDistance(self.name), "meters.")
+            return [self.name, (self.timeParked -
+                self.timeBeginSearch), traci.vehicle.getDistance(self.name)]
+
+        return(0)
             
 
     ## Lookout for available parking spaces by checking vehicle position
@@ -266,6 +270,14 @@ class ParkingSearchVehicle(object):
     
     def getVehicleID(self):
         return self.name
+    
+    def getVehicleRoute(self):
+        return self.currentRoute
+    
+    def setNextRouteSegment(self, edgeID):
+        self.activeRoute.append(edgeID)
+        traci.vehicle.setRoute(self.name, self.activeRoute)
+        
 
     ## Query whether vehicle is on last segment of planned route
     def isOnLastRouteSegment(self):

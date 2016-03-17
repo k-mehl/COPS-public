@@ -194,6 +194,10 @@ def run(NUMBER_OF_PARKING_SPACES, NUMBER_OF_PSV, COOP_RATIO):
             indyShortestNeighbors[trip],allDestinationNodeIndices[trip], \
             allOriginNodeIndices[trip]))
 
+    # create lists for search time and distance results
+    searchTimes = []
+    searchDistances = []
+
     # do simulation time steps as long as vehicles are present in the network
     while traci.simulation.getMinExpectedNumber() > 0:
     	# tell SUMO to do a simulation step
@@ -233,7 +237,26 @@ def run(NUMBER_OF_PARKING_SPACES, NUMBER_OF_PSV, COOP_RATIO):
         #       selectRouting() ...... select whether to cooperate or not
         #       setVehicleData() ..... all TraCI setSomething commands
         for psv in parkingSearchVehicles:
-        	psv.update(parkingSpaces, oppositeEdgeID, step)
+            result = psv.update(parkingSpaces, oppositeEdgeID, step)
+            # if result values could be obtained, the vehicle found
+            # a parking space in the last time step
+            if result:
+                searchTimes.append(result[1])
+                searchDistances.append(result[2])
+            else:
+                # if the vehicle is on the last route segment,
+                # choose one of the possible next edges to continue
+                if psv.isOnLastRouteSegment():
+                    currentRoute = psv.getVehicleRoute()
+                    succEdges = \
+                        net.getEdge(currentRoute[-1]).getToNode().getOutgoing()
+                    succEdgeIDs = []
+                    for edge in succEdges:
+                        succEdgeIDs.append(str(edge.getID()))
+                    if currentRoute[-1] in oppositeEdgeID:
+                        succEdgeIDs.remove(oppositeEdgeID[currentRoute[-1]])
+                    nextRouteSegment = random.choice(succEdgeIDs)
+                    psv.setNextRouteSegment(nextRouteSegment)
 
         # break the while-loop if all remaining SUMO vehicles have 
         # successfully parked
@@ -248,8 +271,9 @@ def run(NUMBER_OF_PARKING_SPACES, NUMBER_OF_PSV, COOP_RATIO):
     traci.close()
     sys.stdout.flush()
 
-    # Return results (for now: number of successful parkings)
-    return getNumberOfParkedVehicles(parkingSearchVehicles)
+    # Return results
+    return getNumberOfParkedVehicles(parkingSearchVehicles), \
+    	searchTimes, searchDistances
 
 
 ## Convert a route given as sequence of node indices into the corresponding
@@ -326,9 +350,9 @@ def wrapper(numPark, numVehicles, coop):
                     "--remote-port", str(PORT)], 
                     stdout=sys.stdout, 
                     stderr=sys.stderr)
-    result = run(numPark, numVehicles, coop)
+    successes, searchTimes, searchDistances = run(numPark, numVehicles, coop)
     sumoProcess.wait()
-    return result
+    return successes, searchTimes, searchDistances
 
 
 ## Main entry point of the simulation script from command line
