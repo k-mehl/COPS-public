@@ -2,7 +2,6 @@
 from __future__ import print_function
 import os
 import sys
-import optparse
 import subprocess
 import random
 
@@ -68,15 +67,13 @@ class Runtime(object):
 
         # internal clock variable, start with 0
         step = 0
-        # create lists for all network nodes and edges
-        nodes = []
-        edges = []
+
         # use sumolib to parse the nodes XML file and write node IDs to the list
-        for node in sumolib.output.parse('reroute.nod.xml', ['node']):
-            nodes.append(str(node.id))
+        nodes = map(lambda x: str(x.id), sumolib.output.parse('reroute.nod.xml', ['node']))
+
         # use sumolib to parse the edges XML file and write edge IDs to the list
-        for edge in sumolib.output.parse('reroute.edg.xml', ['edge']):
-            edges.append(str(edge.id))
+        edges = map(lambda x: str(x.id), sumolib.output.parse('reroute.edg.xml', ['edge']))
+
         # full numbers of nodes and edges in the network
         numberOfNodesinNetwork = len(nodes)
         numberOfEdgesinNetwork = len(edges)
