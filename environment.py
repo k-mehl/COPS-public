@@ -7,7 +7,10 @@ import random
 import itertools
 
 class Environment(object):
-    def __init__(self):
+    def __init__(self, p_args):
+
+        self._args = p_args
+
         self._roadNetwork = {}
 
         self._roadNetwork["nodes"] = {}
@@ -58,7 +61,6 @@ class Environment(object):
 
         for edge in self._edges:
             self._roadNetwork["edges"][edge]["length"] = self._net.getEdge(edge).getLength()
-            self._roadNetwork["edges"][edge]["visitCount"] = 0
             self._roadNetwork["edges"][edge]["fromNode"] = str(self._net.getEdge(edge).getFromNode().getID())
             self._roadNetwork["edges"][edge]["toNode"] = str(self._net.getEdge(edge).getToNode().getID())
             self._roadNetwork["edges"][edge]["succEdgeID"] = map(lambda x: str(x.getID()), self._net.getEdge(edge).getToNode().getOutgoing())
@@ -66,6 +68,11 @@ class Environment(object):
                 self._roadNetwork["edges"][edge]["oppositeEdgeID"] = self._oppositeEdgeID[edge]
             else:
                 self._roadNetwork["edges"][edge]["oppositeEdgeID"] = []
+
+        
+    def initParkingSpaces(self):
+        for edge in self._edges:
+            self._roadNetwork["edges"][edge]["visitCount"] = 0
             self._roadNetwork["edges"][edge]["parkingSpaces"] = []
 
         self._parkingSpaceNumber = 0
@@ -88,8 +95,6 @@ class Environment(object):
                     self._roadNetwork["edges"][edge]["parkingSpaces"].append(ParkingSpace(self._parkingSpaceNumber, edge,
                         position))
                     self._allParkingSpaces.append(self._roadNetwork["edges"][edge]["parkingSpaces"][-1])
-                    if self._parkingSpaceNumber < 5:
-                        print(self._allParkingSpaces)
                     # also add SUMO poi for better visualization in the GUI
                     #traci.poi.add("ParkingSpace" + str(parkingSpaceNumber),
                     #    traci.simulation.convert2D(edge,(position-2.0))[0],
@@ -99,3 +104,20 @@ class Environment(object):
                     self._parkingSpaceNumber+=1
                     # go seven meters ahead on the edge
                     position+=7.0
+
+        # mark a number parking spaces as available as specified per command line
+        # argument
+        for i in range(0, self._args.parkingspaces):
+            # check whether we still have enough parking spaces to make available
+            if self._args.parkingspaces > self._parkingSpaceNumber:
+                print("Too many parking spaces for network.")
+                #exit() #TODO remove this exit, wtf?! Btw, this error handling should probably occur _before_ running the simulation!
+            # select a random parking space which is not yet available, and make it
+            # available
+            success = False
+            while not success:
+                availableParkingSpaceID = int(random.random()*self._parkingSpaceNumber)
+                if not self._allParkingSpaces[availableParkingSpaceID].available:
+                    success = True
+            # make sure the available parking space is not assigned to any vehicle
+            self._allParkingSpaces[availableParkingSpaceID].unassign()
