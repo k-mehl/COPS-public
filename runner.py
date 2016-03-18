@@ -183,7 +183,7 @@ class Runtime(object):
         allOriginNodeIndices = []
         allDestinationNodeIndices = []
         for trip in sumolib.output.parse_fast( \
-            "reroute.rou.xml", 'trip', ['id','from','to']):
+            self._routefile, 'trip', ['id','from','to']):
             allVehicleIDs.append(trip.id)
             vehicleOriginNode[trip.id] =  \
                 net.getEdge(trip.attr_from).getFromNode().getID()
