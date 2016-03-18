@@ -4,8 +4,9 @@ import sumolib
 
 ## Generate a random demand of vehicles for the parking space search and create
 #  the corresponding XML file
-#  @param num Number of vehicles
-def generatePsvDemand(num):
+#  @param p_num Number of vehicles
+#  @param p_filename Filename to write routes, default: reroute.rou.xml
+def generatePsvDemand(p_num, p_filename="reroute.rou.xml"):
     # create seperate lists for possible origin or destination edges
     origins = []
     destinations = []
@@ -19,7 +20,7 @@ def generatePsvDemand(num):
             destinations.append(str(edge.id))
 
     # open routes XML file for write access
-    f = open("reroute.rou.xml", 'w', 1)
+    f = open(p_filename, 'w')
     
     # define tab as 4 spaces
     tab = "    "
@@ -34,7 +35,7 @@ def generatePsvDemand(num):
             ' maxSpeed="100.0" sigma="0.0"/>\n')
     # for each vehicle, select random O/D from possible origins/destinations
     # and write trip info to XML file
-    for i in range(num):
+    for i in range(p_num):
         origin = random.choice(origins)
         dest = random.choice(destinations)
         f.write(tab + veh.format(i, origin, dest))

@@ -30,22 +30,26 @@ from environment import *
 
 class Runtime(object):
 
-    def __init__(self,p_args):
+    ## C'tor
+    # @param p_args Arguments provided by command line via argparse
+    def __init__(self, p_args):
 
         self._args = p_args
+
         # seed for random number generator, random for now
         random.seed()
 
-        # generate the route file for this simulation run
+        # if --routefile flag is provided, use the file for routing,
+        # otherwise generate (and overwrite if exists) route file (reroute.rou.xml) for this simulation run
         # using the given number of parking search vehicles
-        generatePsvDemand(p_args.psv)
-
-        # this script has been called from the command line. It will start sumo as a
-        # server, then connect and run
-        if self._args.gui:
-            self._sumoBinary = checkBinary('sumo-gui')
+        if self._args.routefile:
+            self._routefile = self._args.routefile
         else:
-            self._sumoBinary = checkBinary('sumo')
+            self._routefile = "reroute.rou.xml"
+            generatePsvDemand(p_args.psv, self._routefile)
+
+        # run sumo with gui or headless, depending on the --gui flag
+        self._sumoBinary = checkBinary('sumo-gui') if self._args.gui else checkBinary('sumo')
 
         self._environment = Environment()
         print(self._environment._roadNetwork["edges"]["1to2"])
@@ -58,7 +62,7 @@ class Runtime(object):
         l_sumoProcess = subprocess.Popen(
             [self._sumoBinary,
              "-n", "reroute.net.xml",
-             "-r", "reroute.rou.xml",
+             "-r", self._routefile,
              "--tripinfo-output", "tripinfo.xml",
              "--gui-settings-file", "gui-settings.cfg",
              "--no-step-log",
