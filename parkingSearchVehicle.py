@@ -57,6 +57,11 @@ class ParkingSearchVehicle(object):
         self.traversedRoute = []
         self.cooperativeRoute = p_cooperativeRoute
         self.individualRoute = p_individualRoute
+        if self.driverCooperates:
+            traci.vehicle.setRoute(self.name, self.cooperativeRoute)
+        else:
+            traci.vehicle.setRoute(self.name, self.individualRoute)
+
         
 
     ## Check for equivalence by name attribute
