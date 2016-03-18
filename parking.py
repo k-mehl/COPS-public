@@ -47,7 +47,7 @@ if __name__ == "__main__":
         l_searchTimesSum += sum(l_searchTimes) #/ float(len(searchTimes))
         l_searchDistancesSum += sum(l_searchDistances) #/ float(len(searchDistances))
 
-    l_successRate = 100*l_resultSum/(l_args.runs*l_args.psv)
+    l_successRate = 100*l_successesSum/(l_args.runs*l_args.psv)
     print("")
     print("==== SUMMARY AFTER", l_args.runs, "RUNS ====")
     print("PARAMETERS:        ", l_args.parkingspaces, "parking spaces")
