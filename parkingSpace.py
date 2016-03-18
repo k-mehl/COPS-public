@@ -32,8 +32,6 @@ class ParkingSpace(object):
         # vehicles
         self.available = False
         self.assignedToVehicleID = vehID
-        # set the color of the corresponding SUMO poi in the GUI to orange
-        traci.poi.setColor("ParkingSpace"+str(self.name),(255,165,0,0))
 
     ## Unassign a parking space from a specific vehicle 
     #  (mainly for future variants with dynamic occupancy)
@@ -43,8 +41,6 @@ class ParkingSpace(object):
         self.available = True
         vehID = self.assignedToVehicleID
         self.assignedToVehicleID = ""
-        # set the color of the corresponding SUMO poi in the GUI to green
-        traci.poi.setColor("ParkingSpace"+str(self.name),(0,255,0,0))
         return vehID
 
                 
