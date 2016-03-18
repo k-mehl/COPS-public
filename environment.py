@@ -68,4 +68,34 @@ class Environment(object):
                 self._roadNetwork["edges"][edge]["oppositeEdgeID"] = []
             self._roadNetwork["edges"][edge]["parkingSpaces"] = []
 
-            
+        self._parkingSpaceNumber = 0
+        self._allParkingSpaces = []
+
+        for edge in self._edges:
+            # if an edge is at least 40 meters long, start at 18 meters and
+            # create parking spaces every 7 meters until up to 10 meters before the
+            # edge ends.
+            #     (vehicles can only 'see' parking spaces once they are on the same
+            #     edge;
+            #     starting at 18 meters ensures the vehicles can safely stop at the
+            #     first parking space if it is available)
+            length = self._roadNetwork["edges"][edge]["length"]
+            if length > 40.0:
+                position = 18.0
+                # as long as there are more than 10 meters left on the edge, add
+                # another parking space
+                while position < (length-10.0):
+                    self._roadNetwork["edges"][edge]["parkingSpaces"].append(ParkingSpace(self._parkingSpaceNumber, edge,
+                        position))
+                    self._allParkingSpaces.append(self._roadNetwork["edges"][edge]["parkingSpaces"][-1])
+                    if self._parkingSpaceNumber < 5:
+                        print(self._allParkingSpaces)
+                    # also add SUMO poi for better visualization in the GUI
+                    #traci.poi.add("ParkingSpace" + str(parkingSpaceNumber),
+                    #    traci.simulation.convert2D(edge,(position-2.0))[0],
+                    #    traci.simulation.convert2D(edge,(position-2.0))[1],
+                    #    (255,0,0,0))
+                    # increment counter
+                    self._parkingSpaceNumber+=1
+                    # go seven meters ahead on the edge
+                    position+=7.0
