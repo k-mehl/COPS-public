@@ -26,6 +26,7 @@ from cooperativeSearch import *
 from parkingSearchVehicle import *
 from parkingSpace import *
 from vehicleFactory import *
+from environment import *
 
 class Runtime(object):
 
@@ -46,6 +47,8 @@ class Runtime(object):
         else:
             self._sumoBinary = checkBinary('sumo')
 
+        self._environment = Environment()
+        print(self._environment._roadNetwork["edges"]["1to2"])
 
     ## Runs the simulation on both SUMO and Python layers
     def run(self):
