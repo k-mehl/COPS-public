@@ -14,12 +14,22 @@ if __name__ == "__main__":
     l_parser.add_argument("-s","--parking-search-vehicles", dest="psv", type=int, default=5, help="number of parking search vehicles")
     l_parser.add_argument("-c","--cooperative-ratio", dest="coopratio", type=float, default=0.0, help="cooperative driver ratio [0,1]")
     l_parser.add_argument("--port", dest="sumoport", type=int, default=8873, help="port used for communicating with sumo instance")
+    l_parser.add_argument("--load-route-file", dest="routefile", type=str, help="provide a route file (SUMO xml format), overrides use of auto-generated routes")
+
 
     l_mutexgroup = l_parser.add_mutually_exclusive_group(required=True)
     l_mutexgroup.add_argument("-g","--gui", dest="gui", default=False, action='store_true', help="start simulation with SUMO GUI")
     l_mutexgroup.add_argument("-r","--runs", dest="runs", type=int, default=1, help="number of iterations to run")
 
     l_args = l_parser.parse_args()
+
+    # raise error if headless mode requested (--runs > 1) AND number of parking spaces < vehicles
+    # in the static case this produces an endless loop of at least one vehicle searching for a free space.
+    # In Gui mode this behavior is acceptable
+    if l_args.runs > 1 and not l_args.gui and l_args.parkingspaces < l_args.psv:
+        message = "Number of parking spaces must be at least equal to number of vehicles, if run in headless mode."
+        raise argparse.ArgumentTypeError(message)
+
 
     l_resultSum = 0
 
