@@ -112,7 +112,7 @@ class Runtime(object):
                 lambda (x,y): net.getEdge(x).getToNode().getID() == net.getEdge(y).getFromNode().getID() and
                               net.getEdge(x).getFromNode().getID() == net.getEdge(y).getToNode().getID(),
                 itertools.permutations(edges, 2)
-                ))
+        ))
 
         # counter for parking spaces during creation
         parkingSpaceNumber=0
@@ -152,7 +152,7 @@ class Runtime(object):
             # check whether we still have enough parking spaces to make available
             if self._args.parkingspaces > parkingSpaceNumber:
                 print("Too many parking spaces for network.")
-                exit()
+                #exit() #TODO remove this exit, wtf?! Btw, this error handling should probably occur _before_ running the simulation!
             # select a random parking space which is not yet available, and make it
             # available
             success = False
@@ -191,26 +191,30 @@ class Runtime(object):
 
         # use Aleksandar's Cooperative Search Router to create a dictionary
         # containing all cooperative vehicle routes (only once in advance)
-        cooperativeRoutes = {}
         coopRouter = CooperativeSearch(adjacencyMatrix, allOriginNodeIndices)
         shortestNeighbors = coopRouter.shortest()
-        for trip in range(len(allVehicleIDs)):
-            cooperativeRoutes[allVehicleIDs[trip]] = self.convertNodeSequenceToEdgeSequence(
-                    adjacencyEdgeID,coopRouter.reconstruct_path(
-                    shortestNeighbors[trip],allDestinationNodeIndices[trip],
-                    allOriginNodeIndices[trip]))
+
+        l_cooperativeRoutes = dict(map(
+            lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
+                adjacencyEdgeID,coopRouter.reconstruct_path(
+                            shortestNeighbors[trip],allDestinationNodeIndices[trip],
+                            allOriginNodeIndices[trip])) ),
+                xrange(len(allVehicleIDs))
+        ))
 
         # use Aleksandar's Cooperative Search Router to create a dictionary
         # containing all non-cooperative vehicle routes (only once in advance)
-        individualRoutes = {}
         indyRouter = CooperativeSearch(adjacencyMatrix, allOriginNodeIndices, 0)
         indyShortestNeighbors = indyRouter.shortest()
-        for trip in range(len(allVehicleIDs)):
-            individualRoutes[allVehicleIDs[trip]] = \
-                self.convertNodeSequenceToEdgeSequence( \
-                adjacencyEdgeID,indyRouter.reconstruct_path( \
-                indyShortestNeighbors[trip],allDestinationNodeIndices[trip], \
-                allOriginNodeIndices[trip]))
+
+        l_individualRoutes = dict(map(
+            lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
+                adjacencyEdgeID,indyRouter.reconstruct_path(
+                            indyShortestNeighbors[trip],allDestinationNodeIndices[trip],
+                            allOriginNodeIndices[trip]))
+            ),
+            xrange(len(allVehicleIDs))
+        ))
 
         # create lists for search time and distance results
         searchTimes = []
@@ -233,7 +237,7 @@ class Runtime(object):
             l_departedVehicles = traci.simulation.getDepartedIDList()
             l_parkingSearchVehicles.extend(map(
                     lambda vehID: ParkingSearchVehicle( vehID, self._args.coopratio, step,
-                                                        cooperativeRoutes[vehID], individualRoutes[vehID] ),
+                                                        l_cooperativeRoutes[vehID], l_individualRoutes[vehID] ),
                     l_departedVehicles
             ))
 
@@ -304,7 +308,7 @@ class Runtime(object):
             nextEdge=adjacencyEdgeID[nodeSequence[segment]][nodeSequence[segment+1]]
             if nextEdge=="":
                 print("ERROR: could not convert node sequence to edge sequence.")
-                exit()
+                #exit() #TODO remove this exit, wtf?!
             else:
                 edgeSequence.append(nextEdge)
         return edgeSequence
