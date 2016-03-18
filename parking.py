@@ -28,7 +28,7 @@ if __name__ == "__main__":
     # In Gui mode this behavior is acceptable
     if l_args.runs > 1 and not l_args.gui and l_args.parkingspaces < l_args.psv:
         message = "Number of parking spaces must be at least equal to number of vehicles, if run in headless mode."
-        raise argparse .ArgumentTypeError(message)
+        raise argparse.ArgumentTypeError(message)
 
 
     l_resultSum = 0
