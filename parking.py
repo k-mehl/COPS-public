@@ -23,6 +23,14 @@ if __name__ == "__main__":
 
     l_args = l_parser.parse_args()
 
+    # raise error if headless mode requested (--runs > 1) AND number of parking spaces < vehicles
+    # in the static case this produces an endless loop of at least one vehicle searching for a free space.
+    # In Gui mode this behavior is acceptable
+    if l_args.runs > 1 and not l_args.gui and l_args.parkingspaces < l_args.psv:
+        message = "Number of parking spaces must be at least equal to number of vehicles, if run in headless mode."
+        raise argparse .ArgumentTypeError(message)
+
+
     l_resultSum = 0
 
     l_successesSum       = 0
