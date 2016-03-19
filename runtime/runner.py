@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
 import os
-import sys
 import subprocess
-import random
-import itertools
+import sys
 
 # (from SUMO examples:)
 # we need to import python modules from the $SUMO_HOME/tools directory
@@ -22,11 +21,10 @@ except ImportError:
 import traci
 import sumolib
 
-from cooperativeSearch import *
-from parkingSearchVehicle import *
-from parkingSpace import *
-from vehicleFactory import *
-from environment import *
+from common.cooperativeSearch import *
+from vehicle.parkingSearchVehicle import *
+from common.vehicleFactory import *
+from env.environment import *
 
 class Runtime(object):
 
@@ -46,7 +44,7 @@ class Runtime(object):
             self._routefile = self._args.routefile
         else:
             self._routefile = "reroute.rou.xml"
-            generatePsvDemand(p_args.psv, self._routefile)
+            generatePsvDemand(p_args.psv, self._args.basedir, self._routefile)
 
         # run sumo with gui or headless, depending on the --gui flag
         self._sumoBinary = checkBinary('sumo-gui') if self._args.gui else checkBinary('sumo')
@@ -62,10 +60,10 @@ class Runtime(object):
         # subprocess and then the python script connects and runs
         l_sumoProcess = subprocess.Popen(
             [self._sumoBinary,
-             "-n", "reroute.net.xml",
-             "-r", self._routefile,
-             "--tripinfo-output", "tripinfo.xml",
-             "--gui-settings-file", "gui-settings.cfg",
+             "-n", os.path.join(self._args.basedir, "reroute.net.xml"),
+             "-r", os.path.join(self._args.basedir, self._routefile),
+             "--tripinfo-output", os.path.join(self._args.basedir, "tripinfo.xml"),
+             "--gui-settings-file", os.path.join(self._args.basedir, "gui-settings.cfg"),
              "--no-step-log",
              "--remote-port", str(self._args.sumoport)],
             stdout=sys.stdout,
@@ -90,7 +88,7 @@ class Runtime(object):
         allOriginNodeIndices = []
         allDestinationNodeIndices = []
         for trip in sumolib.output.parse_fast( \
-            self._routefile, 'trip', ['id','from','to']):
+                os.path.join(self._args.basedir, self._routefile), 'trip', ['id','from','to']):
             allVehicleIDs.append(trip.id)
             vehicleOriginNode[trip.id] =  \
                 self._environment._net.getEdge(trip.attr_from).getFromNode().getID()
