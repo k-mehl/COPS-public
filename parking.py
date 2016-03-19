@@ -33,9 +33,10 @@ if __name__ == "__main__":
         message = "Number of parking spaces must be at least equal to number of vehicles, if run in headless mode."
         raise argparse.ArgumentTypeError(message)
 
-    # create basedir if not exists
+    # raise an exception if basedir does not exist
     if not os.path.isdir(l_args.resourcedir):
-        os.mkdir(l_args.resourcedir)
+        message = "The provided directory {} does not exist for argument --resourcedir".format(l_args.resourcedir)
+        raise argparse.ArgumentTypeError(message)
 
     l_resultSum = 0
 
