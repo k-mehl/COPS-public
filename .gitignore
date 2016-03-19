@@ -3,5 +3,8 @@
 !.gitignore
 !*.md
 !*.py
-!resources/*.xml
-!resources/*.cfg
+!resources/gui-settings.cfg
+!resources/reroute.edg.xml
+!resources/reroute.net.xml
+!resources/reroute.nod.xml
+
