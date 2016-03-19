@@ -44,7 +44,7 @@ class Runtime(object):
             self._routefile = self._args.routefile
         else:
             self._routefile = "reroute.rou.xml"
-            generatePsvDemand(p_args.psv, self._args.basedir, self._routefile)
+            generatePsvDemand(p_args.psv, self._args.resourcedir, self._routefile)
 
         # run sumo with gui or headless, depending on the --gui flag
         self._sumoBinary = checkBinary('sumo-gui') if self._args.gui else checkBinary('sumo')
@@ -60,10 +60,10 @@ class Runtime(object):
         # subprocess and then the python script connects and runs
         l_sumoProcess = subprocess.Popen(
             [self._sumoBinary,
-             "-n", os.path.join(self._args.basedir, "reroute.net.xml"),
-             "-r", os.path.join(self._args.basedir, self._routefile),
-             "--tripinfo-output", os.path.join(self._args.basedir, "tripinfo.xml"),
-             "--gui-settings-file", os.path.join(self._args.basedir, "gui-settings.cfg"),
+             "-n", os.path.join(self._args.resourcedir, "reroute.net.xml"),
+             "-r", os.path.join(self._args.resourcedir, self._routefile),
+             "--tripinfo-output", os.path.join(self._args.resourcedir, "tripinfo.xml"),
+             "--gui-settings-file", os.path.join(self._args.resourcedir, "gui-settings.cfg"),
              "--no-step-log",
              "--remote-port", str(self._args.sumoport)],
             stdout=sys.stdout,
@@ -88,7 +88,7 @@ class Runtime(object):
         allOriginNodeIndices = []
         allDestinationNodeIndices = []
         for trip in sumolib.output.parse_fast( \
-                os.path.join(self._args.basedir, self._routefile), 'trip', ['id','from','to']):
+                os.path.join(self._args.resourcedir, self._routefile), 'trip', ['id','from','to']):
             allVehicleIDs.append(trip.id)
             vehicleOriginNode[trip.id] =  \
                 self._environment._net.getEdge(trip.attr_from).getFromNode().getID()
