@@ -10,7 +10,6 @@ Description: Cooperatively searhing space
 
 from __future__ import print_function
 import sys
-import copy
 
 class CooperativeSearch(object):
 

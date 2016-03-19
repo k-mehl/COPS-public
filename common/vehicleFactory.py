@@ -1,17 +1,19 @@
 import random
 import sumolib
-
+import os
 
 ## Generate a random demand of vehicles for the parking space search and create
 #  the corresponding XML file
 #  @param p_num Number of vehicles
-#  @param p_filename Filename to write routes, default: reroute.rou.xml
-def generatePsvDemand(p_num, p_filename="reroute.rou.xml"):
+#  @param p_basedir Base path name
+#  @param p_edgefile Filename to read edges, default: reroute.edg.xml
+#  @param p_routefile Filename to write routes, default: reroute.rou.xml
+def generatePsvDemand(p_num, p_basedir="", p_routefile="reroute.rou.xml", p_edgefile="reroute.edg.xml", ):
     # create seperate lists for possible origin or destination edges
     origins = []
     destinations = []
     # parse edges XML file for all network edges
-    for edge in sumolib.output.parse('reroute.edg.xml', ['edge']):
+    for edge in sumolib.output.parse(os.path.join(p_basedir, p_edgefile), ['edge']):
         # if the edge ID contains "entry": use it as origin only;
         # otherwise: use it as destination only
         if "entry" in str(edge.id):
@@ -20,7 +22,7 @@ def generatePsvDemand(p_num, p_filename="reroute.rou.xml"):
             destinations.append(str(edge.id))
 
     # open routes XML file for write access
-    f = open(p_filename, 'w')
+    f = open(os.path.join(p_basedir, p_routefile), 'w')
     
     # define tab as 4 spaces
     tab = "    "
