@@ -16,8 +16,10 @@ if __name__ == "__main__":
     l_parser.add_argument("-c","--cooperative-ratio", dest="coopratio", type=float, default=0.0, help="cooperative driver ratio [0,1]")
     l_parser.add_argument("--port", dest="sumoport", type=int, default=8873, help="port used for communicating with sumo instance")
     l_parser.add_argument("--load-route-file", dest="routefile", type=str, help="provide a route file (SUMO xml format), overrides use of auto-generated routes")
-    l_parser.add_argument("--basedir", dest="basedir", type=str, default="resources", help="base directory, relative to current working directory, for reading/writing temporary and SUMO related files (default: resources)")
+    l_parser.add_argument("--resourcedir", dest="resourcedir", type=str, default="resources", help="base directory, relative to current working directory, for reading/writing temporary and SUMO related files (default: resources)")
 
+    # if display GUI, restrict to one run (implies --run 1)
+    # for more than one run, disallow use of --gui
     l_mutexgroup = l_parser.add_mutually_exclusive_group(required=True)
     l_mutexgroup.add_argument("-g","--gui", dest="gui", default=False, action='store_true', help="start simulation with SUMO GUI")
     l_mutexgroup.add_argument("-r","--runs", dest="runs", type=int, default=1, help="number of iterations to run")
@@ -32,8 +34,8 @@ if __name__ == "__main__":
         raise argparse.ArgumentTypeError(message)
 
     # create basedir if not exists
-    if not os.path.isdir(l_args.basedir):
-        os.mkdir(l_args.basedir)
+    if not os.path.isdir(l_args.resourcedir):
+        os.mkdir(l_args.resourcedir)
 
     l_resultSum = 0
 

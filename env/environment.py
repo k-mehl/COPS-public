@@ -17,8 +17,8 @@ class Environment(object):
         self._roadNetwork["nodes"] = {}
         self._roadNetwork["edges"] = {}
 
-        self._nodes = map(lambda x: str(x.id), sumolib.output.parse(os.path.join(self._args.basedir, 'reroute.nod.xml'), ['node']))
-        self._edges = map(lambda x: str(x.id), sumolib.output.parse(os.path.join(self._args.basedir, 'reroute.edg.xml'), ['edge']))
+        self._nodes = map(lambda x: str(x.id), sumolib.output.parse(os.path.join(self._args.resourcedir, 'reroute.nod.xml'), ['node']))
+        self._edges = map(lambda x: str(x.id), sumolib.output.parse(os.path.join(self._args.resourcedir, 'reroute.edg.xml'), ['edge']))
 
         for node in self._nodes:
             self._roadNetwork["nodes"][node] = {}
@@ -28,7 +28,7 @@ class Environment(object):
         self._numberOfNodesinNetwork = len(self._nodes)
         self._numberOfEdgesinNetwork = len(self._edges)
 
-        self._net = sumolib.net.readNet(os.path.join(self._args.basedir, 'reroute.net.xml'))
+        self._net = sumolib.net.readNet(os.path.join(self._args.resourcedir, 'reroute.net.xml'))
 
         self._convertNodeIDtoNodeIndex = {}
         self._convertNodeIndexToNodeID = {}
