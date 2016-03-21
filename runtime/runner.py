@@ -37,15 +37,6 @@ class Runtime(object):
         # seed for random number generator, random for now
         random.seed()
 
-        # if --routefile flag is provided, use the file for routing,
-        # otherwise generate (and overwrite if exists) route file (reroute.rou.xml) for this simulation run
-        # using the given number of parking search vehicles
-        if self._args.routefile:
-            self._routefile = self._args.routefile
-        else:
-            self._routefile = "reroute.rou.xml"
-            generatePsvDemand(p_args.psv, self._args.resourcedir, self._routefile)
-
         # run sumo with gui or headless, depending on the --gui flag
         self._sumoBinary = checkBinary('sumo-gui') if self._args.gui else checkBinary('sumo')
 
@@ -56,6 +47,16 @@ class Runtime(object):
     def run(self):
 
         self._environment.initParkingSpaces()
+
+        # if --routefile flag is provided, use the file for routing,
+        # otherwise generate (and overwrite if exists) route file (reroute.rou.xml) for this simulation run
+        # using the given number of parking search vehicles
+        if self._args.routefile:
+            self._routefile = self._args.routefile
+        else:
+            self._routefile = "reroute.rou.xml"
+            generatePsvDemand(self._args.psv, self._args.resourcedir, self._routefile)
+
         # this is the normal way of using traci. sumo is started as a
         # subprocess and then the python script connects and runs
         l_sumoProcess = subprocess.Popen(
@@ -173,7 +174,7 @@ class Runtime(object):
             #       selectRouting() ...... select whether to cooperate or not
             #       setVehicleData() ..... all TraCI setSomething commands
             for psv in l_parkingSearchVehicles:
-                result = psv.update(self._environment._allParkingSpaces, self._environment._oppositeEdgeID, step)
+                result = psv.update(self._environment, self._environment._allParkingSpaces, self._environment._oppositeEdgeID, step)
                 # if result values could be obtained, the vehicle found
                 # a parking space in the last time step
                 if result:
