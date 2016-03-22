@@ -89,7 +89,7 @@ class ParkingSearchVehicle(object):
         # as long as vehicle is not parked:
         # get information about the current lane (ID, length and vehicle
         # position)
-        if not self.activity==4:
+        if not self.activity==state.PARKED:
             self.currentLaneID = traci.vehicle.getLaneID(self.name)
             self.currentLaneLength = traci.lane.getLength(self.currentLaneID)
             self.currentLanePosition = traci.vehicle.getLanePosition(self.name)
