@@ -162,7 +162,12 @@ class Runtime(object):
                         succEdgeCost = {}
 
                         for edge in succEdges:
-                            if not str(edge.getID()) == self._environment._oppositeEdgeID[currentRoute[-1]]:
+                            # consider all successor edges, BUT if no opposite edge exists, don't try to
+                            # exclude it.
+                            if currentRoute[-1] in self._environment._oppositeEdgeID:
+                                if not str(edge.getID()) == self._environment._oppositeEdgeID[currentRoute[-1]]:
+                                    succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
+                            else:
                                 succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
 
                         #calculate minima of succEdgeCost
