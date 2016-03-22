@@ -32,7 +32,7 @@ class ParkingSearchVehicle(object):
         # set individual preference for cooperation
         self.driverCooperates = False
         if random.random()<=coopRatio:
-        	self.driverCooperates = True
+            self.driverCooperates = True
         # information about relevant simulation times; -1001 seems to be used
         # for unset values in SUMO examples
         self.timeCreated = timestep
@@ -57,12 +57,12 @@ class ParkingSearchVehicle(object):
         self.traversedRoute = []
         self.cooperativeRoute = p_cooperativeRoute
         self.individualRoute = p_individualRoute
+
         if self.driverCooperates:
             traci.vehicle.setRoute(self.name, self.cooperativeRoute)
         else:
             traci.vehicle.setRoute(self.name, self.individualRoute)
-
-        
+        self.destinationEdgeID = self.individualRoute[-1]
 
     ## Check for equivalence by name attribute
     def __eq__(self, other):
@@ -135,7 +135,7 @@ class ParkingSearchVehicle(object):
             if ((timestep >= self.timeBeginSearch+1) and
                     self.currentEdgeID in p_environment._roadNetwork["edges"] and
                     self.lookoutForParkingSpace(p_environment._roadNetwork["edges"][self.currentEdgeID]["parkingSpaces"])):
-            	self.activity = VEHICLE_FOUND_PARKING_SPACE
+                self.activity = VEHICLE_FOUND_PARKING_SPACE
                 # let the vehicle stop besides the parking space
                 traci.vehicle.setStop(self.name, self.currentEdgeID,
                         self.assignedParkingPosition, 0, 2**31 - 1, 0)
@@ -255,7 +255,7 @@ class ParkingSearchVehicle(object):
         if self.driverCooperates:
             traci.vehicle.setRoute(self.name, self.cooperativeRoute)
 
-	## Retrieve stored individual routing information
+    ## Retrieve stored individual routing information
     def getIndividualRoute(self):
         return self.individualRoute
 
@@ -278,7 +278,28 @@ class ParkingSearchVehicle(object):
     
     def getVehicleRoute(self):
         return self.currentRoute
-    
+
+    def getDestinationEdgeID(self):
+        return self.destinationEdgeID
+
+    def setDestinationEdgeID(self, destinationEdgeID):
+        self.destinationEdgeID = destinationEdgeID
+
+    def getTraversedRoute(self):
+        return self.traversedRoute
+
+    def setTraversedRoute(self, traversedRoute):
+        self.traversedRoute = traversedRoute
+
+    def getActiveRoute(self):
+        return self.activeRoute
+
+    def setActiveRoute(self, activeRoute):
+        self.activeRoute = activeRoute
+
+    def getName(self):
+        return self.name
+
     def setNextRouteSegment(self, edgeID):
         self.activeRoute.append(edgeID)
         traci.vehicle.setRoute(self.name, self.activeRoute)
