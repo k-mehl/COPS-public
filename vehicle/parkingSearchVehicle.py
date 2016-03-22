@@ -16,11 +16,9 @@ state = Enum(
 class ParkingSearchVehicle(object):
 
     ## Constructor for searching vehicles, initializes vehicle attributes
-    #  @param name Corresponds to the vehicle ID obtained from the route XML
-    #  file
-    #  @param coopRatio The fraction of cooperative drivers
-    #  @param timestep For memorizing the simulation time when a vehicle is
-    #  created
+    #  @param p_name Corresponds to the vehicle ID obtained from the route XML file
+    #  @param p_coopRatio The fraction of cooperative drivers
+    #  @param p_timestep For memorizing the simulation time when a vehicle is created
     def __init__(self, p_name, p_coopRatio=0.0, p_timestep=-1001, p_destinationNodeID="", p_cooperativeRoute=[], p_individualRoute=[]):
         self._name = p_name
         self._speed = 0.0
@@ -71,12 +69,12 @@ class ParkingSearchVehicle(object):
 
 
     ## Update vehicle state in the Python representation
-    #  @param parkingSpaces Information about (currently all) available parking
+    #  @param p_parkingSpaces Information about (currently all) available parking
     #                       spaces
-    #  @param oppositeEdgeID Contains a dictionary for identification of the
+    #  @param p_oppositeEdgeID Contains a dictionary for identification of the
     #                        current opposite direction edge
     #  @param p_timestep Information about the current simulation time
-    def update(self, p_environment, parkingSpaces, p_oppositeEdgeID, p_timestep=-1001):
+    def update(self, p_environment, p_parkingSpaces, p_oppositeEdgeID, p_timestep=-1001):
         # get all relevant information about the vehicle from SUMO via TraCI
         # calls:
         # get vehicle _speed
@@ -199,12 +197,12 @@ class ParkingSearchVehicle(object):
 
 ## Lookout for available parking spaces by checking vehicle position
     #information against the 'map' of existing parking spaces
-    #  @param parkingSpaces Information about all parkingSpaces in the network
-    def lookoutForParkingSpace(self, parkingSpaces):
+    #  @param p_parkingSpaces Information about all parkingSpaces in the network
+    def lookoutForParkingSpace(self, p_parkingSpaces):
         if self._speed > 0.0:
             # for all existing parking spaces, check if there is one available
             # within the assumed viewing distance of the driver
-            for parkingSpace in parkingSpaces:
+            for parkingSpace in p_parkingSpaces:
                 # only consider parking spaces on the current edge
                 if (parkingSpace.available and
                         (parkingSpace.edgeID==self._currentEdgeID)):
@@ -259,8 +257,8 @@ class ParkingSearchVehicle(object):
     ## Store cooperative routing information
     #  @param coopRoute list with route information (edge IDs)
     #  @param useCoopRouting if true, tell SUMO to set the cooperative routing
-    def setCooperativeRoute(self, coopRoute):
-        self._cooperativeRoute = coopRoute
+    def setCooperativeRoute(self, p_coopRoute):
+        self._cooperativeRoute = p_coopRoute
         if self._driverCooperates:
             traci.vehicle.setRoute(self._name, self._cooperativeRoute)
 
@@ -269,10 +267,9 @@ class ParkingSearchVehicle(object):
         return self._individualRoute
 
     ## Store individual routing information
-    #  @param indyRoute list with route information (edge IDs)
-    #  @param useCoopRouting if false, tell SUMO to set the individual routing
-    def setIndividualRoute(self, indyRoute):
-        self._individualRoute = indyRoute
+    #  @param p_indyRoute list with route information (edge IDs)
+    def setIndividualRoute(self, p_indyRoute):
+        self._individualRoute = p_indyRoute
         if not self._driverCooperates:
             traci.vehicle.setRoute(self._name, self._individualRoute)
 
@@ -288,8 +285,8 @@ class ParkingSearchVehicle(object):
     def getVehicleRoute(self):
         return self._currentRoute
     
-    def setNextRouteSegment(self, edgeID):
-        self._activeRoute.append(edgeID)
+    def setNextRouteSegment(self, p_edgeID):
+        self._activeRoute.append(p_edgeID)
         traci.vehicle.setRoute(self._name, self._activeRoute)
         
 
