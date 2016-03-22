@@ -176,7 +176,7 @@ class ParkingSearchVehicle(object):
         # if still searching and an opposite edge exists, look there as well
         if (self._activity == state.SEARCHING and
                     self._seenOppositeParkingSpace== "" and
-                    self._currentEdgeID in self._oppositeEdgeID):
+                    self._currentEdgeID in self._environment._oppositeEdgeID):
             self._seenOppositeParkingSpace = \
                 self.lookoutForOppositeParkingSpace(self._environment._roadNetwork["edges"][self._environment._roadNetwork["edges"][self._currentEdgeID]["oppositeEdgeID"]]["parkingSpaces"], self._oppositeEdgeID)
 
@@ -243,7 +243,7 @@ class ParkingSearchVehicle(object):
             for parkingSpace in p_parkingSpaces:
                 # only consider parking spaces on the current opposite edge
                 if (parkingSpace.available and \
-                            (parkingSpace.edgeID==p_oppositeEdgeID[self._currentEdgeID])):
+                            (parkingSpace.edgeID==p_oppositeEdgeID)):
                     if (parkingSpace.position <
                                 self._currentLaneLength-self._currentLanePosition):
                         if (parkingSpace.position > \
@@ -252,7 +252,7 @@ class ParkingSearchVehicle(object):
                             # insert a loop to the active route (just once back
                             # and forth)
                             self._activeRoute.insert(0,
-                                                     p_oppositeEdgeID[self._currentEdgeID])
+                                                     p_oppositeEdgeID)
                             self._activeRoute.insert(0, self._currentEdgeID)
                             # communicate the modified active route to the
                             # vehicle via TraCI
