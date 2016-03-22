@@ -106,7 +106,7 @@ class Runtime(object):
             # representation
             l_departedVehicles = traci.simulation.getDepartedIDList()
             l_parkingSearchVehicles.extend(map(
-                    lambda vehID: ParkingSearchVehicle( vehID, self._args.coopratio, step,
+                    lambda vehID: ParkingSearchVehicle( vehID, self._environment, self._args.coopratio, step,
                                                         self._environment._net.getEdge(l_individualRoutes[vehID][-1]).getToNode().getID(),
                                                         l_cooperativeRoutes[vehID], l_individualRoutes[vehID] ),
                     l_departedVehicles
@@ -128,7 +128,7 @@ class Runtime(object):
             #       selectRouting() ...... select whether to cooperate or not
             #       setVehicleData() ..... all TraCI setSomething commands
             for psv in l_parkingSearchVehicles:
-                result = psv.update(self._environment, self._environment._allParkingSpaces, self._environment._oppositeEdgeID, step)
+                result = psv.update(step)
                 # if result values could be obtained, the vehicle found
                 # a parking space in the last time step
                 if result:
