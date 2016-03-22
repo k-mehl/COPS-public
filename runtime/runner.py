@@ -106,7 +106,8 @@ class Runtime(object):
             # representation
             l_departedVehicles = traci.simulation.getDepartedIDList()
             l_parkingSearchVehicles.extend(map(
-                    lambda vehID: ParkingSearchVehicle( vehID, self._args.coopratio, step,
+                    lambda vehID: ParkingSearchVehicle( vehID, self._environment, self._args.coopratio, step,
+                                                        self._environment._net.getEdge(l_individualRoutes[vehID][-1]).getToNode().getID(),
                                                         l_cooperativeRoutes[vehID], l_individualRoutes[vehID] ),
                     l_departedVehicles
             ))
@@ -127,8 +128,8 @@ class Runtime(object):
             #       selectRouting() ...... select whether to cooperate or not
             #       setVehicleData() ..... all TraCI setSomething commands
             for psv in l_parkingSearchVehicles:
-                result = psv.update(self._environment, self._environment._allParkingSpaces, self._environment._oppositeEdgeID, step)
 
+                result = psv.update(step)
                 #count edge visits of each vehicle
                 #TODO: make visit update more efficient
                 for edge in self._environment._roadNetwork["edges"].keys():
@@ -159,9 +160,17 @@ class Runtime(object):
 
                         #calculate costs for every edge except opposite direction of current edge
                         succEdgeCost = {}
+
+                        succEdgeIDs = []
                         for edge in succEdges:
-                            if currentRoute[-1] not in self._environment._oppositeEdgeID:
-                                succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
+                            succEdgeIDs.append(str(edge.getID()))
+                            succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
+                        if currentRoute[-1] in self._environment._oppositeEdgeID:
+                            succEdgeIDs.remove(self._environment._oppositeEdgeID[currentRoute[-1]])
+                            del succEdgeCost[self._environment._oppositeEdgeID[currentRoute[-1]]]
+                        #for edge in succEdges:
+                        #    if not str(edge.getID()) == self._environment._oppositeEdgeID[currentRoute[-1]]:
+                        #        succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
 
                         #calculate minima of succEdgeCost
                         minValue = numpy.min(succEdgeCost.values())
