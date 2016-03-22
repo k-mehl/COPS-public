@@ -2,13 +2,16 @@
 from __future__ import print_function
 import traci
 import random
+from common.enum import Enum
 
-## Integer values to indicate the current activity status of a vehicle
-VEHICLE_CRUISING = 0
-VEHICLE_SEARCHING = 1
-VEHICLE_FOUND_PARKING_SPACE = 2
-VEHICLE_MANEUVERING_TO_PARK = 3
-VEHICLE_PARKED = 4
+# Activity states of a vehicle
+state = Enum(
+    ["CRUISING",
+     "SEARCHING",
+     "FOUND_PARKING_SPACE",
+     "MANEUVERING_TO_PARK",
+     "PARKED"]
+)
 
 class ParkingSearchVehicle(object):
 
@@ -28,7 +31,8 @@ class ParkingSearchVehicle(object):
             self.isSearchingVehicle = False
         # information about vehicle activity status, initially vehicle cruises
         # without searching ("phase 1")
-        self.activity = VEHICLE_CRUISING
+        self.activity = state.CRUISING
+
         # set individual preference for cooperation
         self.driverCooperates = False
         if random.random()<=coopRatio:
@@ -119,23 +123,23 @@ class ParkingSearchVehicle(object):
         
         # if the vehicle is cruising and has entered the search district, change
         # to search phase 2
-        if (self.isSearchingVehicle and self.activity == VEHICLE_CRUISING and
+        if (self.isSearchingVehicle and self.activity == state.CRUISING and
                 self.currentRouteIndex >= 1):
             self.timeBeginSearch = timestep
-            self.activity = VEHICLE_SEARCHING
+            self.activity = state.SEARCHING
             # reduce speed for searching
             traci.vehicle.setMaxSpeed(self.name, 8.333)
             # set the vehicle color to yellow in the SUMO GUI
             traci.vehicle.setColor(self.name,(255,255,0,0))
 
         # search phase 2 (and later also 3)
-        if self.activity == VEHICLE_SEARCHING: 
+        if self.activity == state.SEARCHING:
             # if parking space is found ahead on current edge, change vehicle
             # status accordingly
             if ((timestep >= self.timeBeginSearch+1) and
                     self.currentEdgeID in p_environment._roadNetwork["edges"] and
                     self.lookoutForParkingSpace(p_environment._roadNetwork["edges"][self.currentEdgeID]["parkingSpaces"])):
-            	self.activity = VEHICLE_FOUND_PARKING_SPACE
+            	self.activity = state.FOUND_PARKING_SPACE
                 # let the vehicle stop besides the parking space
                 traci.vehicle.setStop(self.name, self.currentEdgeID,
                         self.assignedParkingPosition, 0, 2**31 - 1, 0)
@@ -143,7 +147,7 @@ class ParkingSearchVehicle(object):
                 # SUMO GUI
             	traci.vehicle.setColor(self.name,(255,165,0,0))
             # if still searching and an opposite edge exists, look there as well
-            if (self.activity == VEHICLE_SEARCHING and
+            if (self.activity == state.SEARCHING and
                     self.seenOppositeParkingSpace=="" and 
                     self.currentEdgeID in oppositeEdgeID):
                 self.seenOppositeParkingSpace = \
@@ -151,11 +155,11 @@ class ParkingSearchVehicle(object):
 
         # if the vehicle has stopped besides found parking space, basically
         # block the road for a while
-        if (self.activity == VEHICLE_FOUND_PARKING_SPACE and 
+        if (self.activity == state.FOUND_PARKING_SPACE and
                 self.speed == 0.0 and 
                 (abs(self.currentLanePosition-self.assignedParkingPosition)<0.1)
                 ):
-            self.activity = VEHICLE_MANEUVERING_TO_PARK
+            self.activity = state.MANEUVERING_TO_PARK
             # memorize the time when maneuvering begins
             self.timeBeginManeuvering=timestep
             # set the vehicle color to red in the SUMO GUI
@@ -163,9 +167,9 @@ class ParkingSearchVehicle(object):
 
         # twelve seconds after beginning to maneuver into a parking space,
         # 'jump' off the road and release queueing traffic
-        if (self.activity == VEHICLE_MANEUVERING_TO_PARK and (timestep >
+        if (self.activity == state.MANEUVERING_TO_PARK and (timestep >
             (self.timeBeginManeuvering + 12))):
-            self.activity = VEHICLE_PARKED
+            self.activity = state.PARKED
             # for the change between 'stopped' and 'parked' in SUMO, first the
             # issued stop command has to be deleted by 'resume'
             traci.vehicle.resume(self.name)
@@ -269,7 +273,7 @@ class ParkingSearchVehicle(object):
 
     ## Query whether vehicle has successfully parked
     def getParkedStatus(self):
-        if self.activity == VEHICLE_PARKED:
+        if self.activity == state.PARKED:
             return True
         return False
     
