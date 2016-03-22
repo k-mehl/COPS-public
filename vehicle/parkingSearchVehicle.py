@@ -52,7 +52,6 @@ class ParkingSearchVehicle(object):
         self.currentOppositeEdgeID = ""
         # information about the vehicle route
         self.destinationNodeID = p_destinationNodeID
-        print(self.destinationNodeID)
         self.currentRoute = []
         self.currentRouteIndex = -1
         self.activeRoute = []
