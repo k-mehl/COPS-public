@@ -37,15 +37,6 @@ class Runtime(object):
         # seed for random number generator, random for now
         random.seed()
 
-        # if --routefile flag is provided, use the file for routing,
-        # otherwise generate (and overwrite if exists) route file (reroute.rou.xml) for this simulation run
-        # using the given number of parking search vehicles
-        if self._args.routefile:
-            self._routefile = self._args.routefile
-        else:
-            self._routefile = "reroute.rou.xml"
-            generatePsvDemand(p_args.psv, self._args.resourcedir, self._routefile)
-
         # run sumo with gui or headless, depending on the --gui flag
         self._sumoBinary = checkBinary('sumo-gui') if self._args.gui else checkBinary('sumo')
 
@@ -56,6 +47,16 @@ class Runtime(object):
     def run(self):
 
         self._environment.initParkingSpaces()
+
+        # if --routefile flag is provided, use the file for routing,
+        # otherwise generate (and overwrite if exists) route file (reroute.rou.xml) for this simulation run
+        # using the given number of parking search vehicles
+        if self._args.routefile:
+            self._routefile = self._args.routefile
+        else:
+            self._routefile = "reroute.rou.xml"
+            generatePsvDemand(self._args.psv, self._args.resourcedir, self._routefile)
+
         # this is the normal way of using traci. sumo is started as a
         # subprocess and then the python script connects and runs
         l_sumoProcess = subprocess.Popen(
@@ -78,55 +79,8 @@ class Runtime(object):
         # create empty list for parking search vehicles
         l_parkingSearchVehicles=[]
 
-        # prepare dictionaries with vehicle O/D data (IDs and indices)
-        # by parsing the generated route XML file
-        vehicleOriginNode = {}
-        vehicleOriginNodeIndex = {}
-        vehicleDestinationNode = {}
-        vehicleDestinationNodeIndex = {}
-        allVehicleIDs = []
-        allOriginNodeIndices = []
-        allDestinationNodeIndices = []
-        for trip in sumolib.output.parse_fast( \
-                os.path.join(self._args.resourcedir, self._routefile), 'trip', ['id','from','to']):
-            allVehicleIDs.append(trip.id)
-            vehicleOriginNode[trip.id] =  \
-                self._environment._net.getEdge(trip.attr_from).getFromNode().getID()
-            vehicleOriginNodeIndex[trip.id] = \
-                self._environment._convertNodeIDtoNodeIndex[vehicleOriginNode[trip.id]]
-            vehicleDestinationNode[trip.id] = \
-                self._environment._net.getEdge(trip.to).getToNode().getID()
-            vehicleDestinationNodeIndex[trip.id] = \
-                self._environment._convertNodeIDtoNodeIndex[vehicleDestinationNode[trip.id]]
-            allOriginNodeIndices.append(vehicleOriginNodeIndex[trip.id])
-            allDestinationNodeIndices.append(vehicleDestinationNodeIndex[trip.id])
-
-        # use Aleksandar's Cooperative Search Router to create a dictionary
-        # containing all cooperative vehicle routes (only once in advance)
-        coopRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices)
-        shortestNeighbors = coopRouter.shortest()
-
-        l_cooperativeRoutes = dict(map(
-            lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
-                self._environment._adjacencyEdgeID,coopRouter.reconstruct_path(
-                            shortestNeighbors[trip],allDestinationNodeIndices[trip],
-                            allOriginNodeIndices[trip])) ),
-                xrange(len(allVehicleIDs))
-        ))
-
-        # use Aleksandar's Cooperative Search Router to create a dictionary
-        # containing all non-cooperative vehicle routes (only once in advance)
-        indyRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices, 0)
-        indyShortestNeighbors = indyRouter.shortest()
-
-        l_individualRoutes = dict(map(
-            lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
-                self._environment._adjacencyEdgeID,indyRouter.reconstruct_path(
-                            indyShortestNeighbors[trip],allDestinationNodeIndices[trip],
-                            allOriginNodeIndices[trip]))
-            ),
-            xrange(len(allVehicleIDs))
-        ))
+        # compute phase 2 routing information (individual and cooperative)
+        l_individualRoutes, l_cooperativeRoutes = self.computePhase2Routings()
 
         # create lists for search time and distance results
         searchTimes = []
@@ -153,6 +107,7 @@ class Runtime(object):
             l_departedVehicles = traci.simulation.getDepartedIDList()
             l_parkingSearchVehicles.extend(map(
                     lambda vehID: ParkingSearchVehicle( vehID, self._args.coopratio, step,
+                                                        self._environment._net.getEdge(l_individualRoutes[vehID][-1]).getToNode().getID(),
                                                         l_cooperativeRoutes[vehID], l_individualRoutes[vehID] ),
                     l_departedVehicles
             ))
@@ -173,7 +128,7 @@ class Runtime(object):
             #       selectRouting() ...... select whether to cooperate or not
             #       setVehicleData() ..... all TraCI setSomething commands
             for psv in l_parkingSearchVehicles:
-                result = psv.update(self._environment._allParkingSpaces, self._environment._oppositeEdgeID, step)
+                result = psv.update(self._environment, self._environment._allParkingSpaces, self._environment._oppositeEdgeID, step)
                 # if result values could be obtained, the vehicle found
                 # a parking space in the last time step
                 if result:
@@ -272,4 +227,55 @@ class Runtime(object):
             if ps.assignedToVehicleID:
                 traci.poi.setColor("ParkingSpace"+str(ps.name),(255,165,0,0))
 
-                
+
+    def computePhase2Routings(self):
+        # prepare dictionaries with vehicle O/D data (IDs and indices)
+        # by parsing the generated route XML file
+        vehicleOriginNode = {}
+        vehicleOriginNodeIndex = {}
+        vehicleDestinationNode = {}
+        vehicleDestinationNodeIndex = {}
+        allVehicleIDs = []
+        allOriginNodeIndices = []
+        allDestinationNodeIndices = []
+        for trip in sumolib.output.parse_fast( \
+                os.path.join(self._args.resourcedir, self._routefile), 'trip', ['id','from','to']):
+            allVehicleIDs.append(trip.id)
+            vehicleOriginNode[trip.id] =  \
+                self._environment._net.getEdge(trip.attr_from).getFromNode().getID()
+            vehicleOriginNodeIndex[trip.id] = \
+                self._environment._convertNodeIDtoNodeIndex[vehicleOriginNode[trip.id]]
+            vehicleDestinationNode[trip.id] = \
+                self._environment._net.getEdge(trip.to).getToNode().getID()
+            vehicleDestinationNodeIndex[trip.id] = \
+                self._environment._convertNodeIDtoNodeIndex[vehicleDestinationNode[trip.id]]
+            allOriginNodeIndices.append(vehicleOriginNodeIndex[trip.id])
+            allDestinationNodeIndices.append(vehicleDestinationNodeIndex[trip.id])
+
+        # use Aleksandar's Cooperative Search Router to create a dictionary
+        # containing all cooperative vehicle routes (only once in advance)
+        coopRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices)
+        shortestNeighbors = coopRouter.shortest()
+
+        l_cooperativeRoutes = dict(map(
+            lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
+                self._environment._adjacencyEdgeID,coopRouter.reconstruct_path(
+                            shortestNeighbors[trip],allDestinationNodeIndices[trip],
+                            allOriginNodeIndices[trip])) ),
+                xrange(len(allVehicleIDs))
+        ))
+
+        # use Aleksandar's Cooperative Search Router to create a dictionary
+        # containing all non-cooperative vehicle routes (only once in advance)
+        indyRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices, 0)
+        indyShortestNeighbors = indyRouter.shortest()
+
+        l_individualRoutes = dict(map(
+            lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
+                self._environment._adjacencyEdgeID,indyRouter.reconstruct_path(
+                            indyShortestNeighbors[trip],allDestinationNodeIndices[trip],
+                            allOriginNodeIndices[trip]))
+            ),
+            xrange(len(allVehicleIDs))
+        ))
+        return l_individualRoutes, l_cooperativeRoutes
