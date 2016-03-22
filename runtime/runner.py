@@ -161,16 +161,9 @@ class Runtime(object):
                         #calculate costs for every edge except opposite direction of current edge
                         succEdgeCost = {}
 
-                        succEdgeIDs = []
                         for edge in succEdges:
-                            succEdgeIDs.append(str(edge.getID()))
-                            succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
-                        if currentRoute[-1] in self._environment._oppositeEdgeID:
-                            succEdgeIDs.remove(self._environment._oppositeEdgeID[currentRoute[-1]])
-                            del succEdgeCost[self._environment._oppositeEdgeID[currentRoute[-1]]]
-                        #for edge in succEdges:
-                        #    if not str(edge.getID()) == self._environment._oppositeEdgeID[currentRoute[-1]]:
-                        #        succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
+                            if not str(edge.getID()) == self._environment._oppositeEdgeID[currentRoute[-1]]:
+                                succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
 
                         #calculate minima of succEdgeCost
                         minValue = numpy.min(succEdgeCost.values())
