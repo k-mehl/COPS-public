@@ -33,18 +33,18 @@ class Environment(object):
         self._convertNodeIDtoNodeIndex = {}
         self._convertNodeIndexToNodeID = {}
 
-        self._adjacencyMatrix = [[0 for x in range(self._numberOfNodesinNetwork)] \
-            for x in range(self._numberOfNodesinNetwork)]
+        self._adjacencyMatrix = [[0 for x in xrange(self._numberOfNodesinNetwork)] \
+            for x in xrange(self._numberOfNodesinNetwork)]
 
-        self._adjacencyEdgeID = [["" for x in range(self._numberOfNodesinNetwork)] \
-            for x in range(self._numberOfNodesinNetwork)]
+        self._adjacencyEdgeID = [["" for x in xrange(self._numberOfNodesinNetwork)] \
+            for x in xrange(self._numberOfNodesinNetwork)]
 
-        for fromNode in range(self._numberOfNodesinNetwork):
+        for fromNode in xrange(self._numberOfNodesinNetwork):
             fromNodeID = self._nodes[fromNode]
             # fill node dictionaries by the way
             self._convertNodeIndexToNodeID[fromNode]=fromNodeID
             self._convertNodeIDtoNodeIndex[fromNodeID]=fromNode
-            for toNode in range(self._numberOfNodesinNetwork):
+            for toNode in xrange(self._numberOfNodesinNetwork):
                 toNodeID = self._nodes[toNode]
                 for edge in self._edges:
                     if (self._net.getEdge(edge).getFromNode().getID()==fromNodeID and
@@ -108,7 +108,7 @@ class Environment(object):
 
         # mark a number parking spaces as available as specified per command line
         # argument
-        for i in range(0, self._args.parkingspaces):
+        for i in xrange(0, self._args.parkingspaces):
             # check whether we still have enough parking spaces to make available
             if self._args.parkingspaces > self._parkingSpaceNumber:
                 print("Too many parking spaces for network.")
