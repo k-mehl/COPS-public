@@ -1,5 +1,6 @@
 import traci
 import sumolib
+import numpy
 
 from parkingSpace import *
 
@@ -60,11 +61,35 @@ class Environment(object):
                 itertools.permutations(self._edges, 2)
         ))
 
+        for node in self._nodes:
+            self._roadNetwork["nodes"][node]["coordinates"] = self._net.getNode(node).getCoord()
+
         for edge in self._edges:
             self._roadNetwork["edges"][edge]["length"] = self._net.getEdge(edge).getLength()
             self._roadNetwork["edges"][edge]["fromNode"] = str(self._net.getEdge(edge).getFromNode().getID())
+            fromNodeCoord = self._roadNetwork["nodes"][self._roadNetwork["edges"][edge]["fromNode"]]["coordinates"]
+
             self._roadNetwork["edges"][edge]["toNode"] = str(self._net.getEdge(edge).getToNode().getID())
+            toNodeCoord = self._roadNetwork["nodes"][self._roadNetwork["edges"][edge]["toNode"]]["coordinates"]
+
+            self._roadNetwork["edges"][edge]["meanCoord"] = tuple(numpy.divide(numpy.add(fromNodeCoord,toNodeCoord),2))
+
             self._roadNetwork["edges"][edge]["succEdgeID"] = map(lambda x: str(x.getID()), self._net.getEdge(edge).getToNode().getOutgoing())
+
+            self._roadNetwork["edges"][edge]["nodeDistanceFromEndNode"] = {}
+
+            for node in self._nodes:
+
+                #TODO: discuss the relevant distance measure
+                #endNote synonym to toNote used to avoid confusion in variable names
+                lineEndNodeToNode = numpy.subtract(self._roadNetwork["edges"][edge]["meanCoord"], self._roadNetwork["nodes"][node]["coordinates"])
+                #lineEndNodeToNode = numpy.subtract(toNodeCoord, self._roadNetwork["nodes"][node]["coordinates"])
+                self._roadNetwork["edges"][edge]["nodeDistanceFromEndNode"][node] = \
+                    numpy.sqrt(numpy.sum(lineEndNodeToNode**2))
+
+            self._roadNetwork["edges"][edge]["visitCount"] = {}
+            self._roadNetwork["edges"][edge]["plannedCount"] = {}
+
             if edge in self._oppositeEdgeID:
                 self._roadNetwork["edges"][edge]["oppositeEdgeID"] = self._oppositeEdgeID[edge]
             else:
@@ -73,7 +98,7 @@ class Environment(object):
         
     def initParkingSpaces(self):
         for edge in self._edges:
-            self._roadNetwork["edges"][edge]["visitCount"] = 0
+            #self._roadNetwork["edges"][edge]["visitCount"] = 0
             self._roadNetwork["edges"][edge]["parkingSpaces"] = []
 
         self._parkingSpaceNumber = 0

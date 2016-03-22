@@ -128,6 +128,22 @@ class Runtime(object):
             #       setVehicleData() ..... all TraCI setSomething commands
             for psv in l_parkingSearchVehicles:
                 result = psv.update(self._environment, self._environment._allParkingSpaces, self._environment._oppositeEdgeID, step)
+
+                #count edge visits of each vehicle
+                #TODO: make visit update more efficient
+                for edge in self._environment._roadNetwork["edges"].keys():
+                    traversedRoute = psv.getTraversedRoute()[:]
+                    plannedRoute = psv.getActiveRoute()[:]
+                    #traversedRoutePlusCurrentEdge.append(psv.getActiveRoute()[0])
+
+                    oppositeEdgeID = self._environment._roadNetwork["edges"][edge]["oppositeEdgeID"]
+                    visitCount = traversedRoute.count(str(edge)) \
+                        +traversedRoute.count(oppositeEdgeID)
+                    plannedCount = plannedRoute.count(str(edge)) \
+                        +plannedRoute.count(oppositeEdgeID)
+                    self._environment._roadNetwork["edges"][edge]["visitCount"][psv.getName()] = visitCount
+                    self._environment._roadNetwork["edges"][edge]["plannedCount"][psv.getName()] = plannedCount
+
                 # if result values could be obtained, the vehicle found
                 # a parking space in the last time step
                 if result:
@@ -140,12 +156,23 @@ class Runtime(object):
                         currentRoute = psv.getVehicleRoute()
                         succEdges = \
                             self._environment._net.getEdge(currentRoute[-1]).getToNode().getOutgoing()
-                        succEdgeIDs = []
+
+                        #calculate costs for every edge except opposite direction of current edge
+                        succEdgeCost = {}
                         for edge in succEdges:
-                            succEdgeIDs.append(str(edge.getID()))
-                        if currentRoute[-1] in self._environment._oppositeEdgeID:
-                            succEdgeIDs.remove(self._environment._oppositeEdgeID[currentRoute[-1]])
-                        nextRouteSegment = random.choice(succEdgeIDs)
+                            if currentRoute[-1] not in self._environment._oppositeEdgeID:
+                                succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
+
+                        #calculate minima of succEdgeCost
+                        minValue = numpy.min(succEdgeCost.values())
+                        minKeys = [key for key in succEdgeCost if succEdgeCost[key] == minValue]
+
+                        #choose randomly if costs are equal
+                        if len(minKeys) > 1:
+                            nextRouteSegment = random.choice(minKeys)
+                        else:
+                            nextRouteSegment = minKeys[0]
+
                         psv.setNextRouteSegment(nextRouteSegment)
 
             # break the while-loop if all remaining SUMO vehicles have
@@ -166,6 +193,29 @@ class Runtime(object):
         # Return results
         return self.getNumberOfParkedVehicles(l_parkingSearchVehicles), searchTimes, searchDistances
 
+    ## Calculate cost for an edge for a specific search vehicle
+    #  @param psv parking search vehicle
+    #  @param edge edge
+    #  @return cost of edge
+    def calculateEdgeCost(self, psv, edge):
+        toNodedestinationEdge = self._environment._roadNetwork["edges"][str(psv.getDestinationEdgeID())]["toNode"]
+
+        #get counts from environment
+        selfVisitCount = self._environment._roadNetwork["edges"][edge.getID()]["visitCount"][psv.getName()]
+        externalVisitCount = sum(self._environment._roadNetwork["edges"][edge.getID()]["visitCount"].values())-selfVisitCount
+        externalPlannedCount = sum(self._environment._roadNetwork["edges"][edge.getID()]["plannedCount"].values())
+
+        #TODO: define weights somewhere central
+        distanceWeight = 1
+        selfVisitWeight = 2000
+        externalVisitWeight = 2000
+        externalPlannedWeight = 100
+
+        #calculate cost
+        return distanceWeight * self._environment._roadNetwork["edges"][edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
+            + selfVisitCount*selfVisitWeight\
+            + externalVisitCount * externalVisitWeight\
+            + externalPlannedCount * externalPlannedWeight
 
     ## Convert a route given as sequence of node indices into the corresponding
     #  sequence of edge IDs
