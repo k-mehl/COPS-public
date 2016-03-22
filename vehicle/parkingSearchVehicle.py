@@ -18,7 +18,7 @@ class ParkingSearchVehicle(object):
     #  @param coopRatio The fraction of cooperative drivers
     #  @param timestep For memorizing the simulation time when a vehicle is
     #  created
-    def __init__(self, name, coopRatio=0.0, timestep=-1001, p_cooperativeRoute=[], p_individualRoute=[]):
+    def __init__(self, name, coopRatio=0.0, timestep=-1001, p_destinationNodeID="", p_cooperativeRoute=[], p_individualRoute=[]):
         self.name = name
         self.speed = 0.0
         # allow for differentiation between searching and non-searching vehicles
@@ -51,6 +51,8 @@ class ParkingSearchVehicle(object):
         self.currentLanePosition = -1001.0
         self.currentOppositeEdgeID = ""
         # information about the vehicle route
+        self.destinationNodeID = p_destinationNodeID
+        print(self.destinationNodeID)
         self.currentRoute = []
         self.currentRouteIndex = -1
         self.activeRoute = []
@@ -61,8 +63,7 @@ class ParkingSearchVehicle(object):
             traci.vehicle.setRoute(self.name, self.cooperativeRoute)
         else:
             traci.vehicle.setRoute(self.name, self.individualRoute)
-
-        
+    
 
     ## Check for equivalence by name attribute
     def __eq__(self, other):
