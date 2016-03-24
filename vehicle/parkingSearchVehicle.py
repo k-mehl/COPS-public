@@ -13,6 +13,8 @@ state = Enum(
      "PARKED"]
 )
 
+from runtime.parameters import *
+
 class ParkingSearchVehicle(object):
 
     ## Constructor for searching vehicles, initializes vehicle attributes
@@ -129,7 +131,7 @@ class ParkingSearchVehicle(object):
             self._timeBeginSearch = self._timestep
             self._activity = state.SEARCHING
             # reduce _speed for searching
-            traci.vehicle.setMaxSpeed(self._name, 8.333)
+            traci.vehicle.setMaxSpeed(self._name, MAXSPEED_PHASE2)
             # set the vehicle color to yellow in the SUMO GUI
             traci.vehicle.setColor(self._name,(255,255,0,0))
 
@@ -153,7 +155,7 @@ class ParkingSearchVehicle(object):
         # twelve seconds after beginning to maneuver into a parking space,
         # 'jump' off the road and release queueing traffic
         if (self._activity == state.MANEUVERING_TO_PARK and (self._timestep >
-                                                                 (self._timeBeginManeuvering + 12))):
+                                                                 (self._timeBeginManeuvering + PARKING_EVENT_DURATION))):
 
             return self._park()
 
@@ -221,9 +223,9 @@ class ParkingSearchVehicle(object):
                     # (otherwise SUMO will create an error)
                     # - within a distance of max. 30 meters in front of the
                     # vehicle
-                    if ((parkingSpace.position-self._currentLanePosition >12.0)
+                    if ((parkingSpace.position-self._currentLanePosition >MIN_DISTANCE_TO_PARKING)
                         and (parkingSpace.position-self._currentLanePosition
-                                 <30.0)):
+                                 <MAX_DISTANCE_TO_PARKING)):
                         # found parking space is assigned to this vehicle
                         # (from now, parking space is no longer available to
                         # other vehicles)
@@ -247,7 +249,7 @@ class ParkingSearchVehicle(object):
                     if (parkingSpace.position <
                                 self._currentLaneLength-self._currentLanePosition):
                         if (parkingSpace.position > \
-                                        self._currentLaneLength-(self._currentLanePosition+30.0)):
+                                        self._currentLaneLength-(self._currentLanePosition+MAX_DISTANCE_TO_PARKING)):
                             # if an opposite parking space has been found,
                             # insert a loop to the active route (just once back
                             # and forth)
