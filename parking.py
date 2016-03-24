@@ -27,7 +27,6 @@ if __name__ == "__main__":
 
     l_args = l_parser.parse_args()
 
-
     # raise exception if gui mode requested with > 1 run
     if l_args.gui and l_args.runs > 1:
         message = "Number of runs can't exceed 1, if run in GUI mode."

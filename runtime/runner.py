@@ -25,6 +25,7 @@ from common.cooperativeSearch import *
 from vehicle.parkingSearchVehicle import *
 from common.vehicleFactory import *
 from env.environment import *
+from runtime.parameters import *
 
 class Runtime(object):
 
@@ -212,17 +213,20 @@ class Runtime(object):
         externalVisitCount = sum(self._environment._roadNetwork["edges"][edge.getID()]["visitCount"].values())-selfVisitCount
         externalPlannedCount = sum(self._environment._roadNetwork["edges"][edge.getID()]["plannedCount"].values())
 
-        #TODO: define weights somewhere central
-        distanceWeight = 1
-        selfVisitWeight = 2000
-        externalVisitWeight = 2000
-        externalPlannedWeight = 100
-
         #calculate cost
-        return distanceWeight * self._environment._roadNetwork["edges"][edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
-            + selfVisitCount*selfVisitWeight\
-            + externalVisitCount * externalVisitWeight\
-            + externalPlannedCount * externalPlannedWeight
+        if psv._driverCooperates:
+            cost = DISTANCE_WEIGHT_COOP * \
+                   self._environment._roadNetwork["edges"][edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
+            + selfVisitCount*SELFVISIT_WEIGHT_COOP\
+            + externalVisitCount * EXTERNALVISIT_WEIGHT_COOP\
+            + externalPlannedCount * EXTERNALPLANNED_WEIGHT_COOP
+        else:
+            cost = DISTANCE_WEIGHT_NONCOOP * \
+                   self._environment._roadNetwork["edges"][edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
+            + selfVisitCount*SELFVISIT_WEIGHT_NONCOOP\
+            + externalVisitCount * EXTERNALVISIT_WEIGHT_NONCOOP\
+            + externalPlannedCount * EXTERNALPLANNED_WEIGHT_NONCOOP
+        return cost
 
     ## Convert a route given as sequence of node indices into the corresponding
     #  sequence of edge IDs
