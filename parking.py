@@ -5,20 +5,21 @@ import argparse
 import os
 
 from runtime import runner
+from runtime.parameters import *
 
 # Main entry point for the wrapper module.
 # For now: starts repetitive simulation runs with identical parameters, 
 # and presents the results afterwards.
 if __name__ == "__main__":
     l_parser = argparse.ArgumentParser(description="Process parameters for headless simulation runs.")
-    l_parser.add_argument("-p","--parkingspaces", dest="parkingspaces", type=int, default=5, help="number of available parking spaces")
-    l_parser.add_argument("-s","--parking-search-vehicles", dest="psv", type=int, default=5, help="number of parking search vehicles")
-    l_parser.add_argument("-c","--cooperative-ratio", dest="coopratio", type=float, default=0.0, help="cooperative driver ratio [0,1]")
+    l_parser.add_argument("-p","--parkingspaces", dest="parkingspaces", type=int, default=DEFAULT_NUMBER_PARKINGSPACES, help="number of available parking spaces")
+    l_parser.add_argument("-s","--parking-search-vehicles", dest="psv", type=int, default=DEFAULT_NUMBER_SEARCHVEHICLES, help="number of parking search vehicles")
+    l_parser.add_argument("-c","--cooperative-ratio", dest="coopratio", type=float, default=DEFAULT_COOPERATION_RATIO, help="cooperative driver ratio [0,1]")
     l_parser.add_argument("--port", dest="sumoport", type=int, default=8873, help="port used for communicating with sumo instance")
     l_parser.add_argument("--load-route-file", dest="routefile", type=str, help="provide a route file (SUMO xml format), overrides use of auto-generated routes")
     l_parser.add_argument("--resourcedir", dest="resourcedir", type=str, default="resources", help="base directory, relative to current working directory, for reading/writing temporary and SUMO related files (default: resources)")
-    l_parser.add_argument("-r","--runs", dest="runs", type=int, default=1, help="number of iterations to run")
-
+    l_parser.add_argument("--fixedseed", dest="fixedseed", type = int, default=DEFAULT_FIXEDSEED, help="flag whether random number generator get run number as fixed seed")
+    l_parser.add_argument("-r","--runs", dest="runs", type=int, default=DEFAULT_NUMBER_OF_RUNS, help="number of iterations to run")
     # if display GUI, restrict to one run (implies --run 1)
     # for more than one run, disallow use of --gui
     l_mutexgroup = l_parser.add_mutually_exclusive_group(required=True)
@@ -54,7 +55,7 @@ if __name__ == "__main__":
 
     for i_run in xrange(l_args.runs):
         print("RUN:", i_run+1, "OF", l_args.runs)
-        l_successes, l_searchTimes, l_searchDistances = l_runtime.run()
+        l_successes, l_searchTimes, l_searchDistances = l_runtime.run(i_run)
 
         l_successesSum += l_successes
         l_searchTimesSum += sum(l_searchTimes) #/ float(len(searchTimes))

@@ -35,9 +35,6 @@ class Runtime(object):
 
         self._args = p_args
 
-        # seed for random number generator, random for now
-        random.seed()
-
         # run sumo with gui or headless, depending on the --gui flag
         self._sumoBinary = checkBinary('sumo-gui') if self._args.gui else checkBinary('sumo')
 
@@ -45,7 +42,12 @@ class Runtime(object):
         #print(self._environment._roadNetwork["edges"])
 
     ## Runs the simulation on both SUMO and Python layers
-    def run(self):
+    def run(self, i_run):
+        # seed for random number generator, random for now
+        if self._args.fixedseed:
+            random.seed(i_run)
+        else:
+            random.seed()
 
         self._environment.initParkingSpaces()
 
