@@ -25,26 +25,25 @@ from common.cooperativeSearch import *
 from vehicle.parkingSearchVehicle import *
 from common.vehicleFactory import *
 from env.environment import *
-from runtime.parameters import *
 
 class Runtime(object):
 
     ## C'tor
     # @param p_args Arguments provided by command line via argparse
-    def __init__(self, p_args):
+    def __init__(self, p_config):
 
-        self._args = p_args
+        self._config = p_config
 
         # run sumo with gui or headless, depending on the --gui flag
-        self._sumoBinary = checkBinary('sumo-gui') if self._args.gui else checkBinary('sumo')
+        self._sumoBinary = checkBinary('sumo-gui') if not self._config.get("simulation").get("headless") else checkBinary('sumo')
 
-        self._environment = Environment(self._args)
+        self._environment = Environment(self._config)
         #print(self._environment._roadNetwork["edges"])
 
     ## Runs the simulation on both SUMO and Python layers
     def run(self, i_run):
         # seed for random number generator, random for now
-        if self._args.fixedseed:
+        if self._config.get("simulation").get("fixedseed") == 1:
             random.seed(i_run)
         else:
             random.seed()
@@ -54,27 +53,27 @@ class Runtime(object):
         # if --routefile flag is provided, use the file for routing,
         # otherwise generate (and overwrite if exists) route file (reroute.rou.xml) for this simulation run
         # using the given number of parking search vehicles
-        if self._args.routefile:
-            self._routefile = self._args.routefile
-        else:
+        if self._config.get("simulation").get("routefile") == "reroute.rou.xml":
             self._routefile = "reroute.rou.xml"
-            generatePsvDemand(self._args.psv, self._args.resourcedir, self._routefile)
+            generatePsvDemand(self._config.get("simulation").get("vehicles"), self._config.get("simulation").get("resourcedir"), self._routefile)
+        else:
+            self._routefile = self._config.get("simulation").get("routefile")
 
         # this is the normal way of using traci. sumo is started as a
         # subprocess and then the python script connects and runs
         l_sumoProcess = subprocess.Popen(
             [self._sumoBinary,
-             "-n", os.path.join(self._args.resourcedir, "reroute.net.xml"),
-             "-r", os.path.join(self._args.resourcedir, self._routefile),
-             "--tripinfo-output", os.path.join(self._args.resourcedir, "tripinfo.xml"),
-             "--gui-settings-file", os.path.join(self._args.resourcedir, "gui-settings.cfg"),
+             "-n", os.path.join(self._config.get("simulation").get("resourcedir"), "reroute.net.xml"),
+             "-r", os.path.join(self._config.get("simulation").get("resourcedir"), self._routefile),
+             "--tripinfo-output", os.path.join(self._config.get("simulation").get("resourcedir"), "tripinfo.xml"),
+             "--gui-settings-file", os.path.join(self._config.get("simulation").get("resourcedir"), "gui-settings.cfg"),
              "--no-step-log",
-             "--remote-port", str(self._args.sumoport)],
+             "--remote-port", str(self._config.get("simulation").get("sumoport"))],
             stdout=sys.stdout,
             stderr=sys.stderr)
 
         # execute the TraCI control loop
-        traci.init(self._args.sumoport)
+        traci.init(self._config.get("simulation").get("sumoport"))
 
         # internal clock variable, start with 0
         step = 0
@@ -109,7 +108,7 @@ class Runtime(object):
             # representation
             l_departedVehicles = traci.simulation.getDepartedIDList()
             l_parkingSearchVehicles.extend(map(
-                    lambda vehID: ParkingSearchVehicle( vehID, self._environment, self._args.coopratio, step,
+                    lambda vehID: ParkingSearchVehicle( vehID, self._environment, self._config.get("simulation").get("coopratio"), step,
                                                         self._environment._net.getEdge(l_individualRoutes[vehID][-1]).getToNode().getID(),
                                                         l_cooperativeRoutes[vehID], l_individualRoutes[vehID] ),
                     l_departedVehicles
@@ -190,7 +189,7 @@ class Runtime(object):
             if self.getNumberOfRemainingVehicles(l_parkingSearchVehicles)==0:
                 print("SUCCESSFULLY PARKED:",
                     self.getNumberOfParkedVehicles(l_parkingSearchVehicles),
-                    "OUT OF", self._args.psv)
+                    "OUT OF", self._config.get("simulation").get("vehicles"))
                 break
 
         # (from SUMO examples):
@@ -301,7 +300,7 @@ class Runtime(object):
         allOriginNodeIndices = []
         allDestinationNodeIndices = []
         for trip in sumolib.output.parse_fast( \
-                os.path.join(self._args.resourcedir, self._routefile), 'trip', ['id','from','to']):
+                os.path.join(self._config.get("simulation").get("resourcedir"), self._routefile), 'trip', ['id','from','to']):
             allVehicleIDs.append(trip.id)
             vehicleOriginNode[trip.id] =  \
                 self._environment._net.getEdge(trip.attr_from).getFromNode().getID()

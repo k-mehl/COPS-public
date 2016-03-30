@@ -9,17 +9,17 @@ import itertools
 import os
 
 class Environment(object):
-    def __init__(self, p_args):
+    def __init__(self, p_config):
 
-        self._args = p_args
+        self._config = p_config
 
         self._roadNetwork = {}
 
         self._roadNetwork["nodes"] = {}
         self._roadNetwork["edges"] = {}
 
-        self._nodes = map(lambda x: str(x.id), sumolib.output.parse(os.path.join(self._args.resourcedir, 'reroute.nod.xml'), ['node']))
-        self._edges = map(lambda x: str(x.id), sumolib.output.parse(os.path.join(self._args.resourcedir, 'reroute.edg.xml'), ['edge']))
+        self._nodes = map(lambda x: str(x.id), sumolib.output.parse(os.path.join(self._config.get("simulation").get("resourcedir"), 'reroute.nod.xml'), ['node']))
+        self._edges = map(lambda x: str(x.id), sumolib.output.parse(os.path.join(self._config.get("simulation").get("resourcedir"), 'reroute.edg.xml'), ['edge']))
 
         for node in self._nodes:
             self._roadNetwork["nodes"][node] = {}
@@ -29,7 +29,7 @@ class Environment(object):
         self._numberOfNodesinNetwork = len(self._nodes)
         self._numberOfEdgesinNetwork = len(self._edges)
 
-        self._net = sumolib.net.readNet(os.path.join(self._args.resourcedir, 'reroute.net.xml'))
+        self._net = sumolib.net.readNet(os.path.join(self._config.get("simulation").get("resourcedir"), 'reroute.net.xml'))
 
         self._convertNodeIDtoNodeIndex = {}
         self._convertNodeIndexToNodeID = {}
@@ -133,9 +133,9 @@ class Environment(object):
 
         # mark a number parking spaces as available as specified per command line
         # argument
-        for i in xrange(0, self._args.parkingspaces):
+        for i in xrange(0, self._config.get("simulation").get("parkingspaces")):
             # check whether we still have enough parking spaces to make available
-            if self._args.parkingspaces > self._parkingSpaceNumber:
+            if self._config.get("simulation").get("parkingspaces") > self._parkingSpaceNumber:
                 print("Too many parking spaces for network.")
                 #exit() #TODO remove this exit, wtf?! Btw, this error handling should probably occur _before_ running the simulation!
             # select a random parking space which is not yet available, and make it
