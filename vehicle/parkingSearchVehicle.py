@@ -13,8 +13,6 @@ state = Enum(
      "PARKED"]
 )
 
-from runtime.parameters import *
-
 class ParkingSearchVehicle(object):
 
     ## Constructor for searching vehicles, initializes vehicle attributes
