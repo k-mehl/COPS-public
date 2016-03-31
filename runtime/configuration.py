@@ -61,6 +61,7 @@ class Configuration(object):
             print("* loaded existing config {}".format(p_args.config))
 
         self._overrideConfig(p_args)
+        self._sanitycheck()
 
     def get(self, p_key):
         return self._configuration.get(p_key)
@@ -76,7 +77,7 @@ class Configuration(object):
         fp.close()
         print("* wrote new default config to {}".format(p_location))
 
-## override values with provided argparse parameters
+    ## override values with provided argparse parameters
     # @p_args argparse object
     def _overrideConfig(self, p_args):
         if p_args.parkingspaces:
@@ -96,5 +97,21 @@ class Configuration(object):
         if p_args.gui:
             self._configuration["simulation"]["headless"] = False
 
+    ## Sanity checks of config
+    def _sanitycheck(self):
+        # raise exception if gui mode requested with > 1 run
+        if not self._configuration.get("simulation").get("headless") and self._configuration.get("simulation").get("runs") > 1:
+            message = "Number of runs can't exceed 1, if run in GUI mode."
+            raise StandardError(message)
 
+        # raise exception if headless mode requested  AND number of parking spaces < vehicles
+        # in the static case this produces an endless loop of at least one vehicle searching for a free space.
+        # In Gui mode this behavior is acceptable
+        if self._configuration.get("simulation").get("headless") and self._configuration.get("simulation").get("parkingspaces") < self._configuration.get("simulation").get("vehicles"):
+            message = "Number of parking spaces must be at least equal to number of vehicles, if run in headless mode."
+            raise StandardError(message)
 
+        # raise an exception if provided basedir does not exist
+        if not os.path.isdir(self._configuration.get("simulation").get("resourcedir")):
+            message = "The provided directory {} does not exist for argument --resourcedir".format(self._configuration.get("simulation").get("resourcedir"))
+            raise StandardError(message)
