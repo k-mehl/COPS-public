@@ -37,23 +37,6 @@ if __name__ == "__main__":
     # get config
     l_config = configuration.Configuration(l_args, l_configdir)
 
-    # raise exception if gui mode requested with > 1 run
-    if not l_config.get("simulation").get("headless") and l_config.get("simulation").get("runs") > 1:
-        message = "Number of runs can't exceed 1, if run in GUI mode."
-        raise argparse.ArgumentTypeError(message)
-
-    # raise exception if headless mode requested  AND number of parking spaces < vehicles
-    # in the static case this produces an endless loop of at least one vehicle searching for a free space.
-    # In Gui mode this behavior is acceptable
-    if l_config.get("simulation").get("headless") and l_config.get("simulation").get("parkingspaces") < l_config.get("simulation").get("vehicles"):
-        message = "Number of parking spaces must be at least equal to number of vehicles, if run in headless mode."
-        raise argparse.ArgumentTypeError(message)
-
-    # raise an exception if provided basedir does not exist
-    if not os.path.isdir(l_config.get("simulation").get("resourcedir")):
-        message = "The provided directory {} does not exist for argument --resourcedir".format(l_args.resourcedir)
-        raise argparse.ArgumentTypeError(message)
-
 
     l_resultSum = 0
 
