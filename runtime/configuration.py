@@ -90,6 +90,5 @@ class Configuration(object):
             self._configuration["simulation"]["resourcedir"] = p_args.resourcedir
         if p_args.runs:
             self._configuration["simulation"]["runs"] = p_args.runs
-        if p_args.headless:
-            self._configuration["simulation"]["headless"] = p_args.headless
+        self._configuration["simulation"]["headless"] = p_args.headless
 
