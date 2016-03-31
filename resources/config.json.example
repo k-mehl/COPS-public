@@ -21,7 +21,6 @@
       "fixedseed" : 1,
   },
 
-
   "vehicle" : {
       "parking" : {
           "distance" : {
@@ -31,24 +30,25 @@
           "duration" : 12.0, // seconds
       },
 
-
       "maxspeed" : {
           "phase1" : 27.778, // 100 km/h in m/s
           "phase2" : 8.333, // 30 km/h in m/s
           "phase3" : 8.333, // 30 km/h in m/s
       },
 
-      "coop" : { // weights if vehicle is cooperative
-          "distance" : 1,
-          "selfvisit" : 2000,
-          "externalvisit" : 2000,
-          "externalplanned" : 100,
-      },
-      "noncoop" : { // weights if vehicle is non-cooperative
-          "distance" : 1,
-          "selfvisit" : 2000,
-          "externalvisit" : 0,
-          "externalplanned" : 0,
+      "weights" : {
+          "coop" : { // weights if vehicle is cooperative
+              "distance" : 1,
+              "selfvisit" : 2000,
+              "externalvisit" : 2000,
+              "externalplanned" : 100,
+          },
+          "noncoop" : { // weights if vehicle is non-cooperative
+              "distance" : 1,
+              "selfvisit" : 2000,
+              "externalvisit" : 0,
+              "externalplanned" : 0,
+          },
       },
   },
 }

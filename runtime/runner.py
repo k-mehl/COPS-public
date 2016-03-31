@@ -216,17 +216,17 @@ class Runtime(object):
 
         #calculate cost
         if psv._driverCooperates:
-            cost = self._config.get("vehicle").get("coop").get("distance") * \
+            cost = self._config.get("vehicle").get("weights").get("coop").get("distance") * \
                    self._environment._roadNetwork["edges"][edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
-            + selfVisitCount*self._config.get("vehicle").get("coop").get("selfvisit")\
-            + externalVisitCount * self._config.get("vehicle").get("coop").get("externalvisit")\
-            + externalPlannedCount * self._config.get("vehicle").get("coop").get("externalplanned")
+            + selfVisitCount*self._config.get("vehicle").get("weights").get("coop").get("selfvisit")\
+            + externalVisitCount * self._config.get("vehicle").get("weights").get("coop").get("externalvisit")\
+            + externalPlannedCount * self._config.get("vehicle").get("weights").get("coop").get("externalplanned")
         else:
-            cost = self._config.get("vehicle").get("noncoop").get("distance") * \
+            cost = self._config.get("vehicle").get("weights").get("noncoop").get("distance") * \
                    self._environment._roadNetwork["edges"][edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
-            + selfVisitCount*self._config.get("vehicle").get("noncoop").get("selfvisit")\
-            + externalVisitCount * self._config.get("vehicle").get("noncoop").get("externalvisit")\
-            + externalPlannedCount * self._config.get("vehicle").get("noncoop").get("externalplanned")
+            + selfVisitCount*self._config.get("vehicle").get("weights").get("noncoop").get("selfvisit")\
+            + externalVisitCount * self._config.get("vehicle").get("weights").get("noncoop").get("externalvisit")\
+            + externalPlannedCount * self._config.get("vehicle").get("weights").get("noncoop").get("externalplanned")
         return cost
 
     ## Convert a route given as sequence of node indices into the corresponding
