@@ -131,7 +131,7 @@ class ParkingSearchVehicle(object):
             self._timeBeginSearch = self._timestep
             self._activity = state.SEARCHING
             # reduce _speed for searching
-            traci.vehicle.setMaxSpeed(self._name, self._config.get("vehicle").get("speed").get("phase2"))
+            traci.vehicle.setMaxSpeed(self._name, self._config.get("vehicle").get("maxspeed").get("phase2"))
             # set the vehicle color to yellow in the SUMO GUI
             traci.vehicle.setColor(self._name,(255,255,0,0))
 
