@@ -28,33 +28,31 @@ if __name__ == "__main__":
 
     # if display GUI, restrict to one run (implies --run 1)
     # for more than one run, disallow use of --gui
-    l_parser.add_argument("--headless", dest="headless", default=False, action='store_true', help="start simulation in headless mode without SUMO GUI")
+    l_mutexgroup = l_parser.add_mutually_exclusive_group(required=False)
+    l_mutexgroup.add_argument("--gui", dest="gui", default=False, action='store_true', help="start simulation with SUMO GUI")
+    l_mutexgroup.add_argument("--headless", dest="headless", default=False, action='store_true', help="start simulation in headless mode without SUMO GUI")
 
     l_args = l_parser.parse_args()
 
+    # get config
+    l_config = configuration.Configuration(l_args, l_configdir)
+
     # raise exception if gui mode requested with > 1 run
-    if not l_args.headless and l_args.runs > 1:
+    if not l_config.get("simulation").get("headless") and l_config.get("simulation").get("runs") > 1:
         message = "Number of runs can't exceed 1, if run in GUI mode."
         raise argparse.ArgumentTypeError(message)
 
     # raise exception if headless mode requested  AND number of parking spaces < vehicles
     # in the static case this produces an endless loop of at least one vehicle searching for a free space.
     # In Gui mode this behavior is acceptable
-    if l_args.headless and l_args.parkingspaces < l_args.psv:
+    if l_config.get("simulation").get("headless") and l_config.get("simulation").get("parkingspaces") < l_config.get("simulation").get("vehicles"):
         message = "Number of parking spaces must be at least equal to number of vehicles, if run in headless mode."
         raise argparse.ArgumentTypeError(message)
 
     # raise an exception if provided basedir does not exist
-    if l_args.resourcedir and not os.path.isdir(l_args.resourcedir):
+    if not os.path.isdir(l_config.get("simulation").get("resourcedir")):
         message = "The provided directory {} does not exist for argument --resourcedir".format(l_args.resourcedir)
         raise argparse.ArgumentTypeError(message)
-
-
-
-    l_config = configuration.Configuration(l_args, l_configdir)
-
-    print(l_config.get("simulation"))
-
 
 
     l_resultSum = 0
