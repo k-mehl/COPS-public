@@ -108,7 +108,7 @@ class Runtime(object):
             # representation
             l_departedVehicles = traci.simulation.getDepartedIDList()
             l_parkingSearchVehicles.extend(map(
-                    lambda vehID: ParkingSearchVehicle( vehID, self._environment, self._config.get("simulation").get("coopratio"), step,
+                    lambda vehID: ParkingSearchVehicle( vehID, self._environment, self._config, step,
                                                         self._environment._net.getEdge(l_individualRoutes[vehID][-1]).getToNode().getID(),
                                                         l_cooperativeRoutes[vehID], l_individualRoutes[vehID] ),
                     l_departedVehicles
@@ -216,17 +216,17 @@ class Runtime(object):
 
         #calculate cost
         if psv._driverCooperates:
-            cost = DISTANCE_WEIGHT_COOP * \
+            cost = self._config.get("vehicle").get("coop").get("distance") * \
                    self._environment._roadNetwork["edges"][edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
-            + selfVisitCount*SELFVISIT_WEIGHT_COOP\
-            + externalVisitCount * EXTERNALVISIT_WEIGHT_COOP\
-            + externalPlannedCount * EXTERNALPLANNED_WEIGHT_COOP
+            + selfVisitCount*self._config.get("vehicle").get("coop").get("selfvisit")\
+            + externalVisitCount * self._config.get("vehicle").get("coop").get("externalvisit")\
+            + externalPlannedCount * self._config.get("vehicle").get("coop").get("externalplanned")
         else:
-            cost = DISTANCE_WEIGHT_NONCOOP * \
+            cost = self._config.get("vehicle").get("noncoop").get("distance") * \
                    self._environment._roadNetwork["edges"][edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
-            + selfVisitCount*SELFVISIT_WEIGHT_NONCOOP\
-            + externalVisitCount * EXTERNALVISIT_WEIGHT_NONCOOP\
-            + externalPlannedCount * EXTERNALPLANNED_WEIGHT_NONCOOP
+            + selfVisitCount*self._config.get("vehicle").get("noncoop").get("selfvisit")\
+            + externalVisitCount * self._config.get("vehicle").get("noncoop").get("externalvisit")\
+            + externalPlannedCount * self._config.get("vehicle").get("noncoop").get("externalplanned")
         return cost
 
     ## Convert a route given as sequence of node indices into the corresponding

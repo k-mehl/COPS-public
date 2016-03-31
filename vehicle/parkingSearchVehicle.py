@@ -19,10 +19,12 @@ class ParkingSearchVehicle(object):
     #  @param p_name Corresponds to the vehicle ID obtained from the route XML file
     #  @param p_coopRatio The fraction of cooperative drivers
     #  @param p_timestep For memorizing the simulation time when a vehicle is created
-    def __init__(self, p_name, p_environment, p_coopRatio=0.0, p_timestep=-1001, p_destinationNodeID="", p_cooperativeRoute=[], p_individualRoute=[]):
+    def __init__(self, p_name, p_environment, p_config, p_timestep=-1001, p_destinationNodeID="", p_cooperativeRoute=[], p_individualRoute=[]):
         self._name = p_name
         self._environment = p_environment
         self._speed = 0.0
+        self._config = p_config
+
         # allow for differentiation between searching and non-searching vehicles
         self._isSearchingVehicle = "veh" in self._name
 
@@ -31,7 +33,7 @@ class ParkingSearchVehicle(object):
         self._activity = state.CRUISING
 
         # set individual preference for cooperation
-        self._driverCooperates = random.random() <= p_coopRatio
+        self._driverCooperates = random.random() <= self._config.get("simulation").get("cooperation")
 
         # information about relevant simulation times; -1001 seems to be used
         # for unset values in SUMO examples
@@ -129,7 +131,7 @@ class ParkingSearchVehicle(object):
             self._timeBeginSearch = self._timestep
             self._activity = state.SEARCHING
             # reduce _speed for searching
-            traci.vehicle.setMaxSpeed(self._name, MAXSPEED_PHASE2)
+            traci.vehicle.setMaxSpeed(self._name, self._config.get("vehicle").get("speed").get("phase2"))
             # set the vehicle color to yellow in the SUMO GUI
             traci.vehicle.setColor(self._name,(255,255,0,0))
 
@@ -153,7 +155,7 @@ class ParkingSearchVehicle(object):
         # twelve seconds after beginning to maneuver into a parking space,
         # 'jump' off the road and release queueing traffic
         if (self._activity == state.MANEUVERING_TO_PARK and (self._timestep >
-                                                                 (self._timeBeginManeuvering + PARKING_EVENT_DURATION))):
+                (self._timeBeginManeuvering + self._config.get("vehicle").get("parking").get("duration")))):
 
             return self._park()
 
@@ -221,9 +223,9 @@ class ParkingSearchVehicle(object):
                     # (otherwise SUMO will create an error)
                     # - within a distance of max. 30 meters in front of the
                     # vehicle
-                    if ((parkingSpace.position-self._currentLanePosition >MIN_DISTANCE_TO_PARKING)
+                    if ((parkingSpace.position-self._currentLanePosition > self._config.get("vehicle").get("parking").get("distance").get("min"))
                         and (parkingSpace.position-self._currentLanePosition
-                                 <MAX_DISTANCE_TO_PARKING)):
+                                 < self._config.get("vehicle").get("parking").get("distance").get("max"))):
                         # found parking space is assigned to this vehicle
                         # (from now, parking space is no longer available to
                         # other vehicles)
@@ -247,7 +249,7 @@ class ParkingSearchVehicle(object):
                     if (parkingSpace.position <
                                 self._currentLaneLength-self._currentLanePosition):
                         if (parkingSpace.position > \
-                                        self._currentLaneLength-(self._currentLanePosition+MAX_DISTANCE_TO_PARKING)):
+                                        self._currentLaneLength-(self._currentLanePosition+self._config.get("vehicle").get("parking").get("distance").get("max"))):
                             # if an opposite parking space has been found,
                             # insert a loop to the active route (just once back
                             # and forth)
