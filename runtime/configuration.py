@@ -52,14 +52,13 @@ class Configuration(object):
         if not os.path.isdir(p_configdir):
             os.mkdir(p_configdir)
 
-        print("check whether " +p_args.config + " exists")
+        print("* checking whether {} exists".format(p_args.config))
         if not os.path.isfile(p_args.config):
-            print("create new config")
             self._configuration = jsoncfg.loads_config((json.dumps(self._defaultconfig)))()
             self._writeDefault(p_args.config)
         else:
-            print("load existing config " + p_args.config)
             self._configuration = jsoncfg.load_config(p_args.config)()
+            print("* loaded existing config {}".format(p_args.config))
 
         self._overrideConfig(p_args)
 
@@ -75,8 +74,9 @@ class Configuration(object):
         fp = open(p_location, mode="w")
         json.dump(self._defaultconfig, fp, sort_keys=True, indent=4, separators=(',', ' : '))
         fp.close()
+        print("* wrote new default config to {}".format(p_location))
 
-    ## override values with provided argparse parameters
+## override values with provided argparse parameters
     # @p_args argparse object
     def _overrideConfig(self, p_args):
         if p_args.parkingspaces:
