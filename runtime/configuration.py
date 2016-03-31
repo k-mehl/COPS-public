@@ -27,7 +27,7 @@ class Configuration(object):
           },
           "duration" : 12.0,
       },
-      "speed" : {
+      "maxspeed" : {
           "phase1" : 27.778,
           "phase2" : 8.333,
           "phase3" : 8.333,
