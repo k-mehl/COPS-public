@@ -6,47 +6,48 @@ class Configuration(object):
 
     def __init__(self, p_args, p_configdir):
 
-        self._defaultjson = u"""
-{
-  "simulation" : {
-      "routefile" : "reroute.rou.xml",
-      "resourcedir" : "resources",
-      "sumoport" : 8873,
-      "headless" : true,
-      "runs" : 10,
-      "parkingspaces" : 5,
-      "vehicles" : 5,
-      "cooperation" : 0.0,
-      "fixedseed" : 1,
-  },
-  "vehicle" : {
-      "parking" : {
-          "distance" : {
-              "min" : 12.0,
-              "max" : 30.0,
+        self._defaultconfig = {
+          "simulation" : {
+              "routefile" : "reroute.rou.xml",
+              "resourcedir" : "resources",
+              "sumoport" : 8873,
+              "headless" : True,
+              "runs" : 10,
+              "parkingspaces" : 5,
+              "vehicles" : 5,
+              "cooperation" : 0.0,
+              "fixedseed" : 1,
           },
-          "duration" : 12.0,
-      },
-      "maxspeed" : {
-          "phase1" : 27.778,
-          "phase2" : 8.333,
-          "phase3" : 8.333,
-      },
-      "coop" : {
-          "distance" : 1,
-          "selfvisit" : 2000,
-          "externalvisit" : 2000,
-          "externalplanned" : 100,
-      },
-      "noncoop" : {
-          "distance" : 1,
-          "selfvisit" : 2000,
-          "externalvisit" : 0,
-          "externalplanned" : 0,
-      },
-  },
-}
-        """
+          "vehicle" : {
+              "parking" : {
+                  "distance" : {
+                      "min" : 12.0,
+                      "max" : 30.0,
+                  },
+                  "duration" : 12.0,
+              },
+              "maxspeed" : {
+                  "phase1" : 27.778,
+                  "phase2" : 8.333,
+                  "phase3" : 8.333,
+              },
+              "weights" : {
+                  "coop" : {
+                      "distance" : 1,
+                      "selfvisit" : 2000,
+                      "externalvisit" : 2000,
+                      "externalplanned" : 100,
+                  },
+                  "noncoop" : {
+                      "distance" : 1,
+                      "selfvisit" : 2000,
+                      "externalvisit" : 0,
+                      "externalplanned" : 0,
+                  },
+              },
+          },
+        }
+
         # create fresh config.jason and dir if not exists
         if not os.path.isdir(p_configdir):
             os.mkdir(p_configdir)
@@ -54,7 +55,7 @@ class Configuration(object):
         print("check whether " +p_args.config + " exists")
         if not os.path.isfile(p_args.config):
             print("create new config")
-            self._configuration = jsoncfg.loads_config(self._defaultjson)()
+            self._configuration = jsoncfg.loads_config((json.dumps(self._defaultconfig)))()
             self._writeDefault(p_args.config)
         else:
             print("load existing config " + p_args.config)
@@ -67,12 +68,12 @@ class Configuration(object):
 
     def write(self, p_location):
         fp = open(p_location, mode="w")
-        json.dump(self._configuration, fp, sort_keys=True, indent=4, separators=(',', ': '))
+        json.dump(self._configuration, fp, sort_keys=True, indent=4, separators=(',', ' : '))
         fp.close()
 
     def _writeDefault(self, p_location):
         fp = open(p_location, mode="w")
-        json.dump(jsoncfg.loads_config(self._defaultjson)(), fp, sort_keys=True, indent=4, separators=(',', ': '))
+        json.dump(self._defaultconfig, fp, sort_keys=True, indent=4, separators=(',', ' : '))
         fp.close()
 
     ## override values with provided argparse parameters
@@ -90,5 +91,10 @@ class Configuration(object):
             self._configuration["simulation"]["resourcedir"] = p_args.resourcedir
         if p_args.runs:
             self._configuration["simulation"]["runs"] = p_args.runs
-        self._configuration["simulation"]["headless"] = p_args.headless
+        if p_args.headless:
+            self._configuration["simulation"]["headless"] = True
+        if p_args.gui:
+            self._configuration["simulation"]["headless"] = False
+
+
 
