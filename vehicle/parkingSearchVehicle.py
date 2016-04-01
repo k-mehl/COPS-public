@@ -179,7 +179,7 @@ class ParkingSearchVehicle(object):
     def _search(self):
         # if parking space is found ahead on current edge, change vehicle
         # status accordingly
-        if ((self._timestep >= self._timeBeginSearch+1) and
+        if ((self._timestep >= self._timeBeginSearch) and
                     self._currentEdgeID in self._environment._roadNetwork["edges"] and
                 self.lookoutForParkingSpace(self._environment._roadNetwork["edges"][self._currentEdgeID]["parkingSpaces"])):
             self._activity = state.FOUND_PARKING_SPACE
@@ -217,8 +217,18 @@ class ParkingSearchVehicle(object):
 
         self._activity = state.PARKED
 
+        l_destCoords = self._environment._net.getNode(self._destinationNodeID).getCoord()
+       	l_vehicleCoords = traci.simulation.convert2D(self._currentEdgeID, self._currentLanePosition)
+        
+        if "entry" in self._destinationEdgeID:
+        	l_distanceRoad  = traci.simulation.getDistanceRoad(self._destinationEdgeID, self._environment._roadNetwork["edges"][self._destinationEdgeID]["length"], self._currentEdgeID, self._currentLanePosition, True)
+        else:
+        	l_distanceRoad = traci.simulation.getDistanceRoad(self._currentEdgeID, self._currentLanePosition, self._destinationEdgeID, self._environment._roadNetwork["edges"][self._destinationEdgeID]["length"], True)
+        
+        l_walkingDistance = l_distanceRoad
+        
         return [self._name, (self._timeParked -
-                             self._timeBeginSearch), traci.vehicle.getDistance(self._name)]
+                             self._timeBeginSearch), traci.vehicle.getDistance(self._name), l_walkingDistance]
 
 
     ## Lookout for available parking spaces by checking vehicle position
