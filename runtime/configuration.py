@@ -26,7 +26,6 @@ class Configuration(object):
               },
               "vehicles" : 5,
               "cooperation" : 0.0,
-              "fixedseed" : 1,
           },
           "vehicle" : {
               "parking" : {
