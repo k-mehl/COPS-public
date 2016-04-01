@@ -37,6 +37,10 @@ if __name__ == "__main__":
     # get config
     l_config = configuration.Configuration(l_args, l_configdir)
 
+    print("* pre-testing runcfg for all runs")
+    if l_config.existRunCfg() and len(filter(lambda i_run: not l_config.isRunCfgOk(i_run), xrange(l_config.getCfg("simulation").get("runs")))) > 0:
+        raise StandardError("/!\ error(s) in run configuration")
+    print("  passed.")
 
     l_resultSum = 0
 
@@ -46,10 +50,10 @@ if __name__ == "__main__":
     l_walkingDistancesSum= 0.0
     l_totalDistancesSum  = 0.0
 
-    l_numParkingSpaces = l_config.get("simulation").get("parkingspaces")
-    l_numVehicles = l_config.get("simulation").get("vehicles")
-    l_numCooperation = l_config.get("simulation").get("cooperation")
-    l_numRuns = l_config.get("simulation").get("runs")
+    l_numParkingSpaces = l_config.getCfg("simulation").get("parkingspaces")
+    l_numVehicles = l_config.getCfg("simulation").get("vehicles")
+    l_numCooperation = l_config.getCfg("simulation").get("cooperation")
+    l_numRuns = l_config.getCfg("simulation").get("runs")
 
     l_runtime = runner.Runtime(l_config)
 
@@ -75,12 +79,9 @@ if __name__ == "__main__":
 
     rf = open(os.path.join(l_mainresultdir, l_resultdir, l_resultfile), 'w')
 
-    print("* pre-testing runcfg for all runs")
-    if l_config.existRunCfg() and len(filter(lambda i_run: not l_config.isRunCfgOk(i_run), xrange(l_config.getCfg("simulation").get("runs")))) > 0:
-        raise StandardError("/!\ error(s) in run configuration")
 
-    for i_run in xrange(l_config.get("simulation").get("runs")):
-        print("RUN:", i_run+1, "OF", l_config.get("simulation").get("runs"))
+    for i_run in xrange(l_config.getCfg("simulation").get("runs")):
+        print("RUN:", i_run+1, "OF", l_config.getCfg("simulation").get("runs"))
         l_successes, l_searchTimes, l_searchDistances, l_walkingDistances = l_runtime.run(i_run)
         for i_result in range(len(l_searchTimes)):
             print
@@ -100,7 +101,7 @@ if __name__ == "__main__":
     
     sf = open(os.path.join(l_mainresultdir, l_resultdir, l_summaryfile), 'w')
 
-    l_successRate = 100*l_successesSum/(l_config.get("simulation").get("runs")*l_config.get("simulation").get("vehicles"))
+    l_successRate = 100*l_successesSum/(l_config.getCfg("simulation").get("runs")*l_config.getCfg("simulation").get("vehicles"))
 
     sf.write("")
     sf.write("==== SUMMARY AFTER " + str(l_numRuns) + " RUNS ====\n")
