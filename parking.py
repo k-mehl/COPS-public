@@ -23,7 +23,8 @@ if __name__ == "__main__":
     l_parser.add_argument("--load-route-file", dest="routefile", type=str, help="provide a route file (SUMO xml format), overrides use of auto-generated routes")
     l_parser.add_argument("--resourcedir", dest="resourcedir", type=str, help="base directory, relative to current working directory, for reading/writing temporary and SUMO related files (default: resources)")
     l_parser.add_argument("-r","--runs", dest="runs", type=int, help="number of iterations to run")
-    l_parser.add_argument("--fixedseed", dest="fixedseed", type = int, help="flag whether random number generator get run number as fixed seed")
+    l_parser.add_argument("--fixedseed", dest="fixedseed", type=int, help="flag whether random number generator get run number as fixed seed")
+    l_parser.add_argument("--runconfig", dest="runconfiguration", type=str, help="json configuration file containing environment information for each run")
 
     # if display GUI, restrict to one run (implies --run 1)
     # for more than one run, disallow use of --gui
@@ -45,20 +46,26 @@ if __name__ == "__main__":
 
     l_runtime = runner.Runtime(l_config)
 
-    for i_run in xrange(l_config.get("simulation").get("runs")):
-        print("RUN:", i_run+1, "OF", l_config.get("simulation").get("runs"))
+    print("* pre-testing runcfg for all runs")
+    if len(filter(lambda i_run: not l_config.isRunCfgOk(i_run), xrange(l_config.getCfg("simulation").get("runs")))) > 0:
+        raise StandardError("/!\ error(s) in run configuration")
+    else:
+        print("  success!")
+
+    for i_run in xrange(l_config.getCfg("simulation").get("runs")):
+        print("RUN:", i_run+1, "OF", l_config.getCfg("simulation").get("runs"))
         l_successes, l_searchTimes, l_searchDistances = l_runtime.run(i_run)
 
         l_successesSum += l_successes
         l_searchTimesSum += sum(l_searchTimes) #/ float(len(searchTimes))
         l_searchDistancesSum += sum(l_searchDistances) #/ float(len(searchDistances))
 
-    l_successRate = 100*l_successesSum/(l_config.get("simulation").get("runs")*l_config.get("simulation").get("vehicles"))
+    l_successRate = 100*l_successesSum/(l_config.getCfg("simulation").get("runs")*l_config.getCfg("simulation").get("vehicles"))
     print("")
-    print("==== SUMMARY AFTER", l_config.get("simulation").get("runs"), "RUNS ====")
-    print("PARAMETERS:        ", l_config.get("simulation").get("parkingspaces"), "parking spaces")
-    print("                   ", l_config.get("simulation").get("vehicles"), "searching vehicles")
-    print("                   ", l_config.get("simulation").get("cooperation")*100, "percent of drivers cooperate")
+    print("==== SUMMARY AFTER", l_config.getCfg("simulation").get("runs"), "RUNS ====")
+    print("PARAMETERS:        ", l_config.getCfg("simulation").get("parkingspaces").get("free"), "free parking spaces")
+    print("                   ", l_config.getCfg("simulation").get("vehicles"), "searching vehicles")
+    print("                   ", l_config.getCfg("simulation").get("cooperation")*100, "percent of drivers cooperate")
     print("TOTAL SUCCESS RATE:", l_successRate, "percent",
         "of cars found an available parking space")
     print("")
@@ -70,3 +77,5 @@ if __name__ == "__main__":
         print("AVG SEARCH DISTANCE", l_searchDistancesAvg, "meters")
     print("")
 
+    # write run cfg
+    l_config.writeRunCfg()

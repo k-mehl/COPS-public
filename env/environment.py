@@ -18,8 +18,8 @@ class Environment(object):
         self._roadNetwork["nodes"] = {}
         self._roadNetwork["edges"] = {}
 
-        self._nodes = map(lambda x: str(x.id), sumolib.output.parse(os.path.join(self._config.get("simulation").get("resourcedir"), 'reroute.nod.xml'), ['node']))
-        self._edges = map(lambda x: str(x.id), sumolib.output.parse(os.path.join(self._config.get("simulation").get("resourcedir"), 'reroute.edg.xml'), ['edge']))
+        self._nodes = map(lambda x: str(x.id), sumolib.output.parse(os.path.join(self._config.getCfg("simulation").get("resourcedir"), 'reroute.nod.xml'), ['node']))
+        self._edges = map(lambda x: str(x.id), sumolib.output.parse(os.path.join(self._config.getCfg("simulation").get("resourcedir"), 'reroute.edg.xml'), ['edge']))
 
         for node in self._nodes:
             self._roadNetwork["nodes"][node] = {}
@@ -29,7 +29,7 @@ class Environment(object):
         self._numberOfNodesinNetwork = len(self._nodes)
         self._numberOfEdgesinNetwork = len(self._edges)
 
-        self._net = sumolib.net.readNet(os.path.join(self._config.get("simulation").get("resourcedir"), 'reroute.net.xml'))
+        self._net = sumolib.net.readNet(os.path.join(self._config.getCfg("simulation").get("resourcedir"), 'reroute.net.xml'))
 
         self._convertNodeIDtoNodeIndex = {}
         self._convertNodeIndexToNodeID = {}
@@ -95,8 +95,23 @@ class Environment(object):
             else:
                 self._roadNetwork["edges"][edge]["oppositeEdgeID"] = []
 
-        
-    def initParkingSpaces(self):
+
+    def loadParkingSpaces(self, p_run):
+
+        self._parkingSpaceNumber = self._config.getCfg("simulation").get("parkingspaces").get("free")
+
+        l_cfgparkingspaces = self._config.getRunCfg(str(p_run)).get("parkingspaces")
+        self._allParkingSpaces = map(lambda (k,v): ParkingSpace(v.get("name"),
+                                                         v.get("edgeID"),
+                                                         v.get("position"),
+                                                         available=v.get("available")),
+                              l_cfgparkingspaces.items())
+
+        for edge in self._edges:
+            self._roadNetwork["edges"][edge]["parkingSpaces"] = filter(lambda p: p.edgeID == edge, self._allParkingSpaces)
+
+
+    def initParkingSpaces(self, p_run):
         for edge in self._edges:
             #self._roadNetwork["edges"][edge]["visitCount"] = 0
             self._roadNetwork["edges"][edge]["parkingSpaces"] = []
@@ -133,10 +148,10 @@ class Environment(object):
 
         # mark a number parking spaces as available as specified per command line
         # argument
-        for i in xrange(0, self._config.get("simulation").get("parkingspaces")):
+        for i in xrange(0, self._config.getCfg("simulation").get("parkingspaces").get("free")):
             # check whether we still have enough parking spaces to make available
-            if self._config.get("simulation").get("parkingspaces") > self._parkingSpaceNumber:
-                print("Too many parking spaces for network.")
+            if self._config.getCfg("simulation").get("parkingspaces").get("free") > self._parkingSpaceNumber:
+                print("Too free many parking spaces for network.")
                 #exit() #TODO remove this exit, wtf?! Btw, this error handling should probably occur _before_ running the simulation!
             # select a random parking space which is not yet available, and make it
             # available
@@ -147,3 +162,6 @@ class Environment(object):
                     success = True
             # make sure the available parking space is not assigned to any vehicle
             self._allParkingSpaces[availableParkingSpaceID].unassign()
+
+        # update parking spaces in run configuration
+        self._config.updateRunCfgParkingspaces(p_run, self._allParkingSpaces)

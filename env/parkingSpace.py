@@ -8,10 +8,10 @@ class ParkingSpace(object):
     #  @param edgeID Specifies the edge on which the parking space is located
     #  @param position Specifies the position of the parking space on the edge
     #                  [meters]
-    def __init__(self, name, edgeID, position):
+    def __init__(self, name, edgeID, position, available=False):
         self.name = name
         # parking space is not available by default
-        self.available = False
+        self.available = available
         self.edgeID = edgeID
         self.position = position
         # parking space is not assigned to any vehicle by default
