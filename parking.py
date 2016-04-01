@@ -3,6 +3,7 @@ from __future__ import print_function
 
 import argparse
 import os
+import time
 
 from runtime import runner
 from runtime import configuration
@@ -42,37 +43,81 @@ if __name__ == "__main__":
     l_successesSum       = 0
     l_searchTimesSum     = 0
     l_searchDistancesSum = 0.0
+    l_walkingDistancesSum= 0.0
+    l_totalDistancesSum  = 0.0
+
+    l_numParkingSpaces = l_config.get("simulation").get("parkingspaces")
+    l_numVehicles = l_config.get("simulation").get("vehicles")
+    l_numCooperation = l_config.get("simulation").get("cooperation")
+    l_numRuns = l_config.get("simulation").get("runs")
 
     l_runtime = runner.Runtime(l_config)
+
+    l_mainresultdir = "results"
+
+    if not os.path.isdir(l_mainresultdir):
+            os.mkdir(l_mainresultdir)
+
+    l_resultdir = time.strftime("%Y%m%d%H%M%S")
+
+    if not os.path.isdir((os.path.join(l_mainresultdir, l_resultdir))):
+            os.mkdir((os.path.join(l_mainresultdir, l_resultdir)))
+
+    l_resultfile = "details-s" + str(l_numVehicles) + \
+        "p" + str(l_numParkingSpaces) + \
+        "c" + str(int(l_numCooperation*100)) + \
+        "r" + str(l_numRuns) + ".csv"
+
+    l_summaryfile= "summary-s" + str(l_numVehicles) + \
+        "p" + str(l_numParkingSpaces) + \
+        "c" + str(int(l_numCooperation*100)) + \
+        "r" + str(l_numRuns) + ".txt"
+
+    rf = open(os.path.join(l_mainresultdir, l_resultdir, l_resultfile), 'w')
 
     print("* pre-testing runcfg for all runs")
     if l_config.existRunCfg() and len(filter(lambda i_run: not l_config.isRunCfgOk(i_run), xrange(l_config.getCfg("simulation").get("runs")))) > 0:
         raise StandardError("/!\ error(s) in run configuration")
 
-    for i_run in xrange(l_config.getCfg("simulation").get("runs")):
-        print("RUN:", i_run+1, "OF", l_config.getCfg("simulation").get("runs"))
-        l_successes, l_searchTimes, l_searchDistances = l_runtime.run(i_run)
-
+    for i_run in xrange(l_config.get("simulation").get("runs")):
+        print("RUN:", i_run+1, "OF", l_config.get("simulation").get("runs"))
+        l_successes, l_searchTimes, l_searchDistances, l_walkingDistances = l_runtime.run(i_run)
+        for i_result in range(len(l_searchTimes)):
+            print
+            rf.write(str(l_numVehicles) + ",")
+            rf.write(str(l_numParkingSpaces) + ",")
+            rf.write(str(l_numCooperation) + ",")
+            rf.write(str(l_searchTimes[i_result]) + ",")
+            rf.write(str(l_searchDistances[i_result]) + ",")
+            rf.write(str(l_walkingDistances[i_result]) + ",")
+            rf.write(str((l_searchDistances[i_result]+l_walkingDistances[i_result])) + "\n")
         l_successesSum += l_successes
         l_searchTimesSum += sum(l_searchTimes) #/ float(len(searchTimes))
         l_searchDistancesSum += sum(l_searchDistances) #/ float(len(searchDistances))
+        l_walkingDistancesSum += sum(l_walkingDistances)
+        l_totalDistancesSum += (sum(l_searchDistances)+sum(l_walkingDistances))
+    rf.close()
+    
+    sf = open(os.path.join(l_mainresultdir, l_resultdir, l_summaryfile), 'w')
 
-    l_successRate = 100*l_successesSum/(l_config.getCfg("simulation").get("runs")*l_config.getCfg("simulation").get("vehicles"))
-    print("")
-    print("==== SUMMARY AFTER", l_config.getCfg("simulation").get("runs"), "RUNS ====")
-    print("PARAMETERS:        ", l_config.getCfg("simulation").get("parkingspaces").get("free"), "free parking spaces")
-    print("                   ", l_config.getCfg("simulation").get("vehicles"), "searching vehicles")
-    print("                   ", l_config.getCfg("simulation").get("cooperation")*100, "percent of drivers cooperate")
-    print("TOTAL SUCCESS RATE:", l_successRate, "percent",
-        "of cars found an available parking space")
-    print("")
+    l_successRate = 100*l_successesSum/(l_config.get("simulation").get("runs")*l_config.get("simulation").get("vehicles"))
 
+    sf.write("")
+    sf.write("==== SUMMARY AFTER " + str(l_numRuns) + " RUNS ====\n")
+    sf.write("PARAMETERS:          " + str(l_numVehicles) + " vehicles\n")
+    sf.write("                     " + str(l_numParkingSpaces) + " parking spaces\n")
+    sf.write("                     " + str(int(l_numCooperation*100)) + " percent of drivers cooperate\n")
     if l_successesSum:
         l_searchTimesAvg = l_searchTimesSum / float(l_successesSum)
         l_searchDistancesAvg = l_searchDistancesSum / float(l_successesSum)
-        print("AVG SEARCH TIME    ", l_searchTimesAvg, "seconds")
-        print("AVG SEARCH DISTANCE", l_searchDistancesAvg, "meters")
-    print("")
+        l_walkingDistancesAvg = l_walkingDistancesSum / float(l_successesSum)
+        l_totalDistancesAvg = l_totalDistancesSum / float(l_successesSum)
+        sf.write("AVG SEARCH TIME      " + str(l_searchTimesAvg) + " seconds\n")
+        sf.write("AVG SEARCH DISTANCE  " + str(l_searchDistancesAvg) + " meters\n")
+        sf.write("AVG WALKING DISTANCE " + str(l_walkingDistancesAvg) + " meters\n")
+        sf.write("AVG TOTAL DISTANCE   " + str(l_totalDistancesAvg) + " meters\n")
+    
+    sf.close()
 
     # write run cfg
     l_config.writeRunCfg()

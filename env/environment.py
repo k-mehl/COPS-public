@@ -129,7 +129,7 @@ class Environment(object):
             #     first parking space if it is available)
             length = self._roadNetwork["edges"][edge]["length"]
             if length > 40.0:
-                position = 18.0
+                position = 20.0
                 # as long as there are more than 10 meters left on the edge, add
                 # another parking space
                 while position < (length-10.0):

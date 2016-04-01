@@ -88,6 +88,7 @@ class Runtime(object):
         # create lists for search time and distance results
         searchTimes = []
         searchDistances = []
+        walkingDistances = []
 
         self.initPOI()
         self.updatePOIColors()
@@ -153,6 +154,7 @@ class Runtime(object):
                 if result:
                     searchTimes.append(result[1])
                     searchDistances.append(result[2])
+                    walkingDistances.append(result[3])
                 else:
                     # if the vehicle is on the last route segment,
                     # choose one of the possible next edges to continue
@@ -201,7 +203,7 @@ class Runtime(object):
         l_sumoProcess.wait()
 
         # Return results
-        return self.getNumberOfParkedVehicles(l_parkingSearchVehicles), searchTimes, searchDistances
+        return self.getNumberOfParkedVehicles(l_parkingSearchVehicles), searchTimes, searchDistances, walkingDistances
 
     ## Calculate cost for an edge for a specific search vehicle
     #  @param psv parking search vehicle
