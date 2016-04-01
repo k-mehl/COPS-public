@@ -44,6 +44,7 @@ if __name__ == "__main__":
     l_searchTimesSum     = 0
     l_searchDistancesSum = 0.0
     l_walkingDistancesSum= 0.0
+    l_totalDistancesSum  = 0.0
 
     l_numParkingSpaces = l_config.get("simulation").get("parkingspaces")
     l_numVehicles = l_config.get("simulation").get("vehicles")
@@ -70,7 +71,7 @@ if __name__ == "__main__":
     l_summaryfile= "summary-s" + str(l_numVehicles) + \
         "p" + str(l_numParkingSpaces) + \
         "c" + str(int(l_numCooperation*100)) + \
-        "r" + str(l_numRuns) + ".csv"
+        "r" + str(l_numRuns) + ".txt"
 
     rf = open(os.path.join(l_mainresultdir, l_resultdir, l_resultfile), 'w')
     
@@ -84,11 +85,13 @@ if __name__ == "__main__":
             rf.write(str(l_numCooperation) + ",")
             rf.write(str(l_searchTimes[i_result]) + ",")
             rf.write(str(l_searchDistances[i_result]) + ",")
-            rf.write(str(l_walkingDistances[i_result]) + "\n")
+            rf.write(str(l_walkingDistances[i_result]) + ",")
+            rf.write(str((l_searchDistances[i_result]+l_walkingDistances[i_result])) + "\n")
         l_successesSum += l_successes
         l_searchTimesSum += sum(l_searchTimes) #/ float(len(searchTimes))
         l_searchDistancesSum += sum(l_searchDistances) #/ float(len(searchDistances))
         l_walkingDistancesSum += sum(l_walkingDistances)
+        l_totalDistancesSum += (sum(l_searchDistances)+sum(l_walkingDistances))
     rf.close()
     
     sf = open(os.path.join(l_mainresultdir, l_resultdir, l_summaryfile), 'w')
@@ -104,9 +107,11 @@ if __name__ == "__main__":
         l_searchTimesAvg = l_searchTimesSum / float(l_successesSum)
         l_searchDistancesAvg = l_searchDistancesSum / float(l_successesSum)
         l_walkingDistancesAvg = l_walkingDistancesSum / float(l_successesSum)
+        l_totalDistancesAvg = l_totalDistancesSum / float(l_successesSum)
         sf.write("AVG SEARCH TIME      " + str(l_searchTimesAvg) + " seconds\n")
         sf.write("AVG SEARCH DISTANCE  " + str(l_searchDistancesAvg) + " meters\n")
         sf.write("AVG WALKING DISTANCE " + str(l_walkingDistancesAvg) + " meters\n")
+        sf.write("AVG TOTAL DISTANCE   " + str(l_totalDistancesAvg) + " meters\n")
     
     sf.close()
 
@@ -126,5 +131,6 @@ if __name__ == "__main__":
         print("AVG SEARCH TIME     ", l_searchTimesAvg, "seconds")
         print("AVG SEARCH DISTANCE ", l_searchDistancesAvg, "meters")
         print("AVG WALKING DISTANCE", l_walkingDistancesAvg, "meters")
+        print("AVG TOTAL DISTANCE  ", l_totalDistancesAvg, "meters")
     print("")
 
