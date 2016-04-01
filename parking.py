@@ -47,10 +47,8 @@ if __name__ == "__main__":
     l_runtime = runner.Runtime(l_config)
 
     print("* pre-testing runcfg for all runs")
-    if len(filter(lambda i_run: not l_config.isRunCfgOk(i_run), xrange(l_config.getCfg("simulation").get("runs")))) > 0:
+    if l_config.existRunCfg() and len(filter(lambda i_run: not l_config.isRunCfgOk(i_run), xrange(l_config.getCfg("simulation").get("runs")))) > 0:
         raise StandardError("/!\ error(s) in run configuration")
-    else:
-        print("  success!")
 
     for i_run in xrange(l_config.getCfg("simulation").get("runs")):
         print("RUN:", i_run+1, "OF", l_config.getCfg("simulation").get("runs"))
