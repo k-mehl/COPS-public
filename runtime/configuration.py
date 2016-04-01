@@ -144,6 +144,9 @@ class Configuration(object):
             message = "The provided directory {} does not exist for argument --resourcedir".format(self._configuration.get("simulation").get("resourcedir"))
             raise StandardError(message)
 
+    def existRunCfg(self):
+        return len(self._runconfiguration) > 0
+
     def isRunCfgOk(self, p_runid):
         # phase 1: check if runcfg for given runid exists
         if not self._runconfiguration.get(str(p_runid)):
