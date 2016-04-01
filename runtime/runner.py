@@ -42,11 +42,6 @@ class Runtime(object):
 
     ## Runs the simulation on both SUMO and Python layers
     def run(self, i_run):
-        # seed for random number generator, random for now
-        if self._config.getCfg("simulation").get("fixedseed") == 1:
-            random.seed(i_run)
-        else:
-            random.seed()
 
         # if there is a run configuration loaded use it to populate parkingspaces in environment otherwise initialize new
         if not self._config.getRunCfg(str(i_run)):

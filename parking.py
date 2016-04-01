@@ -23,7 +23,6 @@ if __name__ == "__main__":
     l_parser.add_argument("--load-route-file", dest="routefile", type=str, help="provide a route file (SUMO xml format), overrides use of auto-generated routes")
     l_parser.add_argument("--resourcedir", dest="resourcedir", type=str, help="base directory, relative to current working directory, for reading/writing temporary and SUMO related files (default: resources)")
     l_parser.add_argument("-r","--runs", dest="runs", type=int, help="number of iterations to run")
-    l_parser.add_argument("--fixedseed", dest="fixedseed", type=int, help="flag whether random number generator get run number as fixed seed")
     l_parser.add_argument("--runconfig", dest="runconfiguration", type=str, help="json configuration file containing environment information for each run")
 
     # if display GUI, restrict to one run (implies --run 1)
