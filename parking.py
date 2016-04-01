@@ -43,6 +43,7 @@ if __name__ == "__main__":
     l_successesSum       = 0
     l_searchTimesSum     = 0
     l_searchDistancesSum = 0.0
+    l_walkingDistancesSum= 0.0
 
     l_numParkingSpaces = l_config.get("simulation").get("parkingspaces")
     l_numVehicles = l_config.get("simulation").get("vehicles")
@@ -75,18 +76,19 @@ if __name__ == "__main__":
     
     for i_run in xrange(l_config.get("simulation").get("runs")):
         print("RUN:", i_run+1, "OF", l_config.get("simulation").get("runs"))
-        l_successes, l_searchTimes, l_searchDistances = l_runtime.run(i_run)
+        l_successes, l_searchTimes, l_searchDistances, l_walkingDistances = l_runtime.run(i_run)
         for i_result in range(len(l_searchTimes)):
             print
             rf.write(str(l_numVehicles) + ",")
             rf.write(str(l_numParkingSpaces) + ",")
             rf.write(str(l_numCooperation) + ",")
             rf.write(str(l_searchTimes[i_result]) + ",")
-            rf.write(str(l_searchDistances[i_result]) + "\n")
+            rf.write(str(l_searchDistances[i_result]) + ",")
+            rf.write(str(l_walkingDistances[i_result]) + "\n")
         l_successesSum += l_successes
         l_searchTimesSum += sum(l_searchTimes) #/ float(len(searchTimes))
         l_searchDistancesSum += sum(l_searchDistances) #/ float(len(searchDistances))
-
+        l_walkingDistancesSum += sum(l_walkingDistances)
     rf.close()
     
     sf = open(os.path.join(l_mainresultdir, l_resultdir, l_summaryfile), 'w')
@@ -95,31 +97,34 @@ if __name__ == "__main__":
 
     sf.write("")
     sf.write("==== SUMMARY AFTER " + str(l_numRuns) + " RUNS ====\n")
-    sf.write("PARAMETERS:         " + str(l_numVehicles) + " vehicles\n")
-    sf.write("                    " + str(l_numParkingSpaces) + " parking spaces\n")
-    sf.write("                    " + str(int(l_numCooperation)) + " percent of drivers cooperate\n")
+    sf.write("PARAMETERS:          " + str(l_numVehicles) + " vehicles\n")
+    sf.write("                     " + str(l_numParkingSpaces) + " parking spaces\n")
+    sf.write("                     " + str(int(l_numCooperation*100)) + " percent of drivers cooperate\n")
     if l_successesSum:
         l_searchTimesAvg = l_searchTimesSum / float(l_successesSum)
         l_searchDistancesAvg = l_searchDistancesSum / float(l_successesSum)
-        sf.write("AVG SEARCH TIME     " + str(l_searchTimesAvg) + " seconds\n")
-        sf.write("AVG SEARCH DISTANCE " + str(l_searchDistancesAvg) + " meters\n")
+        l_walkingDistancesAvg = l_walkingDistancesSum / float(l_successesSum)
+        sf.write("AVG SEARCH TIME      " + str(l_searchTimesAvg) + " seconds\n")
+        sf.write("AVG SEARCH DISTANCE  " + str(l_searchDistancesAvg) + " meters\n")
+        sf.write("AVG WALKING DISTANCE " + str(l_walkingDistancesAvg) + " meters\n")
     
     sf.close()
 
     print("")
 
     print("==== SUMMARY AFTER", l_config.get("simulation").get("runs"), "RUNS ====")
-    print("PARAMETERS:        ", l_config.get("simulation").get("parkingspaces"), "parking spaces")
-    print("                   ", l_config.get("simulation").get("vehicles"), "searching vehicles")
-    print("                   ", l_config.get("simulation").get("cooperation")*100, "percent of drivers cooperate")
-    print("TOTAL SUCCESS RATE:", l_successRate, "percent",
+    print("PARAMETERS:         ", l_config.get("simulation").get("parkingspaces"), "parking spaces")
+    print("                    ", l_config.get("simulation").get("vehicles"), "searching vehicles")
+    print("                    ", l_config.get("simulation").get("cooperation")*100, "percent of drivers cooperate")
+    print("TOTAL SUCCESS RATE: ", l_successRate, "percent",
         "of cars found an available parking space")
     print("")
 
     if l_successesSum:
         l_searchTimesAvg = l_searchTimesSum / float(l_successesSum)
         l_searchDistancesAvg = l_searchDistancesSum / float(l_successesSum)
-        print("AVG SEARCH TIME    ", l_searchTimesAvg, "seconds")
-        print("AVG SEARCH DISTANCE", l_searchDistancesAvg, "meters")
+        print("AVG SEARCH TIME     ", l_searchTimesAvg, "seconds")
+        print("AVG SEARCH DISTANCE ", l_searchDistancesAvg, "meters")
+        print("AVG WALKING DISTANCE", l_walkingDistancesAvg, "meters")
     print("")
 

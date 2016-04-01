@@ -202,9 +202,17 @@ class ParkingSearchVehicle(object):
               traci.vehicle.getDistance(self._name), "meters.")
 
         self._activity = state.PARKED
-
+        l_destCoords = self._environment._net.getNode(self._destinationNodeID).getCoord()
+       	l_vehicleCoords = traci.simulation.convert2D(self._currentEdgeID, self._currentLanePosition)
+        l_distanceRoad = traci.simulation.getDistanceRoad(self._currentEdgeID, self._currentLanePosition, self._destinationEdgeID, self._environment._roadNetwork["edges"][self._destinationEdgeID]["length"], True)
+        l_distanceAir = traci.simulation.getDistanceRoad(self._currentEdgeID, self._currentLanePosition, self._destinationEdgeID, self._environment._roadNetwork["edges"][self._destinationEdgeID]["length"], False)
+        if l_distanceRoad > 1000.0:
+        	l_walkingDistance = l_distanceAir
+        else:
+        	l_walkingDistance = l_distanceRoad
+        
         return [self._name, (self._timeParked -
-                             self._timeBeginSearch), traci.vehicle.getDistance(self._name)]
+                             self._timeBeginSearch), traci.vehicle.getDistance(self._name), l_walkingDistance]
 
 
     ## Lookout for available parking spaces by checking vehicle position
