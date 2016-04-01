@@ -11,7 +11,7 @@
       // if set to number, parking spaces are be selected by random.sample() function.
 
       "parkingspaces" : {
-        "number" : 400,
+        "total" : 400,
         "free" : 5,
       },
       // number of vehicles which look for a parking space
@@ -20,8 +20,6 @@
       // ratio of cooperation among vehicles. cooperative vehicles are selected by random.sample( population, k ),
       // where population is a set of $vehicle elements and k = int(round($vehicles * $cooperation))
       "cooperation" : 0.0,
-
-      "fixedseed" : 1,
   },
 
   "vehicle" : {
