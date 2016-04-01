@@ -165,7 +165,7 @@ class ParkingSearchVehicle(object):
     def _search(self):
         # if parking space is found ahead on current edge, change vehicle
         # status accordingly
-        if ((self._timestep >= self._timeBeginSearch+1) and
+        if ((self._timestep >= self._timeBeginSearch) and
                     self._currentEdgeID in self._environment._roadNetwork["edges"] and
                 self.lookoutForParkingSpace(self._environment._roadNetwork["edges"][self._currentEdgeID]["parkingSpaces"])):
             self._activity = state.FOUND_PARKING_SPACE
