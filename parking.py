@@ -102,7 +102,8 @@ if __name__ == "__main__":
         l_searchDistancesSum += sum(l_searchDistances) #/ float(len(searchDistances))
         l_walkingDistancesSum += sum(l_walkingDistances)
         l_totalDistancesSum += (sum(l_searchDistances)+sum(l_walkingDistances))
-        l_config.writeRunCfg()
+
+
     rf.close()
     
     sf = open(os.path.join(l_mainresultdir, l_resultdir, l_summaryfile), 'w')
@@ -126,5 +127,4 @@ if __name__ == "__main__":
     
     sf.close()
 
-    # write run cfg
-    l_config.writeRunCfg()
+

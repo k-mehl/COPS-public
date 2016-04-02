@@ -45,7 +45,11 @@ class Runtime(object):
 
         # if there is a run configuration loaded use it to populate parkingspaces in environment otherwise initialize new
         if not self._config.getRunCfg(str(i_run)):
+            print("* no run cfg found. Initializing random parking spaces.")
             self._environment.initParkingSpaces(i_run)
+            # write run cfg
+            self._config.writeRunCfg()
+
         elif self._config.isRunCfgOk(i_run):
             self._environment.loadParkingSpaces(i_run)
         else:
@@ -279,8 +283,8 @@ class Runtime(object):
     def initPOI(self):
         for ps in self._environment._allParkingSpaces:
             traci.poi.add("ParkingSpace" + str(ps.name),
-                        traci.simulation.convert2D(ps.edgeID,(ps.position-2.0))[0],
-                        traci.simulation.convert2D(ps.edgeID,(ps.position-2.0))[1],
+                        traci.simulation.convert2D(str(ps.edgeID),(ps.position-2.0))[0],
+                        traci.simulation.convert2D(str(ps.edgeID),(ps.position-2.0))[1],
                         (255,0,0,0))
 
 
