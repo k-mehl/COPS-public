@@ -38,9 +38,14 @@ if __name__ == "__main__":
     l_config = configuration.Configuration(l_args, l_configdir)
 
     print("* pre-testing runcfg for all runs")
-    if l_config.existRunCfg() and len(filter(lambda i_run: not l_config.isRunCfgOk(i_run), xrange(l_config.getCfg("simulation").get("runs")))) > 0:
-        raise StandardError("/!\ error(s) in run configuration")
-    print("  passed.")
+    if l_config.existRunCfg():
+        if len(filter(lambda i_run: not l_config.isRunCfgOk(i_run), xrange(l_config.getCfg("simulation").get("runs")))) > 0:
+            raise StandardError("/!\ error(s) in run configuration")
+        else:
+            print("  passed.")
+    else:
+        print("  no runcfg found/loaded.")
+
 
     l_resultSum = 0
 
@@ -81,7 +86,7 @@ if __name__ == "__main__":
 
 
     for i_run in xrange(l_config.getCfg("simulation").get("runs")):
-        print("RUN:", i_run+1, "OF", l_config.getCfg("simulation").get("runs"))
+        print("RUN:", i_run, "OF", l_config.getCfg("simulation").get("runs")-1)
         l_successes, l_searchTimes, l_searchDistances, l_walkingDistances = l_runtime.run(i_run)
         for i_result in range(len(l_searchTimes)):
             print
@@ -97,6 +102,7 @@ if __name__ == "__main__":
         l_searchDistancesSum += sum(l_searchDistances) #/ float(len(searchDistances))
         l_walkingDistancesSum += sum(l_walkingDistances)
         l_totalDistancesSum += (sum(l_searchDistances)+sum(l_walkingDistances))
+        l_config.writeRunCfg()
     rf.close()
     
     sf = open(os.path.join(l_mainresultdir, l_resultdir, l_summaryfile), 'w')
