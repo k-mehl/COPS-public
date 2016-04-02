@@ -18,7 +18,7 @@ class Configuration(object):
               "sumoport" : 8873,
               "headless" : True,
               "runs" : 10,
-              "runconfiguration" : "config.run.jason",
+              "runconfiguration" : "config.runs.json.gz",
               "parkingspaces" : {
                   "total" : 400,
                   "free" : 5,
