@@ -113,10 +113,14 @@ class Runtime(object):
             # if a new vehicle has departed in SUMO, create the corresponding Python
             # representation
             l_departedVehicles = traci.simulation.getDepartedIDList()
+
+            # get individual vehicle preferences from run config if present, otherwise generate values
+            l_run = str(i_run)
+
             l_parkingSearchVehicles.extend(map(
                     lambda vehID: ParkingSearchVehicle( vehID, self._environment, self._config, i_run, step,
                                                         self._environment._net.getEdge(l_individualRoutes[vehID][-1]).getToNode().getID(),
-                                                        l_cooperativeRoutes[vehID], l_individualRoutes[vehID] ),
+                                                        l_cooperativeRoutes[vehID], l_individualRoutes[vehID]),
                     l_departedVehicles
             ))
 

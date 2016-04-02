@@ -194,7 +194,7 @@ class Configuration(object):
         self._writeCfg(self._configuration, self._args.config)
 
     def writeRunCfg(self):
-        self._writeCfg(self._runconfiguration, self._runcfgfilename, p_sort_keys=False, p_indent=None, p_separators=(',',':'))
+        self._writeCfg(self._runconfiguration, self._runcfgfilename, p_sort_keys=True, p_indent=None, p_separators=(',',':'))
 
     def updateRunCfgParkingspaces(self, p_run, p_parkingspaces):
         l_run = str(p_run)
@@ -213,12 +213,11 @@ class Configuration(object):
             self._configuration["simulation"]["parkingspaces"]["total"] = len(p_parkingspaces)
             self.writeCfg()
 
-    def updateRunCfgVehicle(self, p_run, p_vehicle):
+    def updateRunCfgVehicle(self, p_run, p_vcfg):
         l_run = str(p_run)
         if not self._runconfiguration.get(l_run):
             self._runconfiguration[l_run] = {}
         if not self._runconfiguration.get(l_run).get("vehicles"):
             self._runconfiguration.get(l_run)["vehicles"] = {}
-        self._runconfiguration.get(l_run).get("vehicles")[p_vehicle.getVehicleID()] = {
-                "cooperation" : p_vehicle.getCooperation()
-            }
+        self._runconfiguration.get(l_run).get("vehicles")[p_vcfg.get("name")] = p_vcfg
+        self.writeRunCfg()
