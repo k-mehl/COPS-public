@@ -220,4 +220,3 @@ class Configuration(object):
         if not self._runconfiguration.get(l_run).get("vehicles"):
             self._runconfiguration.get(l_run)["vehicles"] = {}
         self._runconfiguration.get(l_run).get("vehicles")[p_vcfg.get("name")] = p_vcfg
-        self.writeRunCfg()
