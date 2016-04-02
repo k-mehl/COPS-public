@@ -24,27 +24,11 @@ class ParkingSearchVehicle(object):
     #  @param p_timestep For memorizing the simulation time when a vehicle is created
     def __init__(self, p_name, p_environment, p_config, p_run, p_timestep=-1001, p_destinationNodeID="", p_cooperativeRoute=[], p_individualRoute=[]):
 
-        self._name = p_name
         self._environment = p_environment
-        self._speed = 0.0
         self._config = p_config
 
-        # allow for differentiation between searching and non-searching vehicles
-        self._isSearchingVehicle = "veh" in self._name
-
-        # information about vehicle _activity status, initially vehicle cruises
-        # without searching ("phase 1")
-        self._activity = state.CRUISING
-
-        # set individual preferences from run config if present, otherwise generate values
-        if self._config.getRunCfg(p_run) \
-                and self._config.getRunCfg(p_run).get("vehicles")\
-                and self._config.getRunCfg(p_run).get("vehicles").get(self._name)\
-                and self._config.getRunCfg(p_run).get("vehicles").get(self._name).get("cooperation"):
-            self._driverCooperates = self._config.getRunCfg(p_run).get("vehicles").get(self._name).get("cooperation")
-            print("Vehicle " + self._name + ": using coop parameter from cfg: " + str(self._driverCooperates))
-        else:
-            self._driverCooperates = random.random() <= self._config.getCfg("simulation").get("cooperation")
+        self._name = p_name
+        self._speed = 0.0
 
         # information about relevant simulation times; -1001 seems to be used
         # for unset values in SUMO examples
@@ -63,15 +47,42 @@ class ParkingSearchVehicle(object):
         self._currentLaneLength = -1001.0
         self._currentLanePosition = -1001.0
         self._currentOppositeEdgeID = ""
-        # information about the vehicle route
 
         self._destinationNodeID = p_destinationNodeID
+        self._cooperativeRoute = p_cooperativeRoute
+        self._individualRoute = p_individualRoute
+
+        # information about the vehicle
+        l_vcfg = {}
+        if self._config.getRunCfg(str(p_run)) != None and self._config.getRunCfg(str(p_run)).get("vehicles") != None:
+            l_vcfg = self._config.getRunCfg(str(p_run)).get("vehicles").get(self._name)
+
+        if not l_vcfg or len(l_vcfg) == 0:
+            self._driverCooperates = random.random() <= self._config.getCfg("simulation").get("cooperation")
+            # information about vehicle _activity status, initially vehicle cruises
+            # without searching ("phase 1")
+            self._activity = state.CRUISING
+            # allow for differentiation between searching and non-searching vehicles
+            self._isSearchingVehicle = "veh" in self._name
+
+            # update vehicle in run cfg
+            l_initialvcfg = {
+                "name" : self._name,
+                "isSearchingVehicle" : self._isSearchingVehicle,
+                "activity" : self._activity,
+                "cooperation" : self._driverCooperates,
+            }
+            self._config.updateRunCfgVehicle(p_run, l_initialvcfg)
+
+        else:
+            self._driverCooperates = l_vcfg.get("cooperation")
+            self._activity = l_vcfg.get("activity")
+            self._isSearchingVehicle = l_vcfg.get("isSearchingVehicle")
+
         self._currentRoute = []
         self._currentRouteIndex = -1
         self._activeRoute = []
         self._traversedRoute = []
-        self._cooperativeRoute = p_cooperativeRoute
-        self._individualRoute = p_individualRoute
         if self._driverCooperates:
             traci.vehicle.setRoute(self._name, self._cooperativeRoute)
             self._destinationEdgeID = self._cooperativeRoute[-1]
@@ -79,8 +90,7 @@ class ParkingSearchVehicle(object):
             traci.vehicle.setRoute(self._name, self._individualRoute)
             self._destinationEdgeID = self._individualRoute[-1]
 
-        # update vehicle in run cfg
-        self._config.updateRunCfgVehicle(p_run, self)
+
 
 
     ## Check for equivalence by name attribute
