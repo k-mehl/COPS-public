@@ -1,5 +1,4 @@
 import json
-import jsoncfg
 import os
 import random
 import gzip
@@ -69,10 +68,11 @@ class Configuration(object):
 
         print("* checking whether {} exists".format(p_args.config))
         if not os.path.isfile(p_args.config):
-            self._configuration = jsoncfg.loads_config((json.dumps(self._defaultconfig)))()
+            self._configuration = json.loads(json.dumps(self._defaultconfig))
             self._writeCfg(self._configuration, p_args.config)
         else:
-            self._configuration = jsoncfg.load_config(p_args.config)()
+            fp = open(p_args.config, 'r')
+            self._configuration = json.load(fp)
             print("* loaded existing config {}".format(p_args.config))
 
         self._overrideConfig(p_args)
@@ -91,13 +91,13 @@ class Configuration(object):
     def getRunCfg(self, p_key):
         return self._runconfiguration.get(p_key)
 
-    def _writeCfg(self, p_config, p_location):
+    def _writeCfg(self, p_config, p_location, p_sort_keys=True, p_indent=4, p_separators=(',', ' : ')):
         if p_location.endswith(".gz"):
             fp = gzip.GzipFile(p_location, 'w')
         else:
             fp = open(p_location, mode="w")
 
-        json.dump(p_config, fp, sort_keys=True, indent=4, separators=(',', ' : '))
+        json.dump(p_config, fp, sort_keys=p_sort_keys, indent=p_indent, separators=p_separators)
         fp.close()
         print("* wrote new config to {}".format(p_location))
 
@@ -174,6 +174,7 @@ class Configuration(object):
         return True
 
     def _readRunCfg(self, p_args):
+        print("* reading run cfg {}".format(self._runcfgfilename))
         if not os.path.isfile(self._runcfgfilename):
             return {}
 
@@ -182,7 +183,7 @@ class Configuration(object):
         else:
             fp = open(self._runcfgfilename, mode="r")
 
-        l_runcfg = jsoncfg.load_config(fp)()
+        l_runcfg = json.load(fp)
 
         fp.close()
 
@@ -193,7 +194,7 @@ class Configuration(object):
         self._writeCfg(self._configuration, self._args.config)
 
     def writeRunCfg(self):
-        self._writeCfg(self._runconfiguration, self._runcfgfilename)
+        self._writeCfg(self._runconfiguration, self._runcfgfilename, p_sort_keys=False, p_indent=None, p_separators=(',',':'))
 
     def updateRunCfgParkingspaces(self, p_run, p_parkingspaces):
         l_run = str(p_run)

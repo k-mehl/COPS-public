@@ -97,7 +97,7 @@ class Environment(object):
 
 
     def loadParkingSpaces(self, p_run):
-
+        print("* loading parking spaces from run cfg")
         self._parkingSpaceNumber = self._config.getCfg("simulation").get("parkingspaces").get("free")
 
         l_cfgparkingspaces = self._config.getRunCfg(str(p_run)).get("parkingspaces")
@@ -109,7 +109,7 @@ class Environment(object):
 
         for edge in self._edges:
             self._roadNetwork["edges"][edge]["parkingSpaces"] = filter(lambda p: p.edgeID == edge, self._allParkingSpaces)
-
+        print("  done.")
 
     def initParkingSpaces(self, p_run):
         for edge in self._edges:
