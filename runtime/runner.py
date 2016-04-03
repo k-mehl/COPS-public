@@ -47,8 +47,6 @@ class Runtime(object):
         if not self._config.getRunCfg(str(i_run)):
             print("* no run cfg found. Initializing random parking spaces.")
             self._environment.initParkingSpaces(i_run)
-            # write run cfg
-            self._config.writeRunCfg()
 
         elif self._config.isRunCfgOk(i_run):
             self._environment.loadParkingSpaces(i_run)

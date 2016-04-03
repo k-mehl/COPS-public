@@ -105,7 +105,10 @@ if __name__ == "__main__":
 
 
     rf.close()
-    
+
+    # write run cfg
+    l_config.writeRunCfg()
+
     sf = open(os.path.join(l_mainresultdir, l_resultdir, l_summaryfile), 'w')
 
     l_successRate = 100*l_successesSum/(l_config.getCfg("simulation").get("runs")*l_config.getCfg("simulation").get("vehicles"))
