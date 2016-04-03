@@ -123,8 +123,9 @@ if __name__ == "__main__":
     rf.close()
     cf.close()
 
-    # write run cfg
-    l_config.writeRunCfg()
+    # write run cfg - make sure not to overwrite an existing one
+    if not l_config.existRunCfg():
+        l_config.writeRunCfg()
 
 
     sf = open(os.path.join(l_mainresultdir, l_resultdir, l_summaryfile), 'w')
