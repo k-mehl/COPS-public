@@ -109,7 +109,7 @@ class Environment(object):
 
         for edge in self._edges:
             self._roadNetwork["edges"][edge]["parkingSpaces"] = filter(lambda p: p.edgeID == edge, self._allParkingSpaces)
-        print("  done.")
+        print("  -> done.")
 
     def initParkingSpaces(self, p_run):
         for edge in self._edges:

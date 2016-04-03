@@ -1,6 +1,6 @@
+from __future__ import print_function
 import json
 import os
-import random
 import gzip
 
 # todo: add run configuration, i.e. occupancy of parking spaces.
@@ -99,8 +99,6 @@ class Configuration(object):
 
         json.dump(p_config, fp, sort_keys=p_sort_keys, indent=p_indent, separators=p_separators)
         fp.close()
-        print("* wrote new config to {}".format(p_location))
-
 
     ## override values with provided argparse parameters
     # @p_args argparse object
@@ -191,12 +189,14 @@ class Configuration(object):
 
 
     def writeCfg(self):
+        print("* writing configuration to {}".format(self._args.config))
         self._writeCfg(self._configuration, self._args.config)
+        print("  -> done.")
 
     def writeRunCfg(self):
         print("* writing run configuration to {}".format(self._runcfgfilename))
         self._writeCfg(self._runconfiguration, self._runcfgfilename, p_sort_keys=True, p_indent=None, p_separators=(',',':'))
-        print("  done.")
+        print("  -> done.")
 
     def updateRunCfgParkingspaces(self, p_run, p_parkingspaces):
         l_run = str(p_run)
