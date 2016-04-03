@@ -194,7 +194,9 @@ class Configuration(object):
         self._writeCfg(self._configuration, self._args.config)
 
     def writeRunCfg(self):
+        print("* writing run configuration to {}".format(self._runcfgfilename))
         self._writeCfg(self._runconfiguration, self._runcfgfilename, p_sort_keys=True, p_indent=None, p_separators=(',',':'))
+        print("  done.")
 
     def updateRunCfgParkingspaces(self, p_run, p_parkingspaces):
         l_run = str(p_run)
