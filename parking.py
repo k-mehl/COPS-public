@@ -124,7 +124,7 @@ if __name__ == "__main__":
     cf.close()
 
     # write run cfg - make sure not to overwrite an existing one
-    if not l_config.existRunCfg():
+    if not os.path.isfile(l_config.getCfg("simulation").get("runconfiguration")):
         l_config.writeRunCfg()
 
 
