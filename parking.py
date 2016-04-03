@@ -55,7 +55,7 @@ if __name__ == "__main__":
     l_walkingDistancesSum= 0.0
     l_totalDistancesSum  = 0.0
 
-    l_numParkingSpaces = l_config.getCfg("simulation").get("parkingspaces")
+    l_numParkingSpaces = l_config.getCfg("simulation").get("parkingspaces")['free']
     l_numVehicles = l_config.getCfg("simulation").get("vehicles")
     l_numCooperation = l_config.getCfg("simulation").get("cooperation")
     l_numRuns = l_config.getCfg("simulation").get("runs")
@@ -81,12 +81,18 @@ if __name__ == "__main__":
         "p" + str(l_numParkingSpaces) + \
         "c" + str(int(l_numCooperation*100)) + \
         "r" + str(l_numRuns) + ".txt"
+        
+    l_convergencefile="convergence-s" + str(l_numVehicles) + \
+        "p" + str(l_numParkingSpaces) + \
+        "c" + str(int(l_numCooperation*100)) + \
+        "r" + str(l_numRuns) + ".csv"
 
     rf = open(os.path.join(l_mainresultdir, l_resultdir, l_resultfile), 'w')
+    cf = open(os.path.join(l_mainresultdir, l_resultdir, l_convergencefile), 'w')
 
 
     for i_run in xrange(l_config.getCfg("simulation").get("runs")):
-        print("RUN:", i_run, "OF", l_config.getCfg("simulation").get("runs")-1)
+        print("RUN:", i_run+1, "OF", l_config.getCfg("simulation").get("runs"))
         l_successes, l_searchTimes, l_searchDistances, l_walkingDistances = l_runtime.run(i_run)
         for i_result in range(len(l_searchTimes)):
             print
@@ -102,9 +108,20 @@ if __name__ == "__main__":
         l_searchDistancesSum += sum(l_searchDistances) #/ float(len(searchDistances))
         l_walkingDistancesSum += sum(l_walkingDistances)
         l_totalDistancesSum += (sum(l_searchDistances)+sum(l_walkingDistances))
+        
+        l_searchTimesAvg = l_searchTimesSum / float(l_successesSum)
+        l_searchDistancesAvg = l_searchDistancesSum / float(l_successesSum)
+        l_walkingDistancesAvg = l_walkingDistancesSum / float(l_successesSum)
+        l_totalDistancesAvg = l_totalDistancesSum / float(l_successesSum)
+        cf.write(str(i_run+1) + ",")
+        cf.write(str(l_searchTimesAvg) + ",")
+        cf.write(str(l_searchDistancesAvg) + ",")
+        cf.write(str(l_walkingDistancesAvg) + ",")
+        cf.write(str(l_totalDistancesAvg) + "\n")
 
 
     rf.close()
+    cf.close()
     
     sf = open(os.path.join(l_mainresultdir, l_resultdir, l_summaryfile), 'w')
 
