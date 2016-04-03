@@ -223,7 +223,7 @@ class ParkingSearchVehicle(object):
         # (at the moment output to console)
         print(self._name, "parked after", (self._timeParked -
                                            self._timeBeginSearch), "seconds,",
-              traci.vehicle.getDistance(self._name), "meters.")
+              traci.vehicle.getDistance(self._name), "meters. Coop?", self._driverCooperates)
 
         self._activity = state.PARKED
 
