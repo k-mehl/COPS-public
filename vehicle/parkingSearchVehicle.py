@@ -75,7 +75,11 @@ class ParkingSearchVehicle(object):
             self._config.updateRunCfgVehicle(p_run, l_initialvcfg)
 
         else:
-            self._driverCooperates = l_vcfg.get("cooperation")
+            # check whether cooperation was enforced via -c flag from cmd line. If so, throw a dice regarding cooperation
+            if self._config.getCfg("simulation").get("forcecooperation") == None:
+                self._driverCooperates = l_vcfg.get("cooperation")
+            else:
+                self._driverCooperates = random.random() <= self._config.getCfg("simulation").get("forcecooperation")
             self._activity = l_vcfg.get("activity")
             self._isSearchingVehicle = l_vcfg.get("isSearchingVehicle")
 

@@ -103,19 +103,19 @@ class Configuration(object):
     ## override values with provided argparse parameters
     # @p_args argparse object
     def _overrideConfig(self, p_args):
-        if p_args.parkingspaces:
+        if p_args.parkingspaces != None:
             self._configuration["simulation"]["parkingspaces"]["free"] = p_args.parkingspaces
-        if p_args.psv:
+        if p_args.psv != None:
             self._configuration["simulation"]["vehicles"] = p_args.psv
-        if p_args.coopratio:
-            self._configuration["simulation"]["cooperation"] = p_args.coopratio
-        if p_args.sumoport:
+        if p_args.coopratio != None:
+            self._configuration["simulation"]["forcecooperation"] = p_args.coopratio
+        if p_args.sumoport != None:
             self._configuration["simulation"]["sumoport"] = p_args.sumoport
-        if p_args.resourcedir:
+        if p_args.resourcedir != None:
             self._configuration["simulation"]["resourcedir"] = p_args.resourcedir
-        if p_args.runs:
+        if p_args.runs != None:
             self._configuration["simulation"]["runs"] = p_args.runs
-        if p_args.runconfiguration:
+        if p_args.runconfiguration != None:
             self._configuration["simulation"]["runconfiguration"] = p_args.runconfiguration
         if p_args.headless:
             self._configuration["simulation"]["headless"] = True

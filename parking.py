@@ -19,10 +19,10 @@ if __name__ == "__main__":
     l_parser.add_argument("--config", dest="config", type=str, default=os.path.join(l_configdir, u"config.json"))
     l_parser.add_argument("-p","--parkingspaces", dest="parkingspaces", type=int, help="number of available parking spaces")
     l_parser.add_argument("-s","--parking-search-vehicles", dest="psv", type=int, help="number of parking search vehicles")
-    l_parser.add_argument("-c","--cooperative-ratio", dest="coopratio", type=float, help="cooperative driver ratio [0,1]")
+    l_parser.add_argument("-c","--cooperative-ratio", dest="coopratio", type=float, help="force cooperative driver ratio to value [0,1]")
     l_parser.add_argument("--port", dest="sumoport", type=int, help="port used for communicating with sumo instance")
     l_parser.add_argument("--load-route-file", dest="routefile", type=str, help="provide a route file (SUMO xml format), overrides use of auto-generated routes")
-    l_parser.add_argument("--resourcedir", dest="resourcedir", type=str, help="base directory, relative to current working directory, for reading/writing temporary and SUMO related files (default: resources)")
+    l_parser.add_argument("--resourcedir", dest="resourcedir", type=str, help="base directory, relative to current working directory, for reading/writing temporary and SUMO related files")
     l_parser.add_argument("-r","--runs", dest="runs", type=int, help="number of iterations to run")
     l_parser.add_argument("--runconfig", dest="runconfiguration", type=str, help="json configuration file containing environment information for each run")
 
