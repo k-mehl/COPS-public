@@ -48,6 +48,10 @@ class ParkingSearchVehicle(object):
         self._currentLanePosition = -1001.0
         self._currentOppositeEdgeID = ""
 
+        # information needed to separate search phases
+        self._currentSearchPhase = 1
+        self._lastEdgeBeforePhase3 = ""
+
         self._destinationNodeID = p_destinationNodeID
         self._cooperativeRoute = p_cooperativeRoute
         self._individualRoute = p_individualRoute
@@ -157,11 +161,18 @@ class ParkingSearchVehicle(object):
         if (self._isSearchingVehicle and self._activity == state.CRUISING and
                     self._currentRouteIndex >= 1):
             self._timeBeginSearch = self._timestep
+            self._currentSearchPhase = 2
             self._activity = state.SEARCHING
             # reduce _speed for searching
             traci.vehicle.setMaxSpeed(self._name, self._config.getCfg("vehicle").get("maxspeed").get("phase2"))
             # set the vehicle color to yellow in the SUMO GUI
             traci.vehicle.setColor(self._name,(255,255,0,0))
+
+        # if the vehicle has reached the last edge before phase 3 should start,
+        # change to phase 3 as soon as the edge ID changes again
+        if self._lastEdgeBeforePhase3 and not self._currentSearchPhase == 3:
+            if not self._currentEdgeID == self._lastEdgeBeforePhase3:
+                self._currentSearchPhase = 3
 
         # search phase 2 (and later also 3)
         if self._activity == state.SEARCHING:
@@ -227,7 +238,8 @@ class ParkingSearchVehicle(object):
         # (at the moment output to console)
         print(self._name, "parked after", (self._timeParked -
                                            self._timeBeginSearch), "seconds,",
-              traci.vehicle.getDistance(self._name), "meters. Coop?", self._driverCooperates)
+              traci.vehicle.getDistance(self._name), "meters. coop?", 
+              self._driverCooperates, ". phase", self._currentSearchPhase)
 
         self._activity = state.PARKED
 
@@ -367,6 +379,8 @@ class ParkingSearchVehicle(object):
     ## Query whether vehicle is on last segment of planned route
     def isOnLastRouteSegment(self):
         if self._currentRouteIndex == len(self._currentRoute)-1:
+            if not self._currentSearchPhase == 3 and not self._lastEdgeBeforePhase3:
+                self._lastEdgeBeforePhase3 = self._currentEdgeID
             return True
         return False
 
