@@ -254,7 +254,7 @@ class ParkingSearchVehicle(object):
         l_walkingDistance = l_distanceRoad
         
         return [self._name, (self._timeParked -
-                             self._timeBeginSearch), traci.vehicle.getDistance(self._name), l_walkingDistance]
+                             self._timeBeginSearch), traci.vehicle.getDistance(self._name), l_walkingDistance, self._currentSearchPhase]
 
 
     ## Lookout for available parking spaces by checking vehicle position
