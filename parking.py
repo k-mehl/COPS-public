@@ -54,6 +54,8 @@ if __name__ == "__main__":
     l_searchDistancesSum = 0.0
     l_walkingDistancesSum= 0.0
     l_totalDistancesSum  = 0.0
+    l_parkedInPhase2Sum  = 0
+    l_parkedInPhase3Sum  = 0
 
     l_numParkingSpaces = l_config.getCfg("simulation").get("parkingspaces")['free']
     l_numVehicles = l_config.getCfg("simulation").get("vehicles")
@@ -88,21 +90,26 @@ if __name__ == "__main__":
         "r" + str(l_numRuns) + ".csv"
 
     rf = open(os.path.join(l_mainresultdir, l_resultdir, l_resultfile), 'w')
+    rf.write("numVeh,numParkSp,coop,searchTime,searchDist,walkDist,totalDist,phase\n")
     cf = open(os.path.join(l_mainresultdir, l_resultdir, l_convergencefile), 'w')
-
+    cf.write("run,avgSearchTime,avgSearchDist,avgWalkDist,avgTotalDist,avgParkPhase2\n")
 
     for i_run in xrange(l_config.getCfg("simulation").get("runs")):
         print("RUN:", i_run+1, "OF", l_config.getCfg("simulation").get("runs"))
-        l_successes, l_searchTimes, l_searchDistances, l_walkingDistances = l_runtime.run(i_run)
+        l_successes, l_searchTimes, l_searchDistances, l_walkingDistances, l_searchPhases = l_runtime.run(i_run)
         for i_result in range(len(l_searchTimes)):
-            print
             rf.write(str(l_numVehicles) + ",")
             rf.write(str(l_numParkingSpaces) + ",")
             rf.write(str(l_numCooperation) + ",")
             rf.write(str(l_searchTimes[i_result]) + ",")
             rf.write(str(l_searchDistances[i_result]) + ",")
             rf.write(str(l_walkingDistances[i_result]) + ",")
-            rf.write(str((l_searchDistances[i_result]+l_walkingDistances[i_result])) + "\n")
+            rf.write(str((l_searchDistances[i_result]+l_walkingDistances[i_result])) + ",")
+            rf.write(str(l_searchPhases[i_result] ) + "\n")
+            if l_searchPhases[i_result] == 2:
+            	l_parkedInPhase2Sum += 1
+            elif l_searchPhases[i_result] == 3:
+            	l_parkedInPhase3Sum += 1
         l_successesSum += l_successes
         l_searchTimesSum += sum(l_searchTimes) #/ float(len(searchTimes))
         l_searchDistancesSum += sum(l_searchDistances) #/ float(len(searchDistances))
@@ -113,11 +120,15 @@ if __name__ == "__main__":
         l_searchDistancesAvg = l_searchDistancesSum / float(l_successesSum)
         l_walkingDistancesAvg = l_walkingDistancesSum / float(l_successesSum)
         l_totalDistancesAvg = l_totalDistancesSum / float(l_successesSum)
+        l_parkedInPhase2Rate = l_parkedInPhase2Sum / float(l_successesSum)
+        l_parkedInPhase3Rate = l_parkedInPhase3Sum / float(l_successesSum)
+
         cf.write(str(i_run+1) + ",")
         cf.write(str(l_searchTimesAvg) + ",")
         cf.write(str(l_searchDistancesAvg) + ",")
         cf.write(str(l_walkingDistancesAvg) + ",")
-        cf.write(str(l_totalDistancesAvg) + "\n")
+        cf.write(str(l_totalDistancesAvg) + ",")
+        cf.write(str(l_parkedInPhase2Rate*100) + "\n")
 
 
     rf.close()
@@ -142,10 +153,14 @@ if __name__ == "__main__":
         l_searchDistancesAvg = l_searchDistancesSum / float(l_successesSum)
         l_walkingDistancesAvg = l_walkingDistancesSum / float(l_successesSum)
         l_totalDistancesAvg = l_totalDistancesSum / float(l_successesSum)
+        l_parkedInPhase2Rate = l_parkedInPhase2Sum / float(l_successesSum)
+        l_parkedInPhase3Rate = l_parkedInPhase3Sum / float(l_successesSum)
         sf.write("AVG SEARCH TIME      " + str(l_searchTimesAvg) + " seconds\n")
         sf.write("AVG SEARCH DISTANCE  " + str(l_searchDistancesAvg) + " meters\n")
         sf.write("AVG WALKING DISTANCE " + str(l_walkingDistancesAvg) + " meters\n")
         sf.write("AVG TOTAL DISTANCE   " + str(l_totalDistancesAvg) + " meters\n")
+        sf.write("PARKED IN PHASE 2    " + str(l_parkedInPhase2Sum) + " vehicles (" + str(l_parkedInPhase2Rate*100) + ") percent\n")
+        sf.write("PARKED IN PHASE 3    " + str(l_parkedInPhase3Sum) + " vehicles (" + str(l_parkedInPhase3Rate*100) + ") percent\n")
     
     sf.close()
 
