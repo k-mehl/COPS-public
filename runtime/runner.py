@@ -226,7 +226,7 @@ class Runtime(object):
         externalPlannedCount = sum(self._environment._roadNetwork["edges"][edge.getID()]["plannedCount"].values())
 
         #calculate cost
-        if psv._driverCooperates:
+        if psv._driverCooperatesPhase3:
             cost = self._config.getCfg("vehicle").get("weights").get("coop").get("distance") * \
                    self._environment._roadNetwork["edges"][edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
             + selfVisitCount*self._config.getCfg("vehicle").get("weights").get("coop").get("selfvisit")\

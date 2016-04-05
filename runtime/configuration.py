@@ -24,7 +24,8 @@ class Configuration(object):
                   "free" : 5,
               },
               "vehicles" : 5,
-              "cooperation" : 0.0,
+              "coopratioPhase2": 0.0,
+              "coopratioPhase3": 0.0,
           },
           "vehicle" : {
               "parking" : {
@@ -107,8 +108,10 @@ class Configuration(object):
             self._configuration["simulation"]["parkingspaces"]["free"] = p_args.parkingspaces
         if p_args.psv != None:
             self._configuration["simulation"]["vehicles"] = p_args.psv
-        if p_args.coopratio != None:
-            self._configuration["simulation"]["forcecooperation"] = p_args.coopratio
+        if p_args.coopratioPhase2 != None:
+            self._configuration["simulation"]["forcecooperationphasetwo"] = p_args.coopratioPhase2
+        if p_args.coopratioPhase3 != None:
+            self._configuration["simulation"]["forcecooperationphasethree"] = p_args.coopratioPhase3
         if p_args.sumoport != None:
             self._configuration["simulation"]["sumoport"] = p_args.sumoport
         if p_args.resourcedir != None:
