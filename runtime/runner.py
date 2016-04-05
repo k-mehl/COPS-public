@@ -56,11 +56,11 @@ class Runtime(object):
         # if --routefile flag is provided, use the file for routing,
         # otherwise generate (and overwrite if exists) route file (reroute.rou.xml) for this simulation run
         # using the given number of parking search vehicles
-        if self._config.getCfg("simulation").get("routefile") == "reroute.rou.xml":
-            self._routefile = "reroute.rou.xml"
-            generatePsvDemand(self._config.getCfg("simulation").get("vehicles"), self._config.getCfg("simulation").get("resourcedir"), self._routefile)
+        if os.path.isfile(os.path.join(self._config.getCfg("simulation").get("resourcedir"), self._config.getCfg("simulation").get("routefile"))) and not self._config.getCfg("simulation").get("routefile") == "reroute.rou.xml":
+            self._routefile = self._config.getCfg("simulation").get("routefile")
         else:
             self._routefile = self._config.getCfg("simulation").get("routefile")
+            generatePsvDemand(self._config.getCfg("simulation").get("vehicles"), self._config.getCfg("simulation").get("resourcedir"), self._routefile)
 
         # this is the normal way of using traci. sumo is started as a
         # subprocess and then the python script connects and runs
