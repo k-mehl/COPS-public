@@ -62,7 +62,8 @@ class ParkingSearchVehicle(object):
             l_vcfg = self._config.getRunCfg(str(p_run)).get("vehicles").get(self._name)
 
         if not l_vcfg or len(l_vcfg) == 0:
-            self._driverCooperates = random.random() <= self._config.getCfg("simulation").get("cooperation")
+            self._driverCooperatesPhase2 = random.random() <= self._config.getCfg("simulation").get("coopratioPhase2")
+            self._driverCooperatesPhase3 = random.random() <= self._config.getCfg("simulation").get("coopratioPhase3")
             # information about vehicle _activity status, initially vehicle cruises
             # without searching ("phase 1")
             self._activity = state.CRUISING
@@ -74,16 +75,21 @@ class ParkingSearchVehicle(object):
                 "name" : self._name,
                 "isSearchingVehicle" : self._isSearchingVehicle,
                 "activity" : self._activity,
-                "cooperation" : self._driverCooperates,
+                "coopPhase2" : self._driverCooperatesPhase2,
+                "coopPhase3" : self._driverCooperatesPhase3,
             }
             self._config.updateRunCfgVehicle(p_run, l_initialvcfg)
 
         else:
             # check whether cooperation was enforced via -c flag from cmd line. If so, throw a dice regarding cooperation
-            if self._config.getCfg("simulation").get("forcecooperation") == None:
-                self._driverCooperates = l_vcfg.get("cooperation")
+            if self._config.getCfg("simulation").get("forcecooperationphasetwo") == None:
+                self._driverCooperatesPhase2 = l_vcfg.get("coopPhase2")
             else:
-                self._driverCooperates = random.random() <= self._config.getCfg("simulation").get("forcecooperation")
+                self._driverCooperatesPhase2 = random.random() <= self._config.getCfg("simulation").get("forcecooperationphasetwo")
+            if self._config.getCfg("simulation").get("forcecooperationphasethree") == None:
+                self._driverCooperatesPhase3 = l_vcfg.get("coopPhase3")
+            else:
+                self._driverCooperatesPhase3 = random.random() <= self._config.getCfg("simulation").get("forcecooperationphasethree")
             self._activity = l_vcfg.get("activity")
             self._isSearchingVehicle = l_vcfg.get("isSearchingVehicle")
 
@@ -91,7 +97,7 @@ class ParkingSearchVehicle(object):
         self._currentRouteIndex = -1
         self._activeRoute = []
         self._traversedRoute = []
-        if self._driverCooperates:
+        if self._driverCooperatesPhase2:
             traci.vehicle.setRoute(self._name, self._cooperativeRoute)
             self._destinationEdgeID = self._cooperativeRoute[-1]
         else:
@@ -237,9 +243,9 @@ class ParkingSearchVehicle(object):
         # print statistics of the successfully parked vehicle
         # (at the moment output to console)
         print(self._name, "parked after", (self._timeParked -
-                                           self._timeBeginSearch), "seconds,",
-              traci.vehicle.getDistance(self._name), "meters. coop?", 
-              self._driverCooperates, ". phase", self._currentSearchPhase)
+                                           self._timeBeginSearch), "sec,",
+              traci.vehicle.getDistance(self._name), "m. coop?", 
+              self._driverCooperatesPhase2, "/", self._driverCooperatesPhase3, ". phase", self._currentSearchPhase)
 
         self._activity = state.PARKED
 
@@ -321,7 +327,7 @@ class ParkingSearchVehicle(object):
     #  @param useCoopRouting if true, tell SUMO to set the cooperative routing
     def setCooperativeRoute(self, p_coopRoute):
         self._cooperativeRoute = p_coopRoute
-        if self._driverCooperates:
+        if self._driverCooperatesPhase2:
             traci.vehicle.setRoute(self._name, self._cooperativeRoute)
 
 
@@ -333,7 +339,7 @@ class ParkingSearchVehicle(object):
     #  @param p_indyRoute list with route information (edge IDs)
     def setIndividualRoute(self, p_indyRoute):
         self._individualRoute = p_indyRoute
-        if not self._driverCooperates:
+        if not self._driverCooperatesPhase2:
             traci.vehicle.setRoute(self._name, self._individualRoute)
 
     ## Query whether vehicle has successfully parked
@@ -370,7 +376,7 @@ class ParkingSearchVehicle(object):
         return self._name
 
     def getCooperation(self):
-        return self._driverCooperates
+        return self._driverCooperatesPhase2
 
     def setNextRouteSegment(self, p_edgeID):
         self._activeRoute.append(p_edgeID)

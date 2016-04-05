@@ -19,7 +19,8 @@ if __name__ == "__main__":
     l_parser.add_argument("--config", dest="config", type=str, default=os.path.join(l_configdir, u"config.json"))
     l_parser.add_argument("-p","--parkingspaces", dest="parkingspaces", type=int, help="number of available parking spaces")
     l_parser.add_argument("-s","--parking-search-vehicles", dest="psv", type=int, help="number of parking search vehicles")
-    l_parser.add_argument("-c","--cooperative-ratio", dest="coopratio", type=float, help="force cooperative driver ratio to value [0,1]")
+    l_parser.add_argument("--cooperative-ratio-phase-two", dest="coopratioPhase2", type=float, help="force cooperative driver ratio in phase 2 to value [0,1]")
+    l_parser.add_argument("--cooperative-ratio-phase-three", dest="coopratioPhase3", type=float, help="force cooperative driver ratio in phase 3 to value [0,1]")
     l_parser.add_argument("--port", dest="sumoport", type=int, help="port used for communicating with sumo instance")
     l_parser.add_argument("--load-route-file", dest="routefile", type=str, help="provide a route file (SUMO xml format), overrides use of auto-generated routes")
     l_parser.add_argument("--resourcedir", dest="resourcedir", type=str, help="base directory, relative to current working directory, for reading/writing temporary and SUMO related files")
@@ -59,7 +60,8 @@ if __name__ == "__main__":
 
     l_numParkingSpaces = l_config.getCfg("simulation").get("parkingspaces")['free']
     l_numVehicles = l_config.getCfg("simulation").get("vehicles")
-    l_numCooperation = l_config.getCfg("simulation").get("cooperation")
+    l_numCoopPhase2 = l_config.getCfg("simulation").get("coopratioPhase2")
+    l_numCoopPhase3 = l_config.getCfg("simulation").get("coopratioPhase3")
     l_numRuns = l_config.getCfg("simulation").get("runs")
 
     l_runtime = runner.Runtime(l_config)
@@ -75,22 +77,25 @@ if __name__ == "__main__":
             os.mkdir((os.path.join(l_mainresultdir, l_resultdir)))
 
     l_resultfile = "details-s" + str(l_numVehicles) + \
-        "p" + str(l_numParkingSpaces) + \
-        "c" + str(int(l_numCooperation*100)) + \
-        "r" + str(l_numRuns) + ".csv"
+        "-p" + str(l_numParkingSpaces) + \
+        "-c" + str(int(l_numCoopPhase2*100)) + \
+        "-" + str(int(l_numCoopPhase3*100)) + \
+        "-r" + str(l_numRuns) + ".csv"
 
     l_summaryfile= "summary-s" + str(l_numVehicles) + \
-        "p" + str(l_numParkingSpaces) + \
-        "c" + str(int(l_numCooperation*100)) + \
-        "r" + str(l_numRuns) + ".txt"
+        "-p" + str(l_numParkingSpaces) + \
+        "-c" + str(int(l_numCoopPhase2*100)) + \
+        "-" + str(int(l_numCoopPhase3*100)) + \
+        "-r" + str(l_numRuns) + ".txt"
         
     l_convergencefile="convergence-s" + str(l_numVehicles) + \
-        "p" + str(l_numParkingSpaces) + \
-        "c" + str(int(l_numCooperation*100)) + \
-        "r" + str(l_numRuns) + ".csv"
+        "-p" + str(l_numParkingSpaces) + \
+        "-c" + str(int(l_numCoopPhase2*100)) + \
+        "-" + str(int(l_numCoopPhase3*100)) + \
+        "-r" + str(l_numRuns) + ".csv"
 
     rf = open(os.path.join(l_mainresultdir, l_resultdir, l_resultfile), 'w')
-    rf.write("numVeh,numParkSp,coop,searchTime,searchDist,walkDist,totalDist,phase\n")
+    rf.write("numVeh,numParkSp,coopPhase2,coopPhase3,searchTime,searchDist,walkDist,totalDist,phase\n")
     cf = open(os.path.join(l_mainresultdir, l_resultdir, l_convergencefile), 'w')
     cf.write("run,avgSearchTime,avgSearchDist,avgWalkDist,avgTotalDist,avgParkPhase2\n")
 
@@ -100,7 +105,8 @@ if __name__ == "__main__":
         for i_result in range(len(l_searchTimes)):
             rf.write(str(l_numVehicles) + ",")
             rf.write(str(l_numParkingSpaces) + ",")
-            rf.write(str(l_numCooperation) + ",")
+            rf.write(str(l_numCoopPhase2) + ",")
+            rf.write(str(l_numCoopPhase3) + ",")
             rf.write(str(l_searchTimes[i_result]) + ",")
             rf.write(str(l_searchDistances[i_result]) + ",")
             rf.write(str(l_walkingDistances[i_result]) + ",")
@@ -147,7 +153,8 @@ if __name__ == "__main__":
     sf.write("==== SUMMARY AFTER " + str(l_numRuns) + " RUNS ====\n")
     sf.write("PARAMETERS:          " + str(l_numVehicles) + " vehicles\n")
     sf.write("                     " + str(l_numParkingSpaces) + " parking spaces\n")
-    sf.write("                     " + str(int(l_numCooperation*100)) + " percent of drivers cooperate\n")
+    sf.write("                     " + str(int(l_numCoopPhase2*100)) + " percent of drivers cooperate in phase 2\n")
+    sf.write("                     " + str(int(l_numCoopPhase3*100)) + " percent of drivers cooperate in phase 3\n")
     if l_successesSum:
         l_searchTimesAvg = l_searchTimesSum / float(l_successesSum)
         l_searchDistancesAvg = l_searchDistancesSum / float(l_successesSum)
