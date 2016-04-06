@@ -89,6 +89,7 @@ class Runtime(object):
 
         # create lists for search time and distance results
         searchTimes = []
+        walkingTimes = []
         searchDistances = []
         walkingDistances = []
         searchPhases = []
@@ -160,9 +161,10 @@ class Runtime(object):
                 # a parking space in the last time step
                 if result:
                     searchTimes.append(result[1])
-                    searchDistances.append(result[2])
-                    walkingDistances.append(result[3])
-                    searchPhases.append(result[4])
+                    walkingTimes.append(result[2])
+                    searchDistances.append(result[3])
+                    walkingDistances.append(result[4])
+                    searchPhases.append(result[5])
                 else:
                     # if the vehicle is on the last route segment,
                     # choose one of the possible next edges to continue
@@ -211,7 +213,7 @@ class Runtime(object):
         l_sumoProcess.wait()
 
         # Return results
-        return self.getNumberOfParkedVehicles(l_parkingSearchVehicles), searchTimes, searchDistances, walkingDistances, searchPhases
+        return self.getNumberOfParkedVehicles(l_parkingSearchVehicles), searchTimes, walkingTimes, searchDistances, walkingDistances, searchPhases
 
     ## Calculate cost for an edge for a specific search vehicle
     #  @param psv parking search vehicle

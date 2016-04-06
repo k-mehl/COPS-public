@@ -258,9 +258,10 @@ class ParkingSearchVehicle(object):
         	l_distanceRoad = traci.simulation.getDistanceRoad(self._currentEdgeID, self._currentLanePosition, self._destinationEdgeID, self._environment._roadNetwork["edges"][self._destinationEdgeID]["length"], True)
         
         l_walkingDistance = l_distanceRoad
+        l_walkingTime = l_distanceRoad / 1.111 # assume 4 km/h walking speed
         
         return [self._name, (self._timeParked -
-                             self._timeBeginSearch), traci.vehicle.getDistance(self._name), l_walkingDistance, self._currentSearchPhase]
+                             self._timeBeginSearch), l_walkingTime, traci.vehicle.getDistance(self._name), l_walkingDistance, self._currentSearchPhase]
 
 
     ## Lookout for available parking spaces by checking vehicle position
