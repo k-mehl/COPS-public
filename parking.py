@@ -180,7 +180,11 @@ if __name__ == "__main__":
         sf.write("AVG TOTAL DISTANCE   " + str(l_totalDistancesAvg) + " meters\n")
         sf.write("PARKED IN PHASE 2    " + str(l_parkedInPhase2Sum) + " vehicles (" + str(l_parkedInPhase2Rate*100) + ") percent\n")
         sf.write("PARKED IN PHASE 3    " + str(l_parkedInPhase3Sum) + " vehicles (" + str(l_parkedInPhase3Rate*100) + ") percent\n")
-    
+        sf.write("\n")
+        sf.write("Additional parameter info:\n")
+        sf.write("externalplanned      " + str(l_externalPlanned) + "\n")
+        sf.write("externalvisit        " + str(l_externalVisit) + "\n")
+        sf.write("selfvisit            " + str(l_selfVisit) + "\n")
     sf.close()
 
 
