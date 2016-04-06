@@ -52,6 +52,8 @@ if __name__ == "__main__":
 
     l_successesSum       = 0
     l_searchTimesSum     = 0
+    l_walkingTimesSum    = 0
+    l_totalTimesSum      = 0
     l_searchDistancesSum = 0.0
     l_walkingDistancesSum= 0.0
     l_totalDistancesSum  = 0.0
@@ -107,19 +109,21 @@ if __name__ == "__main__":
         "-sv" + str(l_selfVisit) + ".csv"
 
     rf = open(os.path.join(l_mainresultdir, l_resultdir, l_resultfile), 'w')
-    rf.write("numVeh,numParkSp,coopPhase2,coopPhase3,searchTime,searchDist,walkDist,totalDist,phase\n")
+    rf.write("numVeh,numParkSp,coopPhase2,coopPhase3,searchTime,walkTime,totalTime,searchDist,walkDist,totalDist,phase\n")
     cf = open(os.path.join(l_mainresultdir, l_resultdir, l_convergencefile), 'w')
-    cf.write("run,avgSearchTime,avgSearchDist,avgWalkDist,avgTotalDist,avgParkPhase2\n")
+    cf.write("run,avgSearchTime,avgWalkTime,avgTotalTime,avgSearchDist,avgWalkDist,avgTotalDist,avgParkPhase2\n")
 
     for i_run in xrange(l_config.getCfg("simulation").get("runs")):
         print("RUN:", i_run+1, "OF", l_config.getCfg("simulation").get("runs"))
-        l_successes, l_searchTimes, l_searchDistances, l_walkingDistances, l_searchPhases = l_runtime.run(i_run)
+        l_successes, l_searchTimes, l_walkingTimes, l_searchDistances, l_walkingDistances, l_searchPhases = l_runtime.run(i_run)
         for i_result in range(len(l_searchTimes)):
             rf.write(str(l_numVehicles) + ",")
             rf.write(str(l_numParkingSpaces) + ",")
             rf.write(str(l_numCoopPhase2) + ",")
             rf.write(str(l_numCoopPhase3) + ",")
             rf.write(str(l_searchTimes[i_result]) + ",")
+            rf.write(str(l_walkingTimes[i_result]) + ",")
+            rf.write(str((l_searchTimes[i_result]+l_walkingTimes[i_result])) + ",")
             rf.write(str(l_searchDistances[i_result]) + ",")
             rf.write(str(l_walkingDistances[i_result]) + ",")
             rf.write(str((l_searchDistances[i_result]+l_walkingDistances[i_result])) + ",")
@@ -130,11 +134,15 @@ if __name__ == "__main__":
             	l_parkedInPhase3Sum += 1
         l_successesSum += l_successes
         l_searchTimesSum += sum(l_searchTimes) #/ float(len(searchTimes))
+        l_walkingTimesSum += sum(l_walkingTimes)
+        l_totalTimesSum += sum(l_searchTimes) + sum(l_walkingTimes)
         l_searchDistancesSum += sum(l_searchDistances) #/ float(len(searchDistances))
         l_walkingDistancesSum += sum(l_walkingDistances)
         l_totalDistancesSum += (sum(l_searchDistances)+sum(l_walkingDistances))
         
         l_searchTimesAvg = l_searchTimesSum / float(l_successesSum)
+        l_walkingTimesAvg = l_walkingTimesSum / float(l_successesSum)
+        l_totalTimesAvg = l_totalTimesSum / float(l_successesSum)
         l_searchDistancesAvg = l_searchDistancesSum / float(l_successesSum)
         l_walkingDistancesAvg = l_walkingDistancesSum / float(l_successesSum)
         l_totalDistancesAvg = l_totalDistancesSum / float(l_successesSum)
@@ -143,6 +151,8 @@ if __name__ == "__main__":
 
         cf.write(str(i_run+1) + ",")
         cf.write(str(l_searchTimesAvg) + ",")
+        cf.write(str(l_walkingTimesAvg) + ",")
+        cf.write(str(l_totalTimesAvg) + ",")
         cf.write(str(l_searchDistancesAvg) + ",")
         cf.write(str(l_walkingDistancesAvg) + ",")
         cf.write(str(l_totalDistancesAvg) + ",")
@@ -163,25 +173,29 @@ if __name__ == "__main__":
 
     sf.write("")
     sf.write("==== SUMMARY AFTER " + str(l_numRuns) + " RUNS ====\n")
-    sf.write("PARAMETERS:          " + str(l_numVehicles) + " vehicles\n")
+    sf.write("parameters:          " + str(l_numVehicles) + " vehicles\n")
     sf.write("                     " + str(l_numParkingSpaces) + " parking spaces\n")
     sf.write("                     " + str(int(l_numCoopPhase2*100)) + " percent of drivers cooperate in phase 2\n")
     sf.write("                     " + str(int(l_numCoopPhase3*100)) + " percent of drivers cooperate in phase 3\n")
     if l_successesSum:
         l_searchTimesAvg = l_searchTimesSum / float(l_successesSum)
+        l_walkingTimesAvg = l_walkingTimesSum / float(l_successesSum)
+        l_totalTimesAvg = l_totalTimesSum / float(l_successesSum)
         l_searchDistancesAvg = l_searchDistancesSum / float(l_successesSum)
         l_walkingDistancesAvg = l_walkingDistancesSum / float(l_successesSum)
         l_totalDistancesAvg = l_totalDistancesSum / float(l_successesSum)
         l_parkedInPhase2Rate = l_parkedInPhase2Sum / float(l_successesSum)
         l_parkedInPhase3Rate = l_parkedInPhase3Sum / float(l_successesSum)
-        sf.write("AVG SEARCH TIME      " + str(l_searchTimesAvg) + " seconds\n")
-        sf.write("AVG SEARCH DISTANCE  " + str(l_searchDistancesAvg) + " meters\n")
-        sf.write("AVG WALKING DISTANCE " + str(l_walkingDistancesAvg) + " meters\n")
-        sf.write("AVG TOTAL DISTANCE   " + str(l_totalDistancesAvg) + " meters\n")
-        sf.write("PARKED IN PHASE 2    " + str(l_parkedInPhase2Sum) + " vehicles (" + str(l_parkedInPhase2Rate*100) + ") percent\n")
-        sf.write("PARKED IN PHASE 3    " + str(l_parkedInPhase3Sum) + " vehicles (" + str(l_parkedInPhase3Rate*100) + ") percent\n")
+        sf.write("avg search time      " + str(l_searchTimesAvg) + " seconds\n")
+        sf.write("avg walking time     " + str(l_walkingTimesAvg) + " seconds\n")
+        sf.write("AVG TOTAL TIME       " + str(l_totalTimesAvg) + " SECONDS\n")
+        sf.write("avg search distance  " + str(l_searchDistancesAvg) + " meters\n")
+        sf.write("avg walking distance " + str(l_walkingDistancesAvg) + " meters\n")
+        sf.write("AVG TOTAL DISTANCE   " + str(l_totalDistancesAvg) + " METERS\n")
+        sf.write("parked in phase 2    " + str(l_parkedInPhase2Sum) + " vehicles (" + str(l_parkedInPhase2Rate*100) + ") percent\n")
+        sf.write("parked in phase 3    " + str(l_parkedInPhase3Sum) + " vehicles (" + str(l_parkedInPhase3Rate*100) + ") percent\n")
         sf.write("\n")
-        sf.write("Additional parameter info:\n")
+        sf.write("additional parameter info:\n")
         sf.write("externalplanned      " + str(l_externalPlanned) + "\n")
         sf.write("externalvisit        " + str(l_externalVisit) + "\n")
         sf.write("selfvisit            " + str(l_selfVisit) + "\n")
