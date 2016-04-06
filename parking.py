@@ -63,6 +63,9 @@ if __name__ == "__main__":
     l_numCoopPhase2 = l_config.getCfg("simulation").get("coopratioPhase2")
     l_numCoopPhase3 = l_config.getCfg("simulation").get("coopratioPhase3")
     l_numRuns = l_config.getCfg("simulation").get("runs")
+    l_externalPlanned = l_config.getCfg("vehicle").get("weights").get("coop").get("externalplanned")
+    l_externalVisit = l_config.getCfg("vehicle").get("weights").get("coop").get("externalvisit")
+    l_selfVisit = l_config.getCfg("vehicle").get("weights").get("coop").get("selfvisit")
 
     l_runtime = runner.Runtime(l_config)
 
@@ -78,21 +81,30 @@ if __name__ == "__main__":
 
     l_resultfile = "details-s" + str(l_numVehicles) + \
         "-p" + str(l_numParkingSpaces) + \
-        "-c" + str(int(l_numCoopPhase2*100)) + \
-        "-" + str(int(l_numCoopPhase3*100)) + \
-        "-r" + str(l_numRuns) + ".csv"
+        "-c" + str(int(l_numCoopPhase2)) + \
+        "-" + str(int(l_numCoopPhase3)) + \
+        "-r" + str(l_numRuns) + \
+        "-ep" + str(l_externalPlanned) + \
+        "-ev" + str(l_externalVisit) + \
+        "-sv" + str(l_selfVisit) + ".csv"
 
     l_summaryfile= "summary-s" + str(l_numVehicles) + \
         "-p" + str(l_numParkingSpaces) + \
-        "-c" + str(int(l_numCoopPhase2*100)) + \
-        "-" + str(int(l_numCoopPhase3*100)) + \
-        "-r" + str(l_numRuns) + ".txt"
+        "-c" + str(int(l_numCoopPhase2)) + \
+        "-" + str(int(l_numCoopPhase3)) + \
+        "-r" + str(l_numRuns) + \
+        "-ep" + str(l_externalPlanned) + \
+        "-ev" + str(l_externalVisit) + \
+        "-sv" + str(l_selfVisit) + ".txt"
         
     l_convergencefile="convergence-s" + str(l_numVehicles) + \
         "-p" + str(l_numParkingSpaces) + \
-        "-c" + str(int(l_numCoopPhase2*100)) + \
-        "-" + str(int(l_numCoopPhase3*100)) + \
-        "-r" + str(l_numRuns) + ".csv"
+        "-c" + str(int(l_numCoopPhase2)) + \
+        "-" + str(int(l_numCoopPhase3)) + \
+        "-r" + str(l_numRuns) + \
+        "-ep" + str(l_externalPlanned) + \
+        "-ev" + str(l_externalVisit) + \
+        "-sv" + str(l_selfVisit) + ".csv"
 
     rf = open(os.path.join(l_mainresultdir, l_resultdir, l_resultfile), 'w')
     rf.write("numVeh,numParkSp,coopPhase2,coopPhase3,searchTime,searchDist,walkDist,totalDist,phase\n")
