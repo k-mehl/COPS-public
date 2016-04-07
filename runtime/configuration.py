@@ -21,6 +21,7 @@ class Configuration(object):
               "verbose" : False,
               "runs" : 10,
               "runconfiguration" : "config.runs.json.gz",
+              "resulttimestamped" : False,
               "parkingspaces" : {
                   "total" : 400,
                   "free" : 5,
@@ -128,6 +129,8 @@ class Configuration(object):
             self._configuration["simulation"]["headless"] = False
         if p_args.verbose:
             self._configuration["simulation"]["verbose"] = True
+        if p_args.resulttimestamped:
+            self._configuration["simulation"]["resulttimestamped"] = True
 
     ## Sanity checks of config
     def _sanitycheck(self):
