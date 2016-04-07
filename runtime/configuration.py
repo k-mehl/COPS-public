@@ -13,6 +13,7 @@ class Configuration(object):
 
         self._defaultconfig = {
           "simulation" : {
+              "forceroutefile" : False,
               "routefile" : "reroute.rou.xml",
               "resourcedir" : "resources",
               "sumoport" : 8873,
