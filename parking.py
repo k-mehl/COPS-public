@@ -27,6 +27,7 @@ if __name__ == "__main__":
     l_parser.add_argument("-r","--runs", dest="runs", type=int, help="number of iterations to run")
     l_parser.add_argument("--runconfig", dest="runconfiguration", type=str, help="json configuration file containing environment information for each run")
     l_parser.add_argument("--verbose", dest="verbose", default=False, action='store_true', help="output more full vehicle parking data")
+    l_parser.add_argument("--timestamp", dest="resulttimestamped", default=False, action='store_true', help="create timestamped folders for output")
 
     # if display GUI, restrict to one run (implies --run 1)
     # for more than one run, disallow use of --gui
@@ -79,9 +80,9 @@ if __name__ == "__main__":
     if not os.path.isdir(l_mainresultdir):
             os.mkdir(l_mainresultdir)
 
-    l_resultdir = time.strftime("%Y%m%d%H%M%S")
-
-    if not os.path.isdir((os.path.join(l_mainresultdir, l_resultdir))):
+    if l_config.getCfg("simulation").get("resulttimestamped"):
+        l_resultdir = time.strftime("%Y%m%d%H%M%S")
+        if not os.path.isdir((os.path.join(l_mainresultdir, l_resultdir))):
             os.mkdir((os.path.join(l_mainresultdir, l_resultdir)))
 
     l_resultfile = "details-s" + str(l_numVehicles) + \
@@ -111,9 +112,13 @@ if __name__ == "__main__":
         "-ev" + str(l_externalVisit) + \
         "-sv" + str(l_selfVisit) + ".csv"
 
-    rf = open(os.path.join(l_mainresultdir, l_resultdir, l_resultfile), 'w')
+    if l_config.getCfg("simulation").get("resulttimestamped"):
+        rf = open(os.path.join(l_mainresultdir, l_resultdir, l_resultfile), 'w')
+        cf = open(os.path.join(l_mainresultdir, l_resultdir, l_convergencefile), 'w')
+    else:
+        rf = open(os.path.join(l_mainresultdir, l_resultfile), 'w')
+        cf = open(os.path.join(l_mainresultdir, l_convergencefile), 'w')
     rf.write("numVeh,numParkSp,run,coopPhase2,coopPhase3,searchTime,walkTime,totalTime,searchDist,walkDist,totalDist,phase,maxSearchTimeThisRun,maxSearchDistThisRun\n")
-    cf = open(os.path.join(l_mainresultdir, l_resultdir, l_convergencefile), 'w')
     cf.write("run,avgSearchTime,avgWalkTime,avgTotalTime,avgSearchDist,avgWalkDist,avgTotalDist,avgParkPhase2,avgMaxSearchTime,avgMaxSearchDist\n")
 
     l_successfulruns = True
@@ -195,8 +200,10 @@ if __name__ == "__main__":
         print("There exists a run cfg at {}! Refusing to overwrite it!".format(
             os.path.isfile(l_config.getCfg("simulation").get("runconfiguration"))))
 
-
-    sf = open(os.path.join(l_mainresultdir, l_resultdir, l_summaryfile), 'w')
+    if l_config.getCfg("simulation").get("resulttimestamped"): 
+        sf = open(os.path.join(l_mainresultdir, l_resultdir, l_summaryfile), 'w')
+    else:
+        sf = open(os.path.join(l_mainresultdir, l_summaryfile), 'w')
 
     l_successRate = 100*l_successesSum/(l_config.getCfg("simulation").get("runs")*l_config.getCfg("simulation").get("vehicles"))
 
