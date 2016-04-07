@@ -171,8 +171,9 @@ if __name__ == "__main__":
             cf.write(str(l_parkedInPhase2Rate*100) + ",")
             cf.write(str(l_maxTimeAvg) + ",")
             cf.write(str(l_maxDistAvg) + "\n")
-        except:
+        except BaseException as e:
             print("/!\\ gracefully shutting down simulation /!\\")
+            print("/!\\ exception was {}".format(e))
             # cleanup open file streams and write run cfg if not exists
             rf.close()
             cf.close()
