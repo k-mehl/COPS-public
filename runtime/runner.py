@@ -45,7 +45,8 @@ class Runtime(object):
 
         # if there is a run configuration loaded use it to populate parkingspaces in environment otherwise initialize new
         if not self._config.getRunCfg(str(i_run)):
-            print("* no run cfg found. Initializing random parking spaces.")
+            if self._config.getCfg("simulation").get("verbose"):
+                print("* no run cfg found. Initializing random parking spaces.")
             self._environment.initParkingSpaces(i_run)
 
         elif self._config.isRunCfgOk(i_run):
@@ -200,9 +201,10 @@ class Runtime(object):
             # break the while-loop if all remaining SUMO vehicles have
             # successfully parked
             if self.getNumberOfRemainingVehicles(l_parkingSearchVehicles)==0:
-                print("SUCCESSFULLY PARKED:",
-                    self.getNumberOfParkedVehicles(l_parkingSearchVehicles),
-                    "OUT OF", self._config.getCfg("simulation").get("vehicles"))
+                if self._config.getCfg("simulation").get("verbose"):
+                    print("SUCCESSFULLY PARKED:",
+                        self.getNumberOfParkedVehicles(l_parkingSearchVehicles),
+                        "OUT OF", self._config.getCfg("simulation").get("vehicles"))
                 break
 
         # (from SUMO examples):
