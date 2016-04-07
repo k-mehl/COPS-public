@@ -56,7 +56,7 @@ class Runtime(object):
         # if --routefile flag is provided, use the file for routing,
         # otherwise generate (and overwrite if exists) route file (reroute.rou.xml) for this simulation run
         # using the given number of parking search vehicles
-        if os.path.isfile(os.path.join(self._config.getCfg("simulation").get("resourcedir"), self._config.getCfg("simulation").get("routefile"))) and not self._config.getCfg("simulation").get("routefile") == "reroute.rou.xml":
+        if os.path.isfile(os.path.join(self._config.getCfg("simulation").get("resourcedir"), self._config.getCfg("simulation").get("routefile"))) and self._config.getCfg("simulation").get("forceroutefile"):
             self._routefile = self._config.getCfg("simulation").get("routefile")
         else:
             self._routefile = self._config.getCfg("simulation").get("routefile")
