@@ -132,8 +132,17 @@ class ParkingSearchVehicle(object):
         # position)
         if not self._activity==state.PARKED:
             self._currentLaneID = traci.vehicle.getLaneID(self._name)
+
+            # return if vehicle is currently being teleported or SUMO did other esoteric things resulting in no
+            # information regarding current position in network
+            if self._currentLaneID == None or self._currentLaneID == "":
+                print("/!\ no information regarding {}'s position, skipping update()".format(self._name))
+                return
+
             self._currentLaneLength = traci.lane.getLength(self._currentLaneID)
             self._currentLanePosition = traci.vehicle.getLanePosition(self._name)
+
+
         # if an opposite direction lane exists, get ID of the opposite edge
         if self._currentEdgeID in self._environment._oppositeEdgeID:
             self._oppositeEdgeID = self._environment._oppositeEdgeID[self._currentEdgeID]
