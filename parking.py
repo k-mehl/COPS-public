@@ -26,6 +26,7 @@ if __name__ == "__main__":
     l_parser.add_argument("--resourcedir", dest="resourcedir", type=str, help="base directory, relative to current working directory, for reading/writing temporary and SUMO related files")
     l_parser.add_argument("-r","--runs", dest="runs", type=int, help="number of iterations to run")
     l_parser.add_argument("--runconfig", dest="runconfiguration", type=str, help="json configuration file containing environment information for each run")
+    l_parser.add_argument("--verbose", dest="verbose", default=False, action='store_true', help="output more full vehicle parking data")
 
     # if display GUI, restrict to one run (implies --run 1)
     # for more than one run, disallow use of --gui

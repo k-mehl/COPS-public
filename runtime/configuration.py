@@ -126,6 +126,8 @@ class Configuration(object):
             self._configuration["simulation"]["headless"] = True
         if p_args.gui:
             self._configuration["simulation"]["headless"] = False
+        if p_args.verbose:
+            self._configuration["simulation"]["verbose"] = True
 
     ## Sanity checks of config
     def _sanitycheck(self):
