@@ -242,10 +242,11 @@ class ParkingSearchVehicle(object):
         self._timeParked = self._timestep
         # print statistics of the successfully parked vehicle
         # (at the moment output to console)
-        print(self._name, "parked after", (self._timeParked -
-                                           self._timeBeginSearch), "sec,",
-              traci.vehicle.getDistance(self._name), "m. coop?", 
-              self._driverCooperatesPhase2, "/", self._driverCooperatesPhase3, ". phase", self._currentSearchPhase)
+        if self._config.getCfg("simulation").get("verbose"):
+            print(self._name, "parked after", (self._timeParked -
+                                               self._timeBeginSearch), "sec,",
+                  traci.vehicle.getDistance(self._name), "m. coop?", 
+                  self._driverCooperatesPhase2, "/", self._driverCooperatesPhase3, ". phase", self._currentSearchPhase)
 
         self._activity = state.PARKED
 

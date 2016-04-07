@@ -117,7 +117,7 @@ if __name__ == "__main__":
 
     l_successfulruns = True
     for i_run in xrange(l_config.getCfg("simulation").get("runs")):
-        print("RUN:", i_run+1, "OF", l_config.getCfg("simulation").get("runs"))
+        print("PID", os.getpid(), "RUNCFG:", l_config.getCfg("simulation").get("runconfiguration"), "RUN:", i_run+1, "of", l_config.getCfg("simulation").get("runs"))
         try:
             l_successes, l_searchTimes, l_walkingTimes, l_searchDistances, l_walkingDistances, l_searchPhases = l_runtime.run(i_run)
 

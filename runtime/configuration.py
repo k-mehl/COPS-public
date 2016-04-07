@@ -18,6 +18,7 @@ class Configuration(object):
               "resourcedir" : "resources",
               "sumoport" : 8873,
               "headless" : True,
+              "verbose" : False,
               "runs" : 10,
               "runconfiguration" : "config.runs.json.gz",
               "parkingspaces" : {
