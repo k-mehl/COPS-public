@@ -190,11 +190,20 @@ class Runtime(object):
                         minValue = numpy.min(succEdgeCost.values())
                         minKeys = [key for key in succEdgeCost if succEdgeCost[key] == minValue]
 
+
                         #choose randomly if costs are equal
-                        if len(minKeys) > 1:
-                            nextRouteSegment = random.choice(minKeys)
+                        if self._config.getCfg("vehicle").get("phase3randomprob"):
+                            phase3RandomProb = self._config.getCfg("vehicle").get("phase3randomprob")
                         else:
-                            nextRouteSegment = minKeys[0]
+                            phase3RandomProb = 0.0
+                        
+                        if (random.random()<phase3RandomProb):
+                            nextRouteSegment = random.choice(succEdgeCost.keys())
+                        else:
+                            if (len(minKeys) > 1):
+                                nextRouteSegment = random.choice(minKeys)
+                            else:
+                                nextRouteSegment = minKeys[0]
 
                         psv.setNextRouteSegment(nextRouteSegment)
 
