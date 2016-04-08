@@ -12,7 +12,7 @@ l_parser.add_argument("-d" ,"--dir", dest="confdir", type=str, default="./")
 l_args = l_parser.parse_args()
 
 now = time.time()
-p = Pool()
+p = Pool(4)
 p.map(os.system, ["python parking.py --config " + x for x in glob.glob(l_args.confdir + "*.json")])
 p.terminate()
 
