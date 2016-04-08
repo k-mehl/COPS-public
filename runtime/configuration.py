@@ -43,6 +43,7 @@ class Configuration(object):
                   "phase2" : 8.333,
                   "phase3" : 8.333,
               },
+              "phase3randomprob" : 0.1,
               "weights" : {
                   "coop" : {
                       "distance" : 1,
