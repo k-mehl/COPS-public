@@ -18,7 +18,8 @@ except NameError:
 
 class CooperativeSearch(object):
 
-    def __init__(self, graph, agents, penalty = 0.2):
+
+    def __init__(self, graph, agents, penalty=0.2):
         """
         A class to hold necessary data and functions for cooperative searching on
         a graph, where graph is represented as an weighted adjacency matrix.
@@ -39,9 +40,9 @@ class CooperativeSearch(object):
         # cheaper than deepcopy and it works for this case, simple copy
         # doesn't work
         self.dynamic_graph = [g[:] for g in self.graph]
-        self.output_lst = [] # distance to every node from the starting node
-        self.path_lst = [] # paths to every node
-        self.bool_lst = [] # visited nodes
+        self.output_lst = []  # distance to every node from the starting node
+        self.path_lst = []    # paths to every node
+        self.bool_lst = []    # visited nodes
 
         # history necessary for drivers to know which nodes they have increased
         self.history = []
@@ -167,12 +168,11 @@ class CooperativeSearch(object):
         """
         Helper method to get the closest neighbor based on two criteria.
         """
-        #TODO inefficient since it raises the complexity to O(V^3)
         minimum = sys.maxsize
-        for i in range(len(output)):
-            if bool_list[i] == False and output[i] <= minimum:
-                minimum = output[i]
-                min_index = i
+        for ind, bool in enumerate(bool_list):
+            if not bool and output[ind] <= minimum:
+                minimum = output[ind]
+                min_index = ind
         return min_index
 
     @staticmethod
@@ -182,8 +182,8 @@ class CooperativeSearch(object):
 
         Args:
             path (list): list with integers and optional string where every
-            value is pointing to a previous in path i.e. path[0] gives a closest
-            node to node 0.
+            value is pointing to a previous in path i.e. path[0] gives a
+            closest node to node 0.
             destination (int): the destination node
             start (int): which node is the starting node
         Returns:
