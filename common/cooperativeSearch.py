@@ -14,7 +14,7 @@ import sys
 try:
     xrange
 except NameError:
-    range
+    xrange = range
 
 class CooperativeSearch(object):
 
