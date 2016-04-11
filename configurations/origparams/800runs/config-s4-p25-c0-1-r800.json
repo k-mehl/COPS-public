@@ -1,0 +1,46 @@
+{
+    "simulation" : {
+        "coopratioPhase2" : 0,
+        "coopratioPhase3" : 1,
+        "headless" : true,
+        "parkingspaces" : {
+            "free" : 25,
+            "total" : 576
+        },
+        "resourcedir" : "resources",
+        "routefile" : "reroute-s4-p25-c0-1-r800.rou.xml",
+        "runconfiguration" : "config-s4-p25-c0-1-r800.runs.json.gz",
+        "runs" : 800,
+        "sumoport" : 9027,
+        "vehicles" : 4
+    },
+    "vehicle" : {
+        "maxspeed" : {
+            "phase1" : 27.778,
+            "phase2" : 8.333,
+            "phase3" : 8.333
+        },
+        "parking" : {
+            "distance" : {
+                "max" : 30.0,
+                "min" : 12.0
+            },
+            "duration" : 12.0
+        },
+        "phase3randomprob" : 0.0,
+        "weights" : {
+            "coop" : {
+                "distance" : 1,
+                "externalplanned" : 100,
+                "externalvisit" : 2000,
+                "selfvisit" : 2000
+            },
+            "noncoop" : {
+                "distance" : 1,
+                "externalplanned" : 0,
+                "externalvisit" : 0,
+                "selfvisit" : 2000
+            }
+        }
+    }
+}

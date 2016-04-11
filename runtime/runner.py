@@ -35,45 +35,49 @@ class Runtime(object):
         self._config = p_config
 
         # run sumo with gui or headless, depending on the --gui flag
-        self._sumoBinary = checkBinary('sumo-gui') if not self._config.get("simulation").get("headless") else checkBinary('sumo')
+        self._sumoBinary = checkBinary('sumo-gui') if not self._config.getCfg("simulation").get("headless") else checkBinary('sumo')
 
         self._environment = Environment(self._config)
         #print(self._environment._roadNetwork["edges"])
 
     ## Runs the simulation on both SUMO and Python layers
     def run(self, i_run):
-        # seed for random number generator, random for now
-        if self._config.get("simulation").get("fixedseed") == 1:
-            random.seed(i_run)
-        else:
-            random.seed()
 
-        self._environment.initParkingSpaces()
+        # if there is a run configuration loaded use it to populate parkingspaces in environment otherwise initialize new
+        if not self._config.getRunCfg(str(i_run)):
+            if self._config.getCfg("simulation").get("verbose"):
+                print("* no run cfg found. Initializing random parking spaces.")
+            self._environment.initParkingSpaces(i_run)
+
+        elif self._config.isRunCfgOk(i_run):
+            self._environment.loadParkingSpaces(i_run)
+        else:
+            return
 
         # if --routefile flag is provided, use the file for routing,
         # otherwise generate (and overwrite if exists) route file (reroute.rou.xml) for this simulation run
         # using the given number of parking search vehicles
-        if self._config.get("simulation").get("routefile") == "reroute.rou.xml":
-            self._routefile = "reroute.rou.xml"
-            generatePsvDemand(self._config.get("simulation").get("vehicles"), self._config.get("simulation").get("resourcedir"), self._routefile)
+        if os.path.isfile(os.path.join(self._config.getCfg("simulation").get("resourcedir"), self._config.getCfg("simulation").get("routefile"))) and self._config.getCfg("simulation").get("forceroutefile"):
+            self._routefile = self._config.getCfg("simulation").get("routefile")
         else:
-            self._routefile = self._config.get("simulation").get("routefile")
+            self._routefile = self._config.getCfg("simulation").get("routefile")
+            generatePsvDemand(self._config.getCfg("simulation").get("vehicles"), self._config.getCfg("simulation").get("resourcedir"), self._routefile)
 
         # this is the normal way of using traci. sumo is started as a
         # subprocess and then the python script connects and runs
         l_sumoProcess = subprocess.Popen(
             [self._sumoBinary,
-             "-n", os.path.join(self._config.get("simulation").get("resourcedir"), "reroute.net.xml"),
-             "-r", os.path.join(self._config.get("simulation").get("resourcedir"), self._routefile),
-             "--tripinfo-output", os.path.join(self._config.get("simulation").get("resourcedir"), "tripinfo.xml"),
-             "--gui-settings-file", os.path.join(self._config.get("simulation").get("resourcedir"), "gui-settings.cfg"),
+             "-n", os.path.join(self._config.getCfg("simulation").get("resourcedir"), "reroute.net.xml"),
+             "-r", os.path.join(self._config.getCfg("simulation").get("resourcedir"), self._routefile),
+             "--tripinfo-output", os.path.join(self._config.getCfg("simulation").get("resourcedir"), "tripinfo.xml"),
+             "--gui-settings-file", os.path.join(self._config.getCfg("simulation").get("resourcedir"), "gui-settings.cfg"),
              "--no-step-log",
-             "--remote-port", str(self._config.get("simulation").get("sumoport"))],
+             "--remote-port", str(self._config.getCfg("simulation").get("sumoport"))],
             stdout=sys.stdout,
             stderr=sys.stderr)
 
         # execute the TraCI control loop
-        traci.init(self._config.get("simulation").get("sumoport"))
+        traci.init(self._config.getCfg("simulation").get("sumoport"))
 
         # internal clock variable, start with 0
         step = 0
@@ -86,8 +90,10 @@ class Runtime(object):
 
         # create lists for search time and distance results
         searchTimes = []
+        walkingTimes = []
         searchDistances = []
         walkingDistances = []
+        searchPhases = []
 
         self.initPOI()
         self.updatePOIColors()
@@ -108,10 +114,14 @@ class Runtime(object):
             # if a new vehicle has departed in SUMO, create the corresponding Python
             # representation
             l_departedVehicles = traci.simulation.getDepartedIDList()
+
+            # get individual vehicle preferences from run config if present, otherwise generate values
+            l_run = str(i_run)
+
             l_parkingSearchVehicles.extend(map(
-                    lambda vehID: ParkingSearchVehicle( vehID, self._environment, self._config, step,
+                    lambda vehID: ParkingSearchVehicle( vehID, self._environment, self._config, i_run, step,
                                                         self._environment._net.getEdge(l_individualRoutes[vehID][-1]).getToNode().getID(),
-                                                        l_cooperativeRoutes[vehID], l_individualRoutes[vehID] ),
+                                                        l_cooperativeRoutes[vehID], l_individualRoutes[vehID]),
                     l_departedVehicles
             ))
 
@@ -152,8 +162,10 @@ class Runtime(object):
                 # a parking space in the last time step
                 if result:
                     searchTimes.append(result[1])
-                    searchDistances.append(result[2])
-                    walkingDistances.append(result[3])
+                    walkingTimes.append(result[2])
+                    searchDistances.append(result[3])
+                    walkingDistances.append(result[4])
+                    searchPhases.append(result[5])
                 else:
                     # if the vehicle is on the last route segment,
                     # choose one of the possible next edges to continue
@@ -178,20 +190,30 @@ class Runtime(object):
                         minValue = numpy.min(succEdgeCost.values())
                         minKeys = [key for key in succEdgeCost if succEdgeCost[key] == minValue]
 
+
                         #choose randomly if costs are equal
-                        if len(minKeys) > 1:
-                            nextRouteSegment = random.choice(minKeys)
+                        if self._config.getCfg("vehicle").get("phase3randomprob"):
+                            phase3RandomProb = self._config.getCfg("vehicle").get("phase3randomprob")
                         else:
-                            nextRouteSegment = minKeys[0]
+                            phase3RandomProb = 0.0
+                        
+                        if (random.random()<phase3RandomProb):
+                            nextRouteSegment = random.choice(succEdgeCost.keys())
+                        else:
+                            if (len(minKeys) > 1):
+                                nextRouteSegment = random.choice(minKeys)
+                            else:
+                                nextRouteSegment = minKeys[0]
 
                         psv.setNextRouteSegment(nextRouteSegment)
 
             # break the while-loop if all remaining SUMO vehicles have
             # successfully parked
             if self.getNumberOfRemainingVehicles(l_parkingSearchVehicles)==0:
-                print("SUCCESSFULLY PARKED:",
-                    self.getNumberOfParkedVehicles(l_parkingSearchVehicles),
-                    "OUT OF", self._config.get("simulation").get("vehicles"))
+                if self._config.getCfg("simulation").get("verbose"):
+                    print("SUCCESSFULLY PARKED:",
+                        self.getNumberOfParkedVehicles(l_parkingSearchVehicles),
+                        "OUT OF", self._config.getCfg("simulation").get("vehicles"))
                 break
 
         # (from SUMO examples):
@@ -202,7 +224,7 @@ class Runtime(object):
         l_sumoProcess.wait()
 
         # Return results
-        return self.getNumberOfParkedVehicles(l_parkingSearchVehicles), searchTimes, searchDistances, walkingDistances
+        return self.getNumberOfParkedVehicles(l_parkingSearchVehicles), searchTimes, walkingTimes, searchDistances, walkingDistances, searchPhases
 
     ## Calculate cost for an edge for a specific search vehicle
     #  @param psv parking search vehicle
@@ -217,18 +239,18 @@ class Runtime(object):
         externalPlannedCount = sum(self._environment._roadNetwork["edges"][edge.getID()]["plannedCount"].values())
 
         #calculate cost
-        if psv._driverCooperates:
-            cost = self._config.get("vehicle").get("weights").get("coop").get("distance") * \
+        if psv._driverCooperatesPhase3:
+            cost = self._config.getCfg("vehicle").get("weights").get("coop").get("distance") * \
                    self._environment._roadNetwork["edges"][edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
-            + selfVisitCount*self._config.get("vehicle").get("weights").get("coop").get("selfvisit")\
-            + externalVisitCount * self._config.get("vehicle").get("weights").get("coop").get("externalvisit")\
-            + externalPlannedCount * self._config.get("vehicle").get("weights").get("coop").get("externalplanned")
+            + selfVisitCount*self._config.getCfg("vehicle").get("weights").get("coop").get("selfvisit")\
+            + externalVisitCount * self._config.getCfg("vehicle").get("weights").get("coop").get("externalvisit")\
+            + externalPlannedCount * self._config.getCfg("vehicle").get("weights").get("coop").get("externalplanned")
         else:
-            cost = self._config.get("vehicle").get("weights").get("noncoop").get("distance") * \
+            cost = self._config.getCfg("vehicle").get("weights").get("noncoop").get("distance") * \
                    self._environment._roadNetwork["edges"][edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
-            + selfVisitCount*self._config.get("vehicle").get("weights").get("noncoop").get("selfvisit")\
-            + externalVisitCount * self._config.get("vehicle").get("weights").get("noncoop").get("externalvisit")\
-            + externalPlannedCount * self._config.get("vehicle").get("weights").get("noncoop").get("externalplanned")
+            + selfVisitCount*self._config.getCfg("vehicle").get("weights").get("noncoop").get("selfvisit")\
+            + externalVisitCount * self._config.getCfg("vehicle").get("weights").get("noncoop").get("externalvisit")\
+            + externalPlannedCount * self._config.getCfg("vehicle").get("weights").get("noncoop").get("externalplanned")
         return cost
 
     ## Convert a route given as sequence of node indices into the corresponding
@@ -278,8 +300,8 @@ class Runtime(object):
     def initPOI(self):
         for ps in self._environment._allParkingSpaces:
             traci.poi.add("ParkingSpace" + str(ps.name),
-                        traci.simulation.convert2D(ps.edgeID,(ps.position-2.0))[0],
-                        traci.simulation.convert2D(ps.edgeID,(ps.position-2.0))[1],
+                        traci.simulation.convert2D(str(ps.edgeID),(ps.position-2.0))[0],
+                        traci.simulation.convert2D(str(ps.edgeID),(ps.position-2.0))[1],
                         (255,0,0,0))
 
 
@@ -302,7 +324,7 @@ class Runtime(object):
         allOriginNodeIndices = []
         allDestinationNodeIndices = []
         for trip in sumolib.output.parse_fast( \
-                os.path.join(self._config.get("simulation").get("resourcedir"), self._routefile), 'trip', ['id','from','to']):
+                os.path.join(self._config.getCfg("simulation").get("resourcedir"), self._routefile), 'trip', ['id','from','to']):
             allVehicleIDs.append(trip.id)
             vehicleOriginNode[trip.id] =  \
                 self._environment._net.getEdge(trip.attr_from).getFromNode().getID()
