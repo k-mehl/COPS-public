@@ -17,23 +17,18 @@ class ParkingSearchVehicle(object):
 
     ## Constructor for searching vehicles, initializes vehicle attributes
     #  @param p_name Corresponds to the vehicle ID obtained from the route XML file
+    #  @param p_environment Reference to environment
+    #  @param p_config Reference to configuration
+    #  @param p_run Current run number
     #  @param p_coopRatio The fraction of cooperative drivers
     #  @param p_timestep For memorizing the simulation time when a vehicle is created
-    def __init__(self, p_name, p_environment, p_config, p_timestep=-1001, p_destinationNodeID="", p_cooperativeRoute=[], p_individualRoute=[]):
-        self._name = p_name
+    def __init__(self, p_name, p_environment, p_config, p_run, p_timestep=-1001, p_destinationNodeID="", p_cooperativeRoute=[], p_individualRoute=[]):
+
         self._environment = p_environment
-        self._speed = 0.0
         self._config = p_config
 
-        # allow for differentiation between searching and non-searching vehicles
-        self._isSearchingVehicle = "veh" in self._name
-
-        # information about vehicle _activity status, initially vehicle cruises
-        # without searching ("phase 1")
-        self._activity = state.CRUISING
-
-        # set individual preference for cooperation
-        self._driverCooperates = random.random() <= self._config.get("simulation").get("cooperation")
+        self._name = p_name
+        self._speed = 0.0
 
         # information about relevant simulation times; -1001 seems to be used
         # for unset values in SUMO examples
@@ -52,21 +47,64 @@ class ParkingSearchVehicle(object):
         self._currentLaneLength = -1001.0
         self._currentLanePosition = -1001.0
         self._currentOppositeEdgeID = ""
-        # information about the vehicle route
+
+        # information needed to separate search phases
+        self._currentSearchPhase = 1
+        self._lastEdgeBeforePhase3 = ""
 
         self._destinationNodeID = p_destinationNodeID
+        self._cooperativeRoute = p_cooperativeRoute
+        self._individualRoute = p_individualRoute
+
+        # information about the vehicle
+        l_vcfg = {}
+        if self._config.getRunCfg(str(p_run)) != None and self._config.getRunCfg(str(p_run)).get("vehicles") != None:
+            l_vcfg = self._config.getRunCfg(str(p_run)).get("vehicles").get(self._name)
+
+        if not l_vcfg or len(l_vcfg) == 0:
+            self._driverCooperatesPhase2 = random.random() <= self._config.getCfg("simulation").get("coopratioPhase2")
+            self._driverCooperatesPhase3 = random.random() <= self._config.getCfg("simulation").get("coopratioPhase3")
+            # information about vehicle _activity status, initially vehicle cruises
+            # without searching ("phase 1")
+            self._activity = state.CRUISING
+            # allow for differentiation between searching and non-searching vehicles
+            self._isSearchingVehicle = "veh" in self._name
+
+            # update vehicle in run cfg
+            l_initialvcfg = {
+                "name" : self._name,
+                "isSearchingVehicle" : self._isSearchingVehicle,
+                "activity" : self._activity,
+                "coopPhase2" : self._driverCooperatesPhase2,
+                "coopPhase3" : self._driverCooperatesPhase3,
+            }
+            self._config.updateRunCfgVehicle(p_run, l_initialvcfg)
+
+        else:
+            # check whether cooperation was enforced via -c flag from cmd line. If so, throw a dice regarding cooperation
+            if self._config.getCfg("simulation").get("forcecooperationphasetwo") == None:
+                self._driverCooperatesPhase2 = l_vcfg.get("coopPhase2")
+            else:
+                self._driverCooperatesPhase2 = random.random() <= self._config.getCfg("simulation").get("forcecooperationphasetwo")
+            if self._config.getCfg("simulation").get("forcecooperationphasethree") == None:
+                self._driverCooperatesPhase3 = l_vcfg.get("coopPhase3")
+            else:
+                self._driverCooperatesPhase3 = random.random() <= self._config.getCfg("simulation").get("forcecooperationphasethree")
+            self._activity = l_vcfg.get("activity")
+            self._isSearchingVehicle = l_vcfg.get("isSearchingVehicle")
+
         self._currentRoute = []
         self._currentRouteIndex = -1
         self._activeRoute = []
         self._traversedRoute = []
-        self._cooperativeRoute = p_cooperativeRoute
-        self._individualRoute = p_individualRoute
-        if self._driverCooperates:
+        if self._driverCooperatesPhase2:
             traci.vehicle.setRoute(self._name, self._cooperativeRoute)
             self._destinationEdgeID = self._cooperativeRoute[-1]
         else:
             traci.vehicle.setRoute(self._name, self._individualRoute)
             self._destinationEdgeID = self._individualRoute[-1]
+
+
 
 
     ## Check for equivalence by name attribute
@@ -94,8 +132,17 @@ class ParkingSearchVehicle(object):
         # position)
         if not self._activity==state.PARKED:
             self._currentLaneID = traci.vehicle.getLaneID(self._name)
+
+            # return if vehicle is currently being teleported or SUMO did other esoteric things resulting in no
+            # information regarding current position in network
+            if self._currentLaneID == None or self._currentLaneID == "":
+                print("/!\ no information regarding {}'s position, skipping update()".format(self._name))
+                return
+
             self._currentLaneLength = traci.lane.getLength(self._currentLaneID)
             self._currentLanePosition = traci.vehicle.getLanePosition(self._name)
+
+
         # if an opposite direction lane exists, get ID of the opposite edge
         if self._currentEdgeID in self._environment._oppositeEdgeID:
             self._oppositeEdgeID = self._environment._oppositeEdgeID[self._currentEdgeID]
@@ -129,11 +176,18 @@ class ParkingSearchVehicle(object):
         if (self._isSearchingVehicle and self._activity == state.CRUISING and
                     self._currentRouteIndex >= 1):
             self._timeBeginSearch = self._timestep
+            self._currentSearchPhase = 2
             self._activity = state.SEARCHING
             # reduce _speed for searching
-            traci.vehicle.setMaxSpeed(self._name, self._config.get("vehicle").get("maxspeed").get("phase2"))
+            traci.vehicle.setMaxSpeed(self._name, self._config.getCfg("vehicle").get("maxspeed").get("phase2"))
             # set the vehicle color to yellow in the SUMO GUI
             traci.vehicle.setColor(self._name,(255,255,0,0))
+
+        # if the vehicle has reached the last edge before phase 3 should start,
+        # change to phase 3 as soon as the edge ID changes again
+        if self._lastEdgeBeforePhase3 and not self._currentSearchPhase == 3:
+            if not self._currentEdgeID == self._lastEdgeBeforePhase3:
+                self._currentSearchPhase = 3
 
         # search phase 2 (and later also 3)
         if self._activity == state.SEARCHING:
@@ -155,7 +209,7 @@ class ParkingSearchVehicle(object):
         # twelve seconds after beginning to maneuver into a parking space,
         # 'jump' off the road and release queueing traffic
         if (self._activity == state.MANEUVERING_TO_PARK and (self._timestep >
-                (self._timeBeginManeuvering + self._config.get("vehicle").get("parking").get("duration")))):
+                (self._timeBeginManeuvering + self._config.getCfg("vehicle").get("parking").get("duration")))):
 
             return self._park()
 
@@ -197,9 +251,11 @@ class ParkingSearchVehicle(object):
         self._timeParked = self._timestep
         # print statistics of the successfully parked vehicle
         # (at the moment output to console)
-        print(self._name, "parked after", (self._timeParked -
-                                           self._timeBeginSearch), "seconds,",
-              traci.vehicle.getDistance(self._name), "meters.")
+        if self._config.getCfg("simulation").get("verbose"):
+            print(self._name, "parked after", (self._timeParked -
+                                               self._timeBeginSearch), "sec,",
+                  traci.vehicle.getDistance(self._name), "m. coop?", 
+                  self._driverCooperatesPhase2, "/", self._driverCooperatesPhase3, ". phase", self._currentSearchPhase)
 
         self._activity = state.PARKED
 
@@ -212,9 +268,10 @@ class ParkingSearchVehicle(object):
         	l_distanceRoad = traci.simulation.getDistanceRoad(self._currentEdgeID, self._currentLanePosition, self._destinationEdgeID, self._environment._roadNetwork["edges"][self._destinationEdgeID]["length"], True)
         
         l_walkingDistance = l_distanceRoad
+        l_walkingTime = l_distanceRoad / 1.111 # assume 4 km/h walking speed
         
         return [self._name, (self._timeParked -
-                             self._timeBeginSearch), traci.vehicle.getDistance(self._name), l_walkingDistance]
+                             self._timeBeginSearch), l_walkingTime, traci.vehicle.getDistance(self._name), l_walkingDistance, self._currentSearchPhase]
 
 
     ## Lookout for available parking spaces by checking vehicle position
@@ -233,9 +290,9 @@ class ParkingSearchVehicle(object):
                     # (otherwise SUMO will create an error)
                     # - within a distance of max. 30 meters in front of the
                     # vehicle
-                    if ((parkingSpace.position-self._currentLanePosition > self._config.get("vehicle").get("parking").get("distance").get("min"))
+                    if ((parkingSpace.position-self._currentLanePosition > self._config.getCfg("vehicle").get("parking").get("distance").get("min"))
                         and (parkingSpace.position-self._currentLanePosition
-                                 < self._config.get("vehicle").get("parking").get("distance").get("max"))):
+                                 < self._config.getCfg("vehicle").get("parking").get("distance").get("max"))):
                         # found parking space is assigned to this vehicle
                         # (from now, parking space is no longer available to
                         # other vehicles)
@@ -259,7 +316,7 @@ class ParkingSearchVehicle(object):
                     if (parkingSpace.position <
                                 self._currentLaneLength-self._currentLanePosition):
                         if (parkingSpace.position > \
-                                        self._currentLaneLength-(self._currentLanePosition+self._config.get("vehicle").get("parking").get("distance").get("max"))):
+                                        self._currentLaneLength-(self._currentLanePosition+self._config.getCfg("vehicle").get("parking").get("distance").get("max"))):
                             # if an opposite parking space has been found,
                             # insert a loop to the active route (just once back
                             # and forth)
@@ -281,7 +338,7 @@ class ParkingSearchVehicle(object):
     #  @param useCoopRouting if true, tell SUMO to set the cooperative routing
     def setCooperativeRoute(self, p_coopRoute):
         self._cooperativeRoute = p_coopRoute
-        if self._driverCooperates:
+        if self._driverCooperatesPhase2:
             traci.vehicle.setRoute(self._name, self._cooperativeRoute)
 
 
@@ -293,7 +350,7 @@ class ParkingSearchVehicle(object):
     #  @param p_indyRoute list with route information (edge IDs)
     def setIndividualRoute(self, p_indyRoute):
         self._individualRoute = p_indyRoute
-        if not self._driverCooperates:
+        if not self._driverCooperatesPhase2:
             traci.vehicle.setRoute(self._name, self._individualRoute)
 
     ## Query whether vehicle has successfully parked
@@ -329,6 +386,9 @@ class ParkingSearchVehicle(object):
     def getName(self):
         return self._name
 
+    def getCooperation(self):
+        return self._driverCooperatesPhase2
+
     def setNextRouteSegment(self, p_edgeID):
         self._activeRoute.append(p_edgeID)
         traci.vehicle.setRoute(self._name, self._activeRoute)
@@ -336,6 +396,8 @@ class ParkingSearchVehicle(object):
     ## Query whether vehicle is on last segment of planned route
     def isOnLastRouteSegment(self):
         if self._currentRouteIndex == len(self._currentRoute)-1:
+            if not self._currentSearchPhase == 3 and not self._lastEdgeBeforePhase3:
+                self._lastEdgeBeforePhase3 = self._currentEdgeID
             return True
         return False
 

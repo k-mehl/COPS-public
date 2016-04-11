@@ -5,20 +5,21 @@
       "sumoport" : 8873,
       "headless" : true,
       "runs" : 10,
-
+      "runconfiguration" : "config.run.jason",
       // parkingspaces sets number of FREE parking spaces in simulation run.
       // possible values are: number of parking spaces [int] or a list of parking space ids [list].
       // if set to number, parking spaces are be selected by random.sample() function.
-      "parkingspaces" : 5,
 
+      "parkingspaces" : {
+        "total" : 400,
+        "free" : 5,
+      },
       // number of vehicles which look for a parking space
       "vehicles" : 5,
 
       // ratio of cooperation among vehicles. cooperative vehicles are selected by random.sample( population, k ),
       // where population is a set of $vehicle elements and k = int(round($vehicles * $cooperation))
       "cooperation" : 0.0,
-
-      "fixedseed" : 1,
   },
 
   "vehicle" : {
