@@ -57,7 +57,7 @@ class CooperativeSearch(object):
         # prepare the output_list and bool_list starting conditions
         for agent in xrange(len(self.agents)):
             for elem in xrange(len(self.graph)):
-                self.output_lst[agent].append(sys.maxsize)  # max distance
+                self.output_lst[agent].append(maxsize)  # max distance
                 self.path_lst[agent].append("start")
                 self.bool_lst[agent].append(False)
                 if elem == self.agents[agent]:
@@ -265,11 +265,11 @@ if __name__ == "__main__":
         print(obj.reconstruct_path(sh[i], dest[i]))
         
     # some testing with networkx
-    import networkx as nx
-    import numpy as np
-    import matplotlib.pyplot as plt
-    adj_matrix = np.matrix(graph_ort_man)
-    G = nx.from_numpy_matrix(adj_matrix)
-    pos=nx.spring_layout(G, iterations=200)
-    nx.draw(G, pos, with_labels=True)
-    plt.show()
+    # import networkx as nx
+    # import numpy as np
+    # import matplotlib.pyplot as plt
+    # adj_matrix = np.matrix(graph_ort_man)
+    # G = nx.from_numpy_matrix(adj_matrix)
+    # pos=nx.spring_layout(G, iterations=200)
+    # nx.draw(G, pos, with_labels=True)
+    # plt.show()
