@@ -9,7 +9,7 @@ Description: Cooperatively searhing space
 """
 
 from __future__ import print_function
-import sys
+from sys import maxsize  # faster like this then like sys.maxsize 40ns vs 17ns
 
 try:
     xrange
@@ -48,15 +48,15 @@ class CooperativeSearch(object):
         self.history = []
 
         # prepare necessary containers
-        for dummy in range(len(self.agents)):
+        for dummy in xrange(len(self.agents)):
             self.output_lst.append([])
             self.path_lst.append([])
             self.bool_lst.append([])
             self.history.append([])
 
         # prepare the output_list and bool_list starting conditions
-        for agent in range(len(self.agents)):
-            for elem in range(len(self.graph)):
+        for agent in xrange(len(self.agents)):
+            for elem in xrange(len(self.graph)):
                 self.output_lst[agent].append(sys.maxsize)  # max distance
                 self.path_lst[agent].append("start")
                 self.bool_lst[agent].append(False)
@@ -87,19 +87,17 @@ class CooperativeSearch(object):
         dynamic adjacency matrix. It is derived from Dijkstra's shortest path
         algorithm.
         """
-        # TODO do not copy lists
         output = self.output_lst[car_index]
         bool_list = self.bool_lst[car_index]
         path = self.path_lst[car_index]
-        max_size = sys.maxsize
         min_index = self._neighbors(output, bool_list)
         bool_list[min_index] = True
 
         temp = None  # dont change the graph all the time
-        for node in range(len(self.graph)):
+        for node in xrange(len(self.graph)):
             if (not bool_list[node]) \
                 and self.dynamic_graph[min_index][node] \
-                and output[min_index] != max_size \
+                and output[min_index] != maxsize \
                 and output[min_index] + self.dynamic_graph[min_index][node] < output[node]:
                     output[node] = output[min_index] + self.dynamic_graph[min_index][node]
                     path[node] = min_index
@@ -123,14 +121,14 @@ class CooperativeSearch(object):
         dynamic adjacency matrix. It is derived from Dijkstra's shortest path
         algorithm.
         """
-        # TODO do not copy lists
         output = self.output_lst[car_index]
         bool_list = self.bool_lst[car_index]
         path = self.path_lst[car_index]
-        max_size = sys.maxsize
         min_index = self._neighbors(output, bool_list)
         bool_list[min_index] = True
 
+        # Modify dynamic driver graph with the knowledge of which edges has the
+        # driver penalized before i.e. revealing the 'real' cost of and edge
         driver_graph = [x[:] for x in self.dynamic_graph]
         history = self.history[car_index]
         for position in history:
@@ -138,10 +136,10 @@ class CooperativeSearch(object):
                 self.graph[position[0]][position[1]] * self.penalty
 
         temp_l = []
-        for node in range(len(self.graph)):
+        for node in xrange(len(self.graph)):
             if ((not bool_list[node]) \
                 and driver_graph[min_index][node] \
-                and output[min_index] != max_size \
+                and output[min_index] != maxsize \
                 and output[min_index] + driver_graph[min_index][node] <
                 output[node]):
                     output[node] = (output[min_index] +
@@ -154,13 +152,13 @@ class CooperativeSearch(object):
             _, temp = min(((output[x], x) for x in temp_l[::-1]),
                           key=lambda p: p[0])
 
-            # Penalize
+            # Penalize both directions
             self.dynamic_graph[min_index][temp] += \
                 self.graph[min_index][temp] * self.penalty
             self.dynamic_graph[temp][min_index] += \
                 self.graph[temp][min_index] * self.penalty
 
-            # Add memory to car
+            # Add memory to car in both direction
             history.append((min_index, temp))
             history.append((temp, min_index))
 
@@ -168,7 +166,7 @@ class CooperativeSearch(object):
         """
         Helper method to get the closest neighbor based on two criteria.
         """
-        minimum = sys.maxsize
+        minimum = maxsize
         for ind, bool in enumerate(bool_list):
             if not bool and output[ind] <= minimum:
                 minimum = output[ind]
@@ -255,13 +253,13 @@ if __name__ == "__main__":
     cars = []
     cars = [0,3,11,12]
     
-    #for i in range(5):
+    #for i in xrange(5):
     #    cars.append(random.choice([0,1,2,3,4,7,8,11,12,13,14,15]))
     obj = CooperativeSearch(graph_ort_man, cars)
     sh = obj.shortest()
     dest = [8,14,5,1]
 
-    for i in range(len(cars)):
+    for i in xrange(len(cars)):
         #dest = random.randint(0,15)
         #print(sh[i])
         print(obj.reconstruct_path(sh[i], dest[i]))
