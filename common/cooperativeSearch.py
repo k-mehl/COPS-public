@@ -73,8 +73,8 @@ class CooperativeSearch(object):
         while len_to_check != 0:
             car = 0
             while car != num_of_steps:
-                # self._inner(car)
-                self.dijkstra_inner(car)
+                self._inner(car)
+                #self.dijkstra_inner(car)
                 car += 1
             len_to_check -= 1
 
@@ -112,6 +112,11 @@ class CooperativeSearch(object):
                         self.graph[min_index][temp] * self.penalty
                 self.dynamic_graph[temp][min_index] += \
                         self.graph[temp][min_index] * self.penalty
+            
+                #self.dynamic_graph[min_index][temp] += \
+                #        self.graph[min_index][temp] * (1 - self.graph[min_index][temp])
+                #self.dynamic_graph[temp][min_index] += \
+                #        self.graph[temp][min_index] * (1 - self.graph[min_index][temp])
                 #temp = None # this was missing from the first version... why?
 
     def dijkstra_inner(self, car_index):
@@ -121,6 +126,8 @@ class CooperativeSearch(object):
         dynamic adjacency matrix. It is derived from Dijkstra's shortest path
         algorithm.
         """
+        # TODO one loop could be added to add additional corrections of choosen
+        # paths hence one could optimize that loop locally
         output = self.output_lst[car_index]
         bool_list = self.bool_lst[car_index]
         path = self.path_lst[car_index]
@@ -149,7 +156,7 @@ class CooperativeSearch(object):
 
         if temp_l:
             # Get min cost node that would be traversed
-            _, temp = min(((output[x], x) for x in temp_l[::-1]),
+            _, temp = min(((output[x], x) for x in temp_l),
                           key=lambda p: p[0])
 
             # Penalize both directions
@@ -255,9 +262,9 @@ if __name__ == "__main__":
     
     #for i in xrange(5):
     #    cars.append(random.choice([0,1,2,3,4,7,8,11,12,13,14,15]))
-    obj = CooperativeSearch(graph_ort_man, cars)
+    obj = CooperativeSearch(graph_ort, cars)
     sh = obj.shortest()
-    dest = [8,14,5,1]
+    dest = [8,4,5,1]
 
     for i in xrange(len(cars)):
         #dest = random.randint(0,15)
