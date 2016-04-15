@@ -11,10 +11,17 @@ try:
 except NameError:
     xrange = range
 
+try:
+    import itertools.izip as zip
+except ImportError:
+    pass
+
 def count_overlap(driver_matrix):
-    forward_edges = (zip(x, x[1:]) for x in driver_matrix)
-    backward_edges = (zip(x[::-1], x[-2::-1]) for x in driver_matrix)
-    edges = list(chain(*forward_edges, *backward_edges))
+    forward_edges = chain.from_iterable((zip(x, x[1:]) for x in
+                                         driver_matrix))
+    backward_edges = chain.from_iterable((zip(x[::-1], x[-2::-1]) for x in
+                                          driver_matrix))
+    edges = list(chain(forward_edges, backward_edges))
     return len(edges) - len(set(edges))
 
 def num_of_visited_nodes(driver_matrix):
@@ -134,7 +141,7 @@ if __name__ == "__main__":
     obj = CooperativeSearch(graph_ort, cars)
     sh = obj.shortest()
     dest = [15, 15, 15, 15, 15]
-    dest = [6, 4, 5, 14, 0]
+    #dest = [6, 4, 5, 14, 0]
 
     recon = []
     for i in xrange(len(cars)):
@@ -148,5 +155,5 @@ if __name__ == "__main__":
     gg = hill(recon, graph_ort)
     print("num_of_visited_nodes", num_of_visited_nodes(gg))
     print("overlap", count_overlap(gg))
-    print(total_cost(gg))
+    print("total_cost", total_cost(gg))
     print(gg)
