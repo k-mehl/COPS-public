@@ -339,8 +339,13 @@ class Runtime(object):
 
         # use Aleksandar's Cooperative Search Router to create a dictionary
         # containing all cooperative vehicle routes (only once in advance)
-        coopRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices)
-        shortestNeighbors = coopRouter.shortest()
+        # coopRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices)
+        # shortestNeighbors = coopRouter.shortest()
+
+        coopRouter = CooperativeSearchHillOptimized(self._environment._adjacencyMatrix,
+                                       allOriginNodeIndices,
+                                       allDestinationNodeIndices)
+        shortestNeighbors = coopRouter.optimized()
 
         l_cooperativeRoutes = dict(map(
             lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
