@@ -342,9 +342,9 @@ class Runtime(object):
         # coopRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices)
         # shortestNeighbors = coopRouter.shortest()
 
-        coopRouter = CooperativeSearchHillOptimized(self._environment._adjacencyMatrix,
+        coopRouter = CoopSearchHillOptimized(self._environment._adjacencyMatrix,
                                        allOriginNodeIndices,
-                                       allDestinationNodeIndices)
+                                       allDestinationNodeIndices, 0.2)
         shortestNeighbors = coopRouter.optimized()
 
         l_cooperativeRoutes = dict(map(
