@@ -209,6 +209,24 @@ class CooperativeSearch(object):
             sol.append(destination)
         return sol[::-1]
 
+class CoopSearchHillOptimized(CooperativeSearch):
+
+    def __init__(self, graph, agents, destinations, penalty):
+        super(CoopSearchHillOptimized, self).__init__(graph, agents, penalty)
+        self.destinations = destinations
+
+    def optimized(self):
+        from hill_climb import hill
+        # this thing with dest[ind] works when you pass dest as an argument
+        # i.e. CoopSearchHillOptimized(graph_ort, cars, dest, 0.2).optimized()
+        # now that is crazy
+        #return hill([self.reconstruct_path(path, dest[ind]) for ind, path in
+        #             enumerate(self.shortest())], self.graph)
+        routes = [self.reconstruct_path(x[0], x[1]) for x in
+                  zip(self.shortest(), self.destinations)] 
+        return hill(routes, self.graph)
+
+
 if __name__ == "__main__":
     # TODO add proper tests
 
@@ -258,18 +276,20 @@ if __name__ == "__main__":
 
     import random
     cars = []
-    cars = [0,3,11,12]
+    cars = [0,3,11,12,5]
     
     #for i in xrange(5):
     #    cars.append(random.choice([0,1,2,3,4,7,8,11,12,13,14,15]))
     obj = CooperativeSearch(graph_ort, cars)
     sh = obj.shortest()
-    dest = [8,4,5,1]
+    #dest = [8,4,5,1]
+    dest = [15, 15, 15, 15, 15]
 
+
+    h_obj = CoopSearchHillOptimized(graph_ort, cars, dest, 0.2).optimized()
     for i in xrange(len(cars)):
-        #dest = random.randint(0,15)
-        #print(sh[i])
         print(obj.reconstruct_path(sh[i], dest[i]))
+        print(h_obj[i])
         
     # some testing with networkx
     # import networkx as nx
