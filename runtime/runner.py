@@ -5,6 +5,16 @@ import os
 import subprocess
 import sys
 
+try:
+    xrange
+except NameError:
+    xrange = range
+
+try:
+    import itertools.izip as zip
+except ImportError:
+    pass
+
 # (from SUMO examples:)
 # we need to import python modules from the $SUMO_HOME/tools directory
 try:
@@ -347,13 +357,17 @@ class Runtime(object):
                                        allDestinationNodeIndices, 0.2)
         shortestNeighbors = coopRouter.optimized()
 
-        l_cooperativeRoutes = dict(map(
-            lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
-                self._environment._adjacencyEdgeID,coopRouter.reconstruct_path(
-                            shortestNeighbors[trip],allDestinationNodeIndices[trip],
-                            allOriginNodeIndices[trip])) ),
-                xrange(len(allVehicleIDs))
-        ))
+        edges = (self.convertNodeSequenceToEdgeSequence(self._environment._adjacencyEdgeID,
+                                                                 shortestNeighbors[trip])
+                 for trip in xrange(len(allVehicleIDs)))
+        l_cooperativeRoutes = dict(zip(allVehicleIDs, edges))
+        # l_cooperativeRoutes = dict(map(
+        #     lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
+        #         self._environment._adjacencyEdgeID,coopRouter.reconstruct_path(
+        #                     shortestNeighbors[trip],allDestinationNodeIndices[trip],
+        #                     allOriginNodeIndices[trip])) ),
+        #         xrange(len(allVehicleIDs))
+        # ))
 
         # use Aleksandar's Cooperative Search Router to create a dictionary
         # containing all non-cooperative vehicle routes (only once in advance)
