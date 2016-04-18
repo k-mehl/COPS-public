@@ -283,28 +283,14 @@ class Runtime(object):
     #  @param psvList List of parking search vehicle objects
     #  @return Number of remaining vehicles which are not parked
     def getNumberOfRemainingVehicles(self, psvList):
-        if not psvList:
-            return 0
-
-        remainingVehicles = 0
-        for psv in psvList:
-            if not psv.getParkedStatus():
-                remainingVehicles += 1
-        return remainingVehicles
+        return sum(1 for psv in psvList if not psv.getParkedStatus())
 
 
     ## Get number of successfully parked vehicles
     #  @param psvList List of parking search vehicle objects
     #  @return Number of parked vehicles
     def getNumberOfParkedVehicles(self, psvList):
-        if not psvList:
-            return 0
-
-        parkedVehicles = 0
-        for psv in psvList:
-            if  psv.getParkedStatus():
-                parkedVehicles += 1
-        return parkedVehicles
+        return sum(1 for psv in psvList if psv.getParkedStatus())
 
 
     def initPOI(self):
@@ -360,6 +346,7 @@ class Runtime(object):
         edges = (self.convertNodeSequenceToEdgeSequence(self._environment._adjacencyEdgeID,
                                                                  shortestNeighbors[trip])
                  for trip in xrange(len(allVehicleIDs)))
+
         l_cooperativeRoutes = dict(zip(allVehicleIDs, edges))
         # l_cooperativeRoutes = dict(map(
         #     lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
