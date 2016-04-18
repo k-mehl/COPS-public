@@ -10,7 +10,6 @@ Description: Cooperatively searhing space
 
 from __future__ import print_function
 from sys import maxsize  # faster like this then like sys.maxsize 40ns vs 17ns
-import sys
 
 try:
     xrange
@@ -186,7 +185,7 @@ class CooperativeSearch(object):
         Helper method to get the closest neighbor based on two criteria.
         """
         #TODO inefficient since it raises the complexity to O(V^3)
-        minimum = sys.maxsize
+        minimum = maxsize
         for i in range(len(output)):
             if bool_list[i] == False and output[i] <= minimum:
                 minimum = output[i]
