@@ -142,12 +142,12 @@ def hill(driver_matrix, adjacency_matrix):
 
         return driver_matrix
 
-    # TODO smarter deceision on number of runs
     for i in xrange(1000):
         driver_matrix = hill_runner(driver_matrix, adjacency_matrix)
         costs.append(count_overlap(driver_matrix) + num_of_visited_nodes(driver_matrix))
-        #if len(costs) > 100 and len(set(costs[-100:])) == 1:
-        #    return driver_matrix
+        # Check if you can stop
+        if len(costs) > 100 and len(set(costs[-100:])) == 1:
+            return driver_matrix
     return driver_matrix
 
 
