@@ -161,27 +161,15 @@ class CooperativeSearch(object):
             history.append((min_index, temp))
             history.append((temp, min_index))
 
-    #def _neighbors(self, output, bool_list):
-    #    """
-    #    Helper method to get the closest neighbor based on two criteria.
-    #    """
-    #    minimum = maxsize
-    #    for ind, bool in enumerate(bool_list):
-    #        if not bool and output[ind] <= minimum:
-    #            minimum = output[ind]
-    #            min_index = ind
-    #    return min_index
-
     def _neighbors(self, output, bool_list):
-        """ 
+        """
         Helper method to get the closest neighbor based on two criteria.
         """
-        #TODO inefficient since it raises the complexity to O(V^3)
         minimum = maxsize
-        for i in range(len(output)):
-            if bool_list[i] == False and output[i] <= minimum:
-                minimum = output[i]
-                min_index = i
+        for ind, bool in enumerate(bool_list):
+            if not bool and output[ind] <= minimum:
+                minimum = output[ind]
+                min_index = ind
         return min_index
 
     @staticmethod
