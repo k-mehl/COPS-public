@@ -16,7 +16,20 @@ try:
 except ImportError:
     pass
 
+reconstruct_path = CooperativeSearch.reconstruct_path
+
+
 def count_overlap(driver_matrix):
+    """
+    Calculate the overlap based on the number of edges that are visited
+    multiple times.
+
+    Args:
+        driver_matrix (list of lists): A list whose members are lists that
+        contain paths that are represented by consecutively visited nodes.
+    Returns:
+        (int) A number of edges that were traversed multiple times.
+    """
     forward_edges = chain.from_iterable((zip(x, x[1:]) for x in
                                          driver_matrix))
     backward_edges = chain.from_iterable((zip(x[::-1], x[-2::-1]) for x in
@@ -24,16 +37,47 @@ def count_overlap(driver_matrix):
     edges = list(chain(forward_edges, backward_edges))
     return len(edges) - len(set(edges))
 
+
 def num_of_visited_nodes(driver_matrix):
+    """
+    Calculate the total number of visited nodes for multiple paths.
+
+    Args:
+        driver_matrix (list of lists): A list whose members are lists that
+        contain paths that are represented by consecutively visited nodes.
+    Returns:
+        Number of visited nodes
+    """
     return sum((len(x) for x in driver_matrix))
 
+
 def total_cost(driver_matrix):
+    """
+    Sum of number of total visited nodes and edge overlap.
+    """
     return count_overlap(driver_matrix) + num_of_visited_nodes(driver_matrix)
 
-def hill(driver_matrix, adjacency_matrix):
-    # TODO normalize cost
-    costs = [total_cost(driver_matrix)]
 
+def hill(driver_matrix, adjacency_matrix):
+    """
+    A hill based optimizer for routes. Cost function is based on the sum of
+    number of visited nodes and edges that overlap. Goal is to minimize this
+    sum.
+
+    Args:
+        driver_matrix (list of lists): A list whose members are lists that
+        contain paths that are represented by consecutively visited nodes.
+
+        adjacency_matrix (list of lists): Adjacency matrix of an underlying
+        graph.
+
+    Returns:
+        (list) Optimized list of routes.
+    """
+
+    # TODO normalize cost
+    # TODO: make all this into a class
+    costs = [total_cost(driver_matrix)]
     def hill_runner(driver_matrix, adjacency_matrix):
         num_of_drivers = len(driver_matrix)
         cost = total_cost(driver_matrix)
@@ -42,27 +86,20 @@ def hill(driver_matrix, adjacency_matrix):
         while len(driver_matrix[d]) < 4:
             d = randint(0, num_of_drivers - 1)
         path = driver_matrix[d]
-        #print("chosen path ", path)
         # pick a random node excluding first and the last (start and end)
         path_end = len(path) - 1
         node_ind = randint(1, path_end - 1)
         node = path[node_ind]
-        #print("chosen node ", node)
-        # get one way nodes (unreachable nodes)
         path_neighbors = (path[node_ind - 1], path[node_ind + 1])
         # chose where to move (you can not move into neighbors already in path)
         neighbors = adjacency_matrix[node][:]
-        #print(neighbors)
-        move_to = [x for x in enumerate(neighbors) if x[1] != 0 and x[0] not in
-                   path_neighbors]
+        move_to = [x for x in enumerate(neighbors)
+                   if x[1] != 0 and x[0] not in path_neighbors]
         if not move_to:
-            # you are in the corner, so no change
+            # you are in the corner, so no change just return
             return driver_matrix
         move_to = choice(move_to)[0]
-        #print("move to: ", move_to)
         # get the shortest route to connecting nodes
-        # TODO left and right will go out of bounds if node_ind is next to
-        # start and end nodes in path
         if node_ind == 1:
             left_ind = 0
         else:
@@ -76,30 +113,21 @@ def hill(driver_matrix, adjacency_matrix):
         left = path[left_ind]
         right = path[righ_ind]
 
-        #print(left, right)
         new_routes = CooperativeSearch(adjacency_matrix, [left, move_to],
                                        0).shortest()
         left_route = new_routes[0]
         righ_route = new_routes[1]
 
-        #print(new_routes)
-        #print(node, left, move_to, right)
-        left_path = CooperativeSearch.reconstruct_path(left_route, move_to,
-                                                       left)
-        right_path = CooperativeSearch.reconstruct_path(righ_route, right,
-                                                        move_to)
-        #print("lp", left_path)
-        #print("rp", right_path)
-        
-        new_path = path[:left_ind] + left_path + right_path[1:-1] + path[righ_ind:]
-        #print("And the path is: ", new_path)
+        left_path = reconstruct_path(left_route, move_to, left)
+        right_path = reconstruct_path(righ_route, right, move_to)
 
-        # some stupid cases where edge gets duplicated discard such cases... in
-        # this situation 2 cases should be checked:
-        # left path routed without the node that got repeated twice
-        # right path router without the node that got repeated twice
-        # and then better option should be chosen
-        # in any case cycles are out of question here
+        new_path = path[:left_ind] + left_path + right_path[1:-1] + path[righ_ind:]
+
+        # TODO: some stupid cases where edge gets duplicated discard such
+        # cases... in this situation 2 cases should be checked: left path
+        # routed without the node that got repeated twice right path router
+        # without the node that got repeated twice and then better option
+        # should be chosen in any case cycles are out of question here
         if len(new_path) - len(set(new_path)):
             # TODO: improve this case because there might be some benefitical
             # cases here to avoid local optima catch
@@ -114,9 +142,6 @@ def hill(driver_matrix, adjacency_matrix):
 
         return driver_matrix
 
-
-
-    # Run 1000 times
     # TODO smarter deceision on number of runs
     for i in xrange(1000):
         driver_matrix = hill_runner(driver_matrix, adjacency_matrix)
