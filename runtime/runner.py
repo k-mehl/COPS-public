@@ -270,8 +270,6 @@ class Runtime(object):
     #  @return edgeSequence route given as edge ID list
     def convertNodeSequenceToEdgeSequence(self, adjacencyEdgeID, nodeSequence):
 	node_pairs = zip(nodeSequence, nodeSequence[1:])
-        edgeSequence = [adjacencyEdgeID[row][col] for row, col in node_pairs
-				if adjacencyEdgeID[row][col]]
         # for segment in xrange(len(nodeSequence) - 1):
         #     nextEdge = adjacencyEdgeID[nodeSequence[segment]][nodeSequence[segment + 1]]
         #     if nextEdge == "":
@@ -279,7 +277,7 @@ class Runtime(object):
         #         #exit() #TODO remove this exit, wtf?!
         #     else:
         #         edgeSequence.append(nextEdge)
-        return edgeSequence
+        return [adjacencyEdgeID[row][col] for row, col in node_pairs]
 
     ## Get number of remaining searching vehicles
     #  @param psvList List of parking search vehicle objects
