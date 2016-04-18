@@ -270,9 +270,9 @@ class Runtime(object):
     #  @return edgeSequence route given as edge ID list
     def convertNodeSequenceToEdgeSequence(self, adjacencyEdgeID, nodeSequence):
         edgeSequence = []
-        for segment in range(0, len(nodeSequence)-1):
-            nextEdge=adjacencyEdgeID[nodeSequence[segment]][nodeSequence[segment+1]]
-            if nextEdge=="":
+        for segment in xrange(len(nodeSequence) - 1):
+            nextEdge = adjacencyEdgeID[nodeSequence[segment]][nodeSequence[segment + 1]]
+            if nextEdge == "":
                 print("ERROR: could not convert node sequence to edge sequence.")
                 #exit() #TODO remove this exit, wtf?!
             else:
