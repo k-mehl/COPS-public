@@ -269,14 +269,16 @@ class Runtime(object):
     #  @param nodeSequence route given as node index list
     #  @return edgeSequence route given as edge ID list
     def convertNodeSequenceToEdgeSequence(self, adjacencyEdgeID, nodeSequence):
-        edgeSequence = []
-        for segment in xrange(len(nodeSequence) - 1):
-            nextEdge = adjacencyEdgeID[nodeSequence[segment]][nodeSequence[segment + 1]]
-            if nextEdge == "":
-                print("ERROR: could not convert node sequence to edge sequence.")
-                #exit() #TODO remove this exit, wtf?!
-            else:
-                edgeSequence.append(nextEdge)
+	node_pairs = zip(nodeSequence, nodeSequence[1:])
+        edgeSequence = [adjacencyEdgeID[row][col] for row, col in node_pairs
+				if adjacencyEdgeID[row][col]]
+        # for segment in xrange(len(nodeSequence) - 1):
+        #     nextEdge = adjacencyEdgeID[nodeSequence[segment]][nodeSequence[segment + 1]]
+        #     if nextEdge == "":
+        #         print("ERROR: could not convert node sequence to edge sequence.")
+        #         #exit() #TODO remove this exit, wtf?!
+        #     else:
+        #         edgeSequence.append(nextEdge)
         return edgeSequence
 
     ## Get number of remaining searching vehicles
