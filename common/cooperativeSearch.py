@@ -62,6 +62,7 @@ class CooperativeSearch(object):
                 self.bool_lst[agent].append(False)
                 if elem == self.agents[agent]:
                     self.output_lst[agent][elem] = 0
+                    self.path_lst[agent][elem] = "start"
 
     def shortest(self):
         """
