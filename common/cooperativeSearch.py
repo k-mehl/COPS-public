@@ -16,19 +16,19 @@ try:
 except NameError:
     xrange = range
 
-class CooperativeSearch(object):
 
+class CooperativeSearch(object):
 
     def __init__(self, graph, agents, penalty=0.2):
         """
-        A class to hold necessary data and functions for cooperative searching on
-        a graph, where graph is represented as an weighted adjacency matrix.
-        
+        A class to hold necessary data and functions for cooperative searching
+        on a graph, where graph is represented as an weighted adjacency matrix.
+
         Args:
             graph (2d list):
             agents (int list): Starting positions of agents
-            penalty (float): How many times to increase the cost of traversing the
-            edge for other agents.
+            penalty (float): How many times to increase the cost of traversing
+            the edge for other agents.
 
         """
         self.graph = graph
@@ -75,7 +75,7 @@ class CooperativeSearch(object):
             car = 0
             while car != num_of_steps:
                 self._inner(car)
-                #self.dijkstra_inner(car)
+                # self.dijkstra_inner(car)
                 car += 1
             len_to_check -= 1
 
@@ -103,22 +103,12 @@ class CooperativeSearch(object):
                     output[node] = output[min_index] + self.dynamic_graph[min_index][node]
                     path[node] = min_index
                     temp = node
-            # TODO the bug is here (it increases the cost all the time)...
-            # lets try the case when it increases the cost on all edges by
-            # puting temp = None after penalty increasement? or maybe
-            # increasement should be in proportion to the lenght of the edge
-            # i.e. long edges get penalized less??
+            # MAGIC happens here... Increasing the node cost basically until
+            # the next node that satisfies requested conditions is reached and
+            # then that node gets increased.
             if temp:
-                self.dynamic_graph[min_index][temp] += \
-                        self.graph[min_index][temp] * self.penalty
-                self.dynamic_graph[temp][min_index] += \
-                        self.graph[temp][min_index] * self.penalty
-            
-                #self.dynamic_graph[min_index][temp] += \
-                #        self.graph[min_index][temp] * (1 - self.graph[min_index][temp])
-                #self.dynamic_graph[temp][min_index] += \
-                #        self.graph[temp][min_index] * (1 - self.graph[min_index][temp])
-                #temp = None # this was missing from the first version... why?
+                self.dynamic_graph[min_index][temp] += self.graph[min_index][temp] * self.penalty
+                self.dynamic_graph[temp][min_index] += self.graph[temp][min_index] * self.penalty
 
     def dijkstra_inner(self, car_index):
         """
@@ -129,6 +119,7 @@ class CooperativeSearch(object):
         """
         # TODO one loop could be added to add additional corrections of choosen
         # paths hence one could optimize that loop locally
+        # TODO make this into separate class
         output = self.output_lst[car_index]
         bool_list = self.bool_lst[car_index]
         path = self.path_lst[car_index]
@@ -288,36 +279,59 @@ if __name__ == "__main__":
                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0]]
 
 
-    gg_bug = [[0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 90.5, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [65.5, 0, 0, 0, 0, 0, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 90.5, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 0, 0, 0, 0], [8.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 8.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8.0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8.0, 0, 0, 0, 0]] 
+    gg_bug = [[0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 90.5, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [65.5, 0, 0, 0, 0, 0, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 90.5, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 0, 0, 0, 0],
+              [8.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 8.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8.0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8.0, 0, 0, 0, 0]]
 
-    import random
-    cars = []
-    cars = [0,3,11,12,5]
-    
-    cars = [25, 25, 25, 25, 25] 
-    
-    #for i in xrange(5):
-    #    cars.append(random.choice([0,1,2,3,4,7,8,11,12,13,14,15]))
+    # import random
+    # cars = [0, 3, 11, 12, 5]
+    cars = [25, 25, 25, 25, 25]
+    # for i in xrange(5):
+    #     cars.append(random.choice([0,1,2,3,4,7,8,11,12,13,14,15]))
     obj = CooperativeSearch(gg_bug, cars)
     sh = obj.shortest()
-    #dest = [8,4,5,1]
-    dest = [15, 15, 15, 15, 15]
-    dest = [12, 12, 12, 12, 12] 
+    # dest = [8,4,5,1]
+    # dest = [15, 15, 15, 15, 15]
+    dest = [12, 12, 12, 12, 12]
 
-
-    #h_obj = CoopSearchHillOptimized(gg_bug, cars, dest, 0.2).optimized()
+    h_obj = CoopSearchHillOptimized(gg_bug, cars, dest, 0.2).optimized()
     for i in xrange(len(cars)):
-        #print(obj.reconstruct_path(sh[i], dest[i]))
-        #print(h_obj[i])
-        print(sh[i])
-        
-    #some testing with networkx
-    import networkx as nx
-    import numpy as np
-    import matplotlib.pyplot as plt
-    adj_matrix = np.matrix(graph_ort_man)
-    adj_matrix = np.matrix(gg_bug)
-    G = nx.from_numpy_matrix(adj_matrix)
-    pos=nx.spring_layout(G, iterations=200)
-    nx.draw(G, pos, with_labels=True)
-    plt.show()
+        print("Dijkstra")
+        print(obj.reconstruct_path(sh[i], dest[i]))
+        print("Optimized")
+        print(h_obj[i])
+    # some testing with networkx
+    # import networkx as nx
+    # import numpy as np
+    # import matplotlib.pyplot as plt
+    # adj_matrix = np.matrix(graph_ort_man)
+    # adj_matrix = np.matrix(gg_bug)
+    # G = nx.from_numpy_matrix(adj_matrix)
+    # pos=nx.spring_layout(G, iterations=200)
+    # nx.draw(G, pos, with_labels=True)
+    # plt.show()
