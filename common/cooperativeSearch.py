@@ -10,6 +10,7 @@ Description: Cooperatively searhing space
 
 from __future__ import print_function
 from sys import maxsize  # faster like this then like sys.maxsize 40ns vs 17ns
+import sys
 
 try:
     xrange
@@ -58,7 +59,7 @@ class CooperativeSearch(object):
         for agent in xrange(len(self.agents)):
             for elem in xrange(len(self.graph)):
                 self.output_lst[agent].append(maxsize)  # max distance
-                self.path_lst[agent].append("start")
+                self.path_lst[agent].append("entry")
                 self.bool_lst[agent].append(False)
                 if elem == self.agents[agent]:
                     self.output_lst[agent][elem] = 0
@@ -169,15 +170,27 @@ class CooperativeSearch(object):
             history.append((min_index, temp))
             history.append((temp, min_index))
 
+    #def _neighbors(self, output, bool_list):
+    #    """
+    #    Helper method to get the closest neighbor based on two criteria.
+    #    """
+    #    minimum = maxsize
+    #    for ind, bool in enumerate(bool_list):
+    #        if not bool and output[ind] <= minimum:
+    #            minimum = output[ind]
+    #            min_index = ind
+    #    return min_index
+
     def _neighbors(self, output, bool_list):
-        """
+        """ 
         Helper method to get the closest neighbor based on two criteria.
         """
-        minimum = maxsize
-        for ind, bool in enumerate(bool_list):
-            if not bool and output[ind] <= minimum:
-                minimum = output[ind]
-                min_index = ind
+        #TODO inefficient since it raises the complexity to O(V^3)
+        minimum = sys.maxsize
+        for i in range(len(output)):
+            if bool_list[i] == False and output[i] <= minimum:
+                minimum = output[i]
+                min_index = i
         return min_index
 
     @staticmethod
@@ -222,8 +235,8 @@ class CoopSearchHillOptimized(CooperativeSearch):
         # now that is crazy
         #return hill([self.reconstruct_path(path, dest[ind]) for ind, path in
         #             enumerate(self.shortest())], self.graph)
-        routes = [self.reconstruct_path(x[0], x[1]) for x in
-                  zip(self.shortest(), self.destinations)] 
+        routes = [self.reconstruct_path(x[0], x[1], x[2]) for x in
+                  zip(self.shortest(), self.destinations, self.agents)]
         return hill(routes, self.graph)
 
 
@@ -277,7 +290,6 @@ if __name__ == "__main__":
 
     gg_bug = [[0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 90.5, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [65.5, 0, 0, 0, 0, 0, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 0, 0, 90.5, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 90.5, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65.5, 0, 0, 0, 0, 90.5, 0, 0, 0, 0, 0], [8.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 8.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8.0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8.0, 0, 0, 0, 0]] 
 
-    print(len(gg_bug))
     import random
     cars = []
     cars = [0,3,11,12,5]
@@ -299,12 +311,13 @@ if __name__ == "__main__":
         #print(h_obj[i])
         print(sh[i])
         
-    # some testing with networkx
-    # import networkx as nx
-    # import numpy as np
-    # import matplotlib.pyplot as plt
-    # adj_matrix = np.matrix(graph_ort_man)
-    # G = nx.from_numpy_matrix(adj_matrix)
-    # pos=nx.spring_layout(G, iterations=200)
-    # nx.draw(G, pos, with_labels=True)
-    # plt.show()
+    #some testing with networkx
+    import networkx as nx
+    import numpy as np
+    import matplotlib.pyplot as plt
+    adj_matrix = np.matrix(graph_ort_man)
+    adj_matrix = np.matrix(gg_bug)
+    G = nx.from_numpy_matrix(adj_matrix)
+    pos=nx.spring_layout(G, iterations=200)
+    nx.draw(G, pos, with_labels=True)
+    plt.show()
