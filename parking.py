@@ -4,6 +4,7 @@ from __future__ import print_function
 import argparse
 import os
 import time
+import traceback
 
 from runtime import runner
 from runtime import configuration
@@ -180,6 +181,9 @@ if __name__ == "__main__":
         except BaseException as e:
             print("/!\\ gracefully shutting down simulation /!\\")
             print("/!\\ exception was {}".format(e))
+            print("/!\\ stack trace:")
+            print(traceback.format_exc())
+            print("/!\ recovering...")
             # cleanup open file streams and write run cfg if not exists
             rf.close()
             cf.close()
