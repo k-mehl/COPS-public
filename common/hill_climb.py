@@ -44,11 +44,12 @@ def hill(driver_matrix, adjacency_matrix):
         path = driver_matrix[d]
         #print("chosen path ", path)
         # pick a random node excluding first and the last (start and end)
-        node_ind = randint(1, len(path) - 2)
+        path_end = len(path) - 1
+        node_ind = randint(1, path_end - 1)
         node = path[node_ind]
         #print("chosen node ", node)
-        path_neighbors = (path[node_ind - 1],
-                          path[node_ind + 1])
+        # get one way nodes (unreachable nodes)
+        path_neighbors = (path[node_ind - 1], path[node_ind + 1])
         # chose where to move (you can not move into neighbors already in path)
         neighbors = adjacency_matrix[node][:]
         #print(neighbors)
@@ -62,13 +63,13 @@ def hill(driver_matrix, adjacency_matrix):
         # get the shortest route to connecting nodes
         # TODO left and right will go out of bounds if node_ind is next to
         # start and end nodes in path
-        if node_ind - 1 == 0:
+        if node_ind == 1:
             left_ind = 0
         else:
             left_ind = node_ind - 2
 
-        if node_ind + 1 == (len(path) - 1):
-            righ_ind = len(path) - 1
+        if node_ind == path_end - 1:
+            righ_ind = path_end
         else:
             righ_ind = node_ind + 2
 
@@ -76,13 +77,21 @@ def hill(driver_matrix, adjacency_matrix):
         right = path[righ_ind]
 
         #print(left, right)
-        new_routes = CooperativeSearch(adjacency_matrix, [move_to], 0).shortest()
-        left_path = CooperativeSearch.reconstruct_path(new_routes[0], left)
-        right_path = CooperativeSearch.reconstruct_path(new_routes[0], right)
+        new_routes = CooperativeSearch(adjacency_matrix, [left, move_to],
+                                       0).shortest()
+        left_route = new_routes[0]
+        righ_route = new_routes[1]
+
+        #print(new_routes)
+        #print(node, left, move_to, right)
+        left_path = CooperativeSearch.reconstruct_path(left_route, move_to,
+                                                       left)
+        right_path = CooperativeSearch.reconstruct_path(righ_route, right,
+                                                        move_to)
         #print("lp", left_path)
         #print("rp", right_path)
         
-        new_path = path[:left_ind] + left_path[::-1] + right_path[1:-1] + path[righ_ind:]
+        new_path = path[:left_ind] + left_path + right_path[1:-1] + path[righ_ind:]
         #print("And the path is: ", new_path)
 
         # some stupid cases where edge gets duplicated discard such cases... in
@@ -146,7 +155,7 @@ if __name__ == "__main__":
     recon = []
     for i in xrange(len(cars)):
         recon.append(obj.reconstruct_path(sh[i], dest[i]))
-        print(obj.reconstruct_path(sh[i], dest[i]))
+        print(obj.reconstruct_path(sh[i], dest[i], cars[i]))
 
     print("num_of_visited_nodes", num_of_visited_nodes(recon))
     print("overlap", count_overlap(recon))
