@@ -165,9 +165,8 @@ class Runtime(object):
 		traversedRoute = psv.getTraversedRoute()
 		plannedRoute = psv.getActiveRoute()
 		name = psv.getName()
-                for edge in self._environment._roadNetwork["edges"].keys():
+                for edge in self._environment._roadNetwork["edges"]:
                     # traversedRoutePlusCurrentEdge.append(psv.getActiveRoute()[0])
-
                     oppositeEdgeID = self._environment._roadNetwork["edges"][edge]["oppositeEdgeID"]
                     visitCount = traversedRoute.count(str(edge)) \
                         + traversedRoute.count(oppositeEdgeID)
@@ -196,8 +195,8 @@ class Runtime(object):
                     succEdgeCost = {}
 
                     for edge in succEdges:
-                        # consider all successor edges, BUT if no opposite edge exists, don't try to
-                        # exclude it.
+			# consider all successor edges, BUT if no opposite edge
+			# exists, don't try to exclude it.
                         if lastSegment in self._environment._oppositeEdgeID:
                             if not str(edge.getID()) == self._environment._oppositeEdgeID[lastSegment]:
                                 succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
