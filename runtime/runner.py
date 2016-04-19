@@ -158,8 +158,8 @@ class Runtime(object):
                 #count edge visits of each vehicle
                 #TODO: make visit update more efficient
                 for edge in self._environment._roadNetwork["edges"].keys():
-                    traversedRoute = psv.getTraversedRoute()[:]
-                    plannedRoute = psv.getActiveRoute()[:]
+                    traversedRoute = psv.getTraversedRoute()
+                    plannedRoute = psv.getActiveRoute()
                     #traversedRoutePlusCurrentEdge.append(psv.getActiveRoute()[0])
 
                     oppositeEdgeID = self._environment._roadNetwork["edges"][edge]["oppositeEdgeID"]
