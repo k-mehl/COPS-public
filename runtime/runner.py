@@ -178,47 +178,46 @@ class Runtime(object):
                     searchDistances.append(result[3])
                     walkingDistances.append(result[4])
                     searchPhases.append(result[5])
-                else:
+                elif psv.isOnLastRouteSegment():
                     # if the vehicle is on the last route segment,
                     # choose one of the possible next edges to continue
-                    if psv.isOnLastRouteSegment():
-                        currentRoute = psv.getVehicleRoute()
-                        succEdges = \
-                            self._environment._net.getEdge(currentRoute[-1]).getToNode().getOutgoing()
+                    lastSegment = psv.getVehicleRoute()[-1]
+                    succEdges = \
+                        self._environment._net.getEdge(lastSegment).getToNode().getOutgoing()
 
-                        # calculate costs for every edge except opposite
-                        # direction of current edge
-                        succEdgeCost = {}
+                    # calculate costs for every edge except opposite
+                    # direction of current edge
+                    succEdgeCost = {}
 
-                        for edge in succEdges:
-                            # consider all successor edges, BUT if no opposite edge exists, don't try to
-                            # exclude it.
-                            if currentRoute[-1] in self._environment._oppositeEdgeID:
-                                if not str(edge.getID()) == self._environment._oppositeEdgeID[currentRoute[-1]]:
-                                    succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
-                            else:
+                    for edge in succEdges:
+                        # consider all successor edges, BUT if no opposite edge exists, don't try to
+                        # exclude it.
+                        if lastSegment in self._environment._oppositeEdgeID:
+                            if not str(edge.getID()) == self._environment._oppositeEdgeID[lastSegment]:
                                 succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
-
-                        #calculate minima of succEdgeCost
-                        minValue = numpy.min(succEdgeCost.values())
-                        minKeys = [key for key in succEdgeCost if succEdgeCost[key] == minValue]
-
-
-                        #choose randomly if costs are equal
-                        if self._config.getCfg("vehicle").get("phase3randomprob"):
-                            phase3RandomProb = self._config.getCfg("vehicle").get("phase3randomprob")
                         else:
-                            phase3RandomProb = 0.0
-                        
-                        if (random.random()<phase3RandomProb):
-                            nextRouteSegment = random.choice(succEdgeCost.keys())
-                        else:
-                            if (len(minKeys) > 1):
-                                nextRouteSegment = random.choice(minKeys)
-                            else:
-                                nextRouteSegment = minKeys[0]
+                            succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
 
-                        psv.setNextRouteSegment(nextRouteSegment)
+                    #calculate minima of succEdgeCost
+                    minValue = numpy.min(succEdgeCost.values())
+                    minKeys = [key for key in succEdgeCost if succEdgeCost[key] == minValue]
+
+
+                    #choose randomly if costs are equal
+                    if self._config.getCfg("vehicle").get("phase3randomprob"):
+                        phase3RandomProb = self._config.getCfg("vehicle").get("phase3randomprob")
+                    else:
+                        phase3RandomProb = 0.0
+                    
+                    if (random.random() < phase3RandomProb):
+                        nextRouteSegment = random.choice(succEdgeCost.keys())
+                    else:
+                        if (len(minKeys) > 1):
+                            nextRouteSegment = random.choice(minKeys)
+                        else:
+                            nextRouteSegment = minKeys[0]
+
+                    psv.setNextRouteSegment(nextRouteSegment)
 
             # break the while-loop if all remaining SUMO vehicles have
             # successfully parked
