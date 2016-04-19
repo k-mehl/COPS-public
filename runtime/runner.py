@@ -162,9 +162,10 @@ class Runtime(object):
                 result = psv.update(step)
                 # count edge visits of each vehicle
                 # TODO: make visit update more efficient
+		traversedRoute = psv.getTraversedRoute()
+		plannedRoute = psv.getActiveRoute()
+		name = psv.getName()
                 for edge in self._environment._roadNetwork["edges"].keys():
-                    traversedRoute = psv.getTraversedRoute()
-                    plannedRoute = psv.getActiveRoute()
                     # traversedRoutePlusCurrentEdge.append(psv.getActiveRoute()[0])
 
                     oppositeEdgeID = self._environment._roadNetwork["edges"][edge]["oppositeEdgeID"]
@@ -172,8 +173,8 @@ class Runtime(object):
                         + traversedRoute.count(oppositeEdgeID)
                     plannedCount = plannedRoute.count(str(edge)) \
                         + plannedRoute.count(oppositeEdgeID)
-                    self._environment._roadNetwork["edges"][edge]["visitCount"][psv.getName()] = visitCount
-                    self._environment._roadNetwork["edges"][edge]["plannedCount"][psv.getName()] = plannedCount
+                    self._environment._roadNetwork["edges"][edge]["visitCount"][name] = visitCount
+                    self._environment._roadNetwork["edges"][edge]["plannedCount"][name] = plannedCount
 
                 # if result values could be obtained, the vehicle found
                 # a parking space in the last time step
