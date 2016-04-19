@@ -53,7 +53,8 @@ class Runtime(object):
     ## Runs the simulation on both SUMO and Python layers
     def run(self, i_run):
 
-        # if there is a run configuration loaded use it to populate parkingspaces in environment otherwise initialize new
+        # if there is a run configuration loaded use it to populate
+        # parkingspaces in environment otherwise initialize new
         if not self._config.getRunCfg(str(i_run)):
             if self._config.getCfg("simulation").get("verbose"):
                 print("* no run cfg found. Initializing random parking spaces.")
@@ -64,9 +65,9 @@ class Runtime(object):
         else:
             return
 
-        # if --routefile flag is provided, use the file for routing,
-        # otherwise generate (and overwrite if exists) route file (reroute.rou.xml) for this simulation run
-        # using the given number of parking search vehicles
+        # if --routefile flag is provided, use the file for routing, otherwise
+        # generate (and overwrite if exists) route file (reroute.rou.xml) for
+        # this simulation run using the given number of parking search vehicles
         if os.path.isfile(os.path.join(self._config.getCfg("simulation").get("resourcedir"), self._config.getCfg("simulation").get("routefile"))) and self._config.getCfg("simulation").get("forceroutefile"):
             self._routefile = self._config.getCfg("simulation").get("routefile")
         else:
@@ -93,7 +94,7 @@ class Runtime(object):
         step = 0
 
         # create empty list for parking search vehicles
-        l_parkingSearchVehicles=[]
+        l_parkingSearchVehicles = []
 
         # compute phase 2 routing information (individual and cooperative)
         l_individualRoutes, l_cooperativeRoutes = self.computePhase2Routings()
@@ -121,11 +122,12 @@ class Runtime(object):
             if step != (traci.simulation.getCurrentTime()/1000):
                 print("TIMESTEP ERROR", step, "getCurrentTime",
                         traci.simulation.getCurrentTime())
-            # if a new vehicle has departed in SUMO, create the corresponding Python
-            # representation
+            # if a new vehicle has departed in SUMO, create the corresponding
+            # Python representation
             l_departedVehicles = traci.simulation.getDepartedIDList()
 
-            # get individual vehicle preferences from run config if present, otherwise generate values
+            # get individual vehicle preferences from run config if present,
+            # otherwise generate values
             l_run = str(i_run)
 
             l_parkingSearchVehicles.extend(map(
@@ -184,7 +186,8 @@ class Runtime(object):
                         succEdges = \
                             self._environment._net.getEdge(currentRoute[-1]).getToNode().getOutgoing()
 
-                        #calculate costs for every edge except opposite direction of current edge
+                        # calculate costs for every edge except opposite
+                        # direction of current edge
                         succEdgeCost = {}
 
                         for edge in succEdges:
@@ -346,7 +349,6 @@ class Runtime(object):
         edges = (self.convertNodeSequenceToEdgeSequence(self._environment._adjacencyEdgeID,
                                                                  shortestNeighbors[trip])
                  for trip in xrange(len(allVehicleIDs)))
-
         l_cooperativeRoutes = dict(zip(allVehicleIDs, edges))
         # l_cooperativeRoutes = dict(map(
         #     lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
@@ -357,18 +359,23 @@ class Runtime(object):
         # ))
 
         # use Aleksandar's Cooperative Search Router to create a dictionary
-        # containing all non-cooperative vehicle routes (only once in advance)
+        # containing all non-cooperative vehicle routes (only once in advance
+        # and if coopratioPhase2 > 0.0)
         l_individualRoutes = None
         if self._config.getCfg("simulation").get("coopratioPhase2"):
             indyRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices, 0)
             indyShortestNeighbors = indyRouter.shortest()
 
-            l_individualRoutes = dict(map(
-                lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
-                    self._environment._adjacencyEdgeID,indyRouter.reconstruct_path(
-                                indyShortestNeighbors[trip],allDestinationNodeIndices[trip],
-                                allOriginNodeIndices[trip]))
-                ),
-                xrange(len(allVehicleIDs))
-            ))
+            edges = (self.convertNodeSequenceToEdgeSequence(self._environment._adjacencyEdgeID,
+                                                                     indyShortestNeighbors[trip])
+                     for trip in xrange(len(allVehicleIDs)))
+            l_individualRoutes = dict(zip(allVehicleIDs, edges))
+            # l_individualRoutes = dict(map(
+            #     lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
+            #         self._environment._adjacencyEdgeID,indyRouter.reconstruct_path(
+            #                     indyShortestNeighbors[trip],allDestinationNodeIndices[trip],
+            #                     allOriginNodeIndices[trip]))
+            #     ),
+            #     xrange(len(allVehicleIDs))
+            # ))
         return l_individualRoutes, l_cooperativeRoutes
