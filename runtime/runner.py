@@ -358,15 +358,17 @@ class Runtime(object):
 
         # use Aleksandar's Cooperative Search Router to create a dictionary
         # containing all non-cooperative vehicle routes (only once in advance)
-        indyRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices, 0)
-        indyShortestNeighbors = indyRouter.shortest()
+        l_individualRoutes = None
+        if self._config.getCfg("simulation").get("coopratioPhase2"):
+            indyRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices, 0)
+            indyShortestNeighbors = indyRouter.shortest()
 
-        l_individualRoutes = dict(map(
-            lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
-                self._environment._adjacencyEdgeID,indyRouter.reconstruct_path(
-                            indyShortestNeighbors[trip],allDestinationNodeIndices[trip],
-                            allOriginNodeIndices[trip]))
-            ),
-            xrange(len(allVehicleIDs))
-        ))
+            l_individualRoutes = dict(map(
+                lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
+                    self._environment._adjacencyEdgeID,indyRouter.reconstruct_path(
+                                indyShortestNeighbors[trip],allDestinationNodeIndices[trip],
+                                allOriginNodeIndices[trip]))
+                ),
+                xrange(len(allVehicleIDs))
+            ))
         return l_individualRoutes, l_cooperativeRoutes
