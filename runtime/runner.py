@@ -123,15 +123,19 @@ class Runtime(object):
                 print("TIMESTEP ERROR", step, "getCurrentTime",
                         traci.simulation.getCurrentTime())
             # if a new vehicle has departed in SUMO, create the corresponding
-            # Python representation
-            l_departedVehicles = traci.simulation.getDepartedIDList()
+            # Python representation and remove the vehicles that have
+            # disappeared in SUMO
+            l_departedVehicles = (x for x in
+                                  traci.simulation.getDepartedIDList()
+                                  if x not in traci.simulation.getArrivedIDList())
 
             # get individual vehicle preferences from run config if present,
             # otherwise generate values
-            l_run = str(i_run)
+            # TODO: following was unused, why was it there?
+            # l_run = str(i_run)
 
             l_parkingSearchVehicles.extend(map(
-                    lambda vehID: ParkingSearchVehicle( vehID, self._environment, self._config, i_run, step,
+                    lambda vehID: ParkingSearchVehicle(vehID, self._environment, self._config, i_run, step,
                                                         self._environment._net.getEdge(l_individualRoutes[vehID][-1]).getToNode().getID(),
                                                         l_cooperativeRoutes[vehID], l_individualRoutes[vehID]),
                     l_departedVehicles
@@ -139,12 +143,13 @@ class Runtime(object):
 
             # if a vehicle has disappeared in SUMO, remove the corresponding Python
             # representation
-            for vehID in traci.simulation.getArrivedIDList():
-                    # for now: output to console that the vehicle disappeared upon
-                    # reaching the destination
-                print(str(vehID),
-                        "did not find an available parking space during phase 2.")
-                l_parkingSearchVehicles.remove(ParkingSearchVehicle(vehID))
+            # for vehID in traci.simulation.getArrivedIDList():
+            #         # for now: output to console that the vehicle disappeared upon
+            #         # reaching the destination
+            #     print(str(vehID),
+            #             "did not find an available parking space during phase 2.")
+            #     l_parkingSearchVehicles.remove(ParkingSearchVehicle(vehID))
+
             # update status of all vehicles
             # TODO: differentiate this update method into e.g.
             #       getVehicleData() ..... all TraCI getSomething commands
@@ -155,18 +160,18 @@ class Runtime(object):
             for psv in l_parkingSearchVehicles:
 
                 result = psv.update(step)
-                #count edge visits of each vehicle
-                #TODO: make visit update more efficient
+                # count edge visits of each vehicle
+                # TODO: make visit update more efficient
                 for edge in self._environment._roadNetwork["edges"].keys():
                     traversedRoute = psv.getTraversedRoute()
                     plannedRoute = psv.getActiveRoute()
-                    #traversedRoutePlusCurrentEdge.append(psv.getActiveRoute()[0])
+                    # traversedRoutePlusCurrentEdge.append(psv.getActiveRoute()[0])
 
                     oppositeEdgeID = self._environment._roadNetwork["edges"][edge]["oppositeEdgeID"]
                     visitCount = traversedRoute.count(str(edge)) \
-                        +traversedRoute.count(oppositeEdgeID)
+                        + traversedRoute.count(oppositeEdgeID)
                     plannedCount = plannedRoute.count(str(edge)) \
-                        +plannedRoute.count(oppositeEdgeID)
+                        + plannedRoute.count(oppositeEdgeID)
                     self._environment._roadNetwork["edges"][edge]["visitCount"][psv.getName()] = visitCount
                     self._environment._roadNetwork["edges"][edge]["plannedCount"][psv.getName()] = plannedCount
 
@@ -198,12 +203,11 @@ class Runtime(object):
                         else:
                             succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
 
-                    #calculate minima of succEdgeCost
+                    # calculate minima of succEdgeCost
                     minValue = numpy.min(succEdgeCost.values())
                     minKeys = [key for key in succEdgeCost if succEdgeCost[key] == minValue]
 
-
-                    #choose randomly if costs are equal
+                    # choose randomly if costs are equal
                     if self._config.getCfg("vehicle").get("phase3randomprob"):
                         phase3RandomProb = self._config.getCfg("vehicle").get("phase3randomprob")
                     else:
