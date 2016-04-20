@@ -213,7 +213,6 @@ class CooperativeSearch(object):
         """
         Return reconstructed shortest paths.
         """
-        self.shortest()
         paths = list(map(self.reconstruct_path, self.path_lst, destinations))
         return paths
 
