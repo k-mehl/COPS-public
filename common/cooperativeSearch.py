@@ -86,6 +86,7 @@ class CooperativeSearch(object):
                 # self.dijkstra_inner(car)
                 car += 1
             len_to_check -= 1
+        return self
 
     def _inner(self, car_index):
         """

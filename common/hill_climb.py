@@ -114,7 +114,7 @@ def hill(driver_matrix, adjacency_matrix):
         right = path[righ_ind]
 
         new_routes = CooperativeSearch(adjacency_matrix, [left, move_to],
-                                       0).shortest()
+                                       0).shortest().path_lst
         left_route = new_routes[0]
         righ_route = new_routes[1]
 
