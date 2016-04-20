@@ -5,6 +5,16 @@ import os
 import subprocess
 import sys
 
+try:
+    xrange
+except NameError:
+    xrange = range
+
+try:
+    import itertools.izip as zip
+except ImportError:
+    pass
+
 # (from SUMO examples:)
 # we need to import python modules from the $SUMO_HOME/tools directory
 try:
@@ -43,7 +53,8 @@ class Runtime(object):
     ## Runs the simulation on both SUMO and Python layers
     def run(self, i_run):
 
-        # if there is a run configuration loaded use it to populate parkingspaces in environment otherwise initialize new
+        # if there is a run configuration loaded use it to populate
+        # parkingspaces in environment otherwise initialize new
         if not self._config.getRunCfg(str(i_run)):
             if self._config.getCfg("simulation").get("verbose"):
                 print("* no run cfg found. Initializing random parking spaces.")
@@ -54,9 +65,9 @@ class Runtime(object):
         else:
             return
 
-        # if --routefile flag is provided, use the file for routing,
-        # otherwise generate (and overwrite if exists) route file (reroute.rou.xml) for this simulation run
-        # using the given number of parking search vehicles
+        # if --routefile flag is provided, use the file for routing, otherwise
+        # generate (and overwrite if exists) route file (reroute.rou.xml) for
+        # this simulation run using the given number of parking search vehicles
         if os.path.isfile(os.path.join(self._config.getCfg("simulation").get("resourcedir"), self._config.getCfg("simulation").get("routefile"))) and self._config.getCfg("simulation").get("forceroutefile"):
             self._routefile = self._config.getCfg("simulation").get("routefile")
         else:
@@ -83,7 +94,7 @@ class Runtime(object):
         step = 0
 
         # create empty list for parking search vehicles
-        l_parkingSearchVehicles=[]
+        l_parkingSearchVehicles = []
 
         # compute phase 2 routing information (individual and cooperative)
         l_individualRoutes, l_cooperativeRoutes = self.computePhase2Routings()
@@ -111,15 +122,20 @@ class Runtime(object):
             if step != (traci.simulation.getCurrentTime()/1000):
                 print("TIMESTEP ERROR", step, "getCurrentTime",
                         traci.simulation.getCurrentTime())
-            # if a new vehicle has departed in SUMO, create the corresponding Python
-            # representation
-            l_departedVehicles = traci.simulation.getDepartedIDList()
+            # if a new vehicle has departed in SUMO, create the corresponding
+            # Python representation and remove the vehicles that have
+            # disappeared in SUMO
+            l_departedVehicles = (x for x in
+                                  traci.simulation.getDepartedIDList()
+                                  if x not in traci.simulation.getArrivedIDList())
 
-            # get individual vehicle preferences from run config if present, otherwise generate values
-            l_run = str(i_run)
+            # get individual vehicle preferences from run config if present,
+            # otherwise generate values
+            # TODO: following was unused, why was it there?
+            # l_run = str(i_run)
 
             l_parkingSearchVehicles.extend(map(
-                    lambda vehID: ParkingSearchVehicle( vehID, self._environment, self._config, i_run, step,
+                    lambda vehID: ParkingSearchVehicle(vehID, self._environment, self._config, i_run, step,
                                                         self._environment._net.getEdge(l_individualRoutes[vehID][-1]).getToNode().getID(),
                                                         l_cooperativeRoutes[vehID], l_individualRoutes[vehID]),
                     l_departedVehicles
@@ -127,12 +143,13 @@ class Runtime(object):
 
             # if a vehicle has disappeared in SUMO, remove the corresponding Python
             # representation
-            for vehID in traci.simulation.getArrivedIDList():
-                    # for now: output to console that the vehicle disappeared upon
-                    # reaching the destination
-                print(str(vehID),
-                        "did not find an available parking space during phase 2.")
-                l_parkingSearchVehicles.remove(ParkingSearchVehicle(vehID))
+            # for vehID in traci.simulation.getArrivedIDList():
+            #         # for now: output to console that the vehicle disappeared upon
+            #         # reaching the destination
+            #     print(str(vehID),
+            #             "did not find an available parking space during phase 2.")
+            #     l_parkingSearchVehicles.remove(ParkingSearchVehicle(vehID))
+
             # update status of all vehicles
             # TODO: differentiate this update method into e.g.
             #       getVehicleData() ..... all TraCI getSomething commands
@@ -143,20 +160,20 @@ class Runtime(object):
             for psv in l_parkingSearchVehicles:
 
                 result = psv.update(step)
-                #count edge visits of each vehicle
-                #TODO: make visit update more efficient
-                for edge in self._environment._roadNetwork["edges"].keys():
-                    traversedRoute = psv.getTraversedRoute()[:]
-                    plannedRoute = psv.getActiveRoute()[:]
-                    #traversedRoutePlusCurrentEdge.append(psv.getActiveRoute()[0])
-
+                # count edge visits of each vehicle
+                # TODO: make visit update more efficient
+		traversedRoute = psv.getTraversedRoute()
+		plannedRoute = psv.getActiveRoute()
+		name = psv.getName()
+                for edge in self._environment._roadNetwork["edges"]:
+                    # traversedRoutePlusCurrentEdge.append(psv.getActiveRoute()[0])
                     oppositeEdgeID = self._environment._roadNetwork["edges"][edge]["oppositeEdgeID"]
                     visitCount = traversedRoute.count(str(edge)) \
-                        +traversedRoute.count(oppositeEdgeID)
+                        + traversedRoute.count(oppositeEdgeID)
                     plannedCount = plannedRoute.count(str(edge)) \
-                        +plannedRoute.count(oppositeEdgeID)
-                    self._environment._roadNetwork["edges"][edge]["visitCount"][psv.getName()] = visitCount
-                    self._environment._roadNetwork["edges"][edge]["plannedCount"][psv.getName()] = plannedCount
+                        + plannedRoute.count(oppositeEdgeID)
+                    self._environment._roadNetwork["edges"][edge]["visitCount"][name] = visitCount
+                    self._environment._roadNetwork["edges"][edge]["plannedCount"][name] = plannedCount
 
                 # if result values could be obtained, the vehicle found
                 # a parking space in the last time step
@@ -166,46 +183,45 @@ class Runtime(object):
                     searchDistances.append(result[3])
                     walkingDistances.append(result[4])
                     searchPhases.append(result[5])
-                else:
+                elif psv.isOnLastRouteSegment():
                     # if the vehicle is on the last route segment,
                     # choose one of the possible next edges to continue
-                    if psv.isOnLastRouteSegment():
-                        currentRoute = psv.getVehicleRoute()
-                        succEdges = \
-                            self._environment._net.getEdge(currentRoute[-1]).getToNode().getOutgoing()
+                    lastSegment = psv.getVehicleRoute()[-1]
+                    succEdges = \
+                        self._environment._net.getEdge(lastSegment).getToNode().getOutgoing()
 
-                        #calculate costs for every edge except opposite direction of current edge
-                        succEdgeCost = {}
+                    # calculate costs for every edge except opposite
+                    # direction of current edge
+                    succEdgeCost = {}
 
-                        for edge in succEdges:
-                            # consider all successor edges, BUT if no opposite edge exists, don't try to
-                            # exclude it.
-                            if currentRoute[-1] in self._environment._oppositeEdgeID:
-                                if not str(edge.getID()) == self._environment._oppositeEdgeID[currentRoute[-1]]:
-                                    succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
-                            else:
+                    for edge in succEdges:
+			# consider all successor edges, BUT if no opposite edge
+			# exists, don't try to exclude it.
+                        if lastSegment in self._environment._oppositeEdgeID:
+                            if not str(edge.getID()) == self._environment._oppositeEdgeID[lastSegment]:
                                 succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
-
-                        #calculate minima of succEdgeCost
-                        minValue = numpy.min(succEdgeCost.values())
-                        minKeys = [key for key in succEdgeCost if succEdgeCost[key] == minValue]
-
-
-                        #choose randomly if costs are equal
-                        if self._config.getCfg("vehicle").get("phase3randomprob"):
-                            phase3RandomProb = self._config.getCfg("vehicle").get("phase3randomprob")
                         else:
-                            phase3RandomProb = 0.0
-                        
-                        if (random.random()<phase3RandomProb):
-                            nextRouteSegment = random.choice(succEdgeCost.keys())
-                        else:
-                            if (len(minKeys) > 1):
-                                nextRouteSegment = random.choice(minKeys)
-                            else:
-                                nextRouteSegment = minKeys[0]
+                            succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
 
-                        psv.setNextRouteSegment(nextRouteSegment)
+                    # calculate minima of succEdgeCost
+                    minValue = numpy.min(succEdgeCost.values())
+                    minKeys = [key for key in succEdgeCost if succEdgeCost[key] == minValue]
+
+                    # choose randomly if costs are equal
+                    if self._config.getCfg("vehicle").get("phase3randomprob"):
+                        phase3RandomProb = self._config.getCfg("vehicle").get("phase3randomprob")
+                    else:
+                        phase3RandomProb = 0.0
+                    
+                    if (random.random() < phase3RandomProb):
+                        nextRouteSegment = random.choice(succEdgeCost.keys())
+                    else:
+                        if (len(minKeys) > 1):
+                            nextRouteSegment = random.choice(minKeys)
+                        else:
+                            nextRouteSegment = minKeys[0]
+
+                    psv.setNextRouteSegment(nextRouteSegment)
 
             # break the while-loop if all remaining SUMO vehicles have
             # successfully parked
@@ -259,42 +275,21 @@ class Runtime(object):
     #  @param nodeSequence route given as node index list
     #  @return edgeSequence route given as edge ID list
     def convertNodeSequenceToEdgeSequence(self, adjacencyEdgeID, nodeSequence):
-        edgeSequence = []
-        for segment in range(0, len(nodeSequence)-1):
-            nextEdge=adjacencyEdgeID[nodeSequence[segment]][nodeSequence[segment+1]]
-            if nextEdge=="":
-                print("ERROR: could not convert node sequence to edge sequence.")
-                #exit() #TODO remove this exit, wtf?!
-            else:
-                edgeSequence.append(nextEdge)
-        return edgeSequence
+	node_pairs = zip(nodeSequence, nodeSequence[1:])
+        return [adjacencyEdgeID[row][col] for row, col in node_pairs]
 
     ## Get number of remaining searching vehicles
     #  @param psvList List of parking search vehicle objects
     #  @return Number of remaining vehicles which are not parked
     def getNumberOfRemainingVehicles(self, psvList):
-        if not psvList:
-            return 0
-
-        remainingVehicles = 0
-        for psv in psvList:
-            if not psv.getParkedStatus():
-                remainingVehicles += 1
-        return remainingVehicles
+        return sum(1 for psv in psvList if not psv.getParkedStatus())
 
 
     ## Get number of successfully parked vehicles
     #  @param psvList List of parking search vehicle objects
     #  @return Number of parked vehicles
     def getNumberOfParkedVehicles(self, psvList):
-        if not psvList:
-            return 0
-
-        parkedVehicles = 0
-        for psv in psvList:
-            if  psv.getParkedStatus():
-                parkedVehicles += 1
-        return parkedVehicles
+        return sum(1 for psv in psvList if psv.getParkedStatus())
 
 
     def initPOI(self):
@@ -339,28 +334,71 @@ class Runtime(object):
 
         # use Aleksandar's Cooperative Search Router to create a dictionary
         # containing all cooperative vehicle routes (only once in advance)
-        coopRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices)
-        shortestNeighbors = coopRouter.shortest()
+        # coopRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices)
+        # shortestNeighbors = coopRouter.shortest()
+        nodeToEdge = self.convertNodeSequenceToEdgeSequence
+        if self._config.getCfg("simulation").get("coopratioPhase2") == 1.0:
+            coopRouter = CoopSearchHillOptimized(
+                                        self._environment._adjacencyMatrix,
+                                        allOriginNodeIndices,
+                                        allDestinationNodeIndices,
+                                        0.2)
+            shortestNeighbors = coopRouter.optimized()
 
-        l_cooperativeRoutes = dict(map(
-            lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
-                self._environment._adjacencyEdgeID,coopRouter.reconstruct_path(
-                            shortestNeighbors[trip],allDestinationNodeIndices[trip],
-                            allOriginNodeIndices[trip])) ),
-                xrange(len(allVehicleIDs))
-        ))
+            edges = (nodeToEdge(self._environment._adjacencyEdgeID,
+                                shortestNeighbors[trip]) for trip in
+                     xrange(len(allVehicleIDs)))
+            l_cooperativeRoutes = dict(zip(allVehicleIDs, edges))
+            l_individualRoutes = l_cooperativeRoutes
+
+        elif self._config.getCfg("simulation").get("coopratioPhase2") == 0.0:
+            indyRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices, 0)
+            indyRouter.shortest()
+            indyShortestNeighbors = indyRouter.paths(allDestinationNodeIndices)
+            edgesIndy = (nodeToEdge(self._environment._adjacencyEdgeID,
+                                    indyShortestNeighbors[trip])
+                         for trip in xrange(len(allVehicleIDs)))
+            l_individualRoutes = dict(zip(allVehicleIDs, edgesIndy))
+            l_cooperativeRoutes = l_individualRoutes
+
+        else:
+            coopRouter = CoopSearchHillOptimized(self._environment._adjacencyMatrix,
+                                           allOriginNodeIndices,
+                                           allDestinationNodeIndices, 0.2)
+            shortestNeighbors = coopRouter.optimized()
+
+            edges = (nodeToEdge(self._environment._adjacencyEdgeID,
+                                shortestNeighbors[trip])
+                     for trip in xrange(len(allVehicleIDs)))
+            l_cooperativeRoutes = dict(zip(allVehicleIDs, edges))
+            
+            indyRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices, 0)
+            indyRouter.shortest()
+            indyShortestNeighbors = indyRouter.paths(allDestinationNodeIndices)
+            edgesIndy = (nodeToEdge(self._environment._adjacencyEdgeID,
+                                    indyShortestNeighbors[trip])
+                         for trip in xrange(len(allVehicleIDs)))
+            l_individualRoutes = dict(zip(allVehicleIDs, edgesIndy))
+        
+        
+        # l_cooperativeRoutes = dict(map(
+        #     lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
+        #         self._environment._adjacencyEdgeID,coopRouter.reconstruct_path(
+        #                     shortestNeighbors[trip],allDestinationNodeIndices[trip],
+        #                     allOriginNodeIndices[trip])) ),
+        #         xrange(len(allVehicleIDs))
+        # ))
 
         # use Aleksandar's Cooperative Search Router to create a dictionary
-        # containing all non-cooperative vehicle routes (only once in advance)
-        indyRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices, 0)
-        indyShortestNeighbors = indyRouter.shortest()
-
-        l_individualRoutes = dict(map(
-            lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
-                self._environment._adjacencyEdgeID,indyRouter.reconstruct_path(
-                            indyShortestNeighbors[trip],allDestinationNodeIndices[trip],
-                            allOriginNodeIndices[trip]))
-            ),
-            xrange(len(allVehicleIDs))
-        ))
+        # containing all non-cooperative vehicle routes (only once in advance
+        # and if coopratioPhase2 > 0.0)
+        
+        # l_individualRoutes = dict(map(
+        #     lambda trip: ( allVehicleIDs[trip], self.convertNodeSequenceToEdgeSequence(
+        #         self._environment._adjacencyEdgeID,indyRouter.reconstruct_path(
+        #                     indyShortestNeighbors[trip],allDestinationNodeIndices[trip],
+        #                     allOriginNodeIndices[trip]))
+        #     ),
+        #     xrange(len(allVehicleIDs))
+        # ))
         return l_individualRoutes, l_cooperativeRoutes
