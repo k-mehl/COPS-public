@@ -87,8 +87,6 @@ class CooperativeSearch(object):
                 car += 1
             len_to_check -= 1
 
-        return self.path_lst
-
     def _inner(self, car_index):
         """
         Helper method that traverses one row of adjacency matrix for one agent
