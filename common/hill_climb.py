@@ -79,6 +79,7 @@ def hill(driver_matrix, adjacency_matrix):
     # TODO normalize cost
     # TODO: make all this into a class
     costs = [total_cost(driver_matrix)]
+
     def hill_runner(driver_matrix, adjacency_matrix):
         num_of_drivers = len(driver_matrix)
         cost = total_cost(driver_matrix)
@@ -114,10 +115,9 @@ def hill(driver_matrix, adjacency_matrix):
         left = path[left_ind]
         right = path[righ_ind]
 
-        new_routes = CooperativeSearch(adjacency_matrix, [left, move_to],
-                                       0).shortest().path_lst
-        left_route = new_routes[0]
-        righ_route = new_routes[1]
+        left_route, righ_route = CooperativeSearch(adjacency_matrix,
+                                                   [left, move_to],
+                                                   0).shortest().path_lst
 
         left_path = reconstruct_path(left_route, move_to, left)
         right_path = reconstruct_path(righ_route, right, move_to)
@@ -170,12 +170,12 @@ if __name__ == "__main__":
                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0]]
 
     cars = [0, 3, 11, 12, 5]
-    #cars = [5, 5, 5, 5, 5]
+    # cars = [5, 5, 5, 5, 5]
 
     obj = CooperativeSearch(graph_ort, cars)
     sh = obj.shortest().path_lst
     dest = [15, 15, 15, 15, 15]
-    #dest = [6, 4, 5, 14, 0]
+    # dest = [6, 4, 5, 14, 0]
 
     recon = []
     for i in xrange(len(cars)):
