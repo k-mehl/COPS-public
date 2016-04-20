@@ -353,7 +353,8 @@ class Runtime(object):
 
         elif self._config.getCfg("simulation").get("coopratioPhase2") == 0.0:
             indyRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices, 0)
-            indyShortestNeighbors = indyRouter.shortest().paths(allDestinationNodeIndices)
+            indyRouter.shortest()
+            indyShortestNeighbors = indyRouter.paths(allDestinationNodeIndices)
             edgesIndy = (nodeToEdge(self._environment._adjacencyEdgeID,
                                     indyShortestNeighbors[trip])
                          for trip in xrange(len(allVehicleIDs)))
@@ -372,7 +373,8 @@ class Runtime(object):
             l_cooperativeRoutes = dict(zip(allVehicleIDs, edges))
             
             indyRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices, 0)
-            indyShortestNeighbors = indyRouter.shortest().paths(allDestinationNodeIndices)
+            indyRouter.shortest()
+            indyShortestNeighbors = indyRouter.paths(allDestinationNodeIndices)
             edgesIndy = (nodeToEdge(self._environment._adjacencyEdgeID,
                                     indyShortestNeighbors[trip])
                          for trip in xrange(len(allVehicleIDs)))
