@@ -15,7 +15,11 @@ try:
     xrange
 except NameError:
     xrange = range
-
+try:
+    import itertools.imap as map
+    import itertools.izip as zip
+except ImportError:
+    pass
 
 class CooperativeSearch(object):
 
@@ -68,6 +72,10 @@ class CooperativeSearch(object):
         """
         Calculate cooperational paths for multiple users. This is a wrapper for
         the class.
+
+        Returns:
+            A list of lists with shortest paths to all other nodes from
+            starting node.
         """
         len_to_check = len(self.graph) - 1
         num_of_steps = len(self.agents)
@@ -201,6 +209,14 @@ class CooperativeSearch(object):
             sol.append(destination)
         return sol[::-1]
 
+    def paths(self, destinations):
+        """
+        Return reconstructed shortest paths.
+        """
+        self.shortest()
+        paths = list(map(self.reconstruct_path, self.path_lst, destinations))
+        return paths
+
 class CoopSearchHillOptimized(CooperativeSearch):
 
     def __init__(self, graph, agents, destinations, penalty):
@@ -306,11 +322,13 @@ if __name__ == "__main__":
     # dest = [8,4,5,1]
     # dest = [15, 15, 15, 15, 15]
     dest = [12, 12, 12, 12, 12]
+    another = CooperativeSearch(gg_bug, cars).paths(dest)
 
     h_obj = CoopSearchHillOptimized(gg_bug, cars, dest, 0.2).optimized()
     for i in xrange(len(cars)):
         print("Dijkstra")
         print(obj.reconstruct_path(sh[i], dest[i]))
+        print(another[i])
         print("Optimized")
         print(h_obj[i])
     # some testing with networkx
