@@ -227,17 +227,12 @@ class CoopSearchHillOptimized(CooperativeSearch):
         # now that is crazy
         #return hill([self.reconstruct_path(path, dest[ind]) for ind, path in
         #             enumerate(self.shortest())], self.graph)
-        routes = [self.reconstruct_path(x[0], x[1], x[2]) for x in
-                  zip(self.shortest(), self.destinations, self.agents)]
-        # TODO: use map here because it is nices
-        # TODO: do not call shortest here use method chaining i.e.
-        # CoopSearchHillOptimized(*args).shortest().optimized()
-
-        # self.shortest()
-        # routes = list(map(self.reconstruct_path,
-        #                   self.path_lst,
-        #                   self.destinations,
-        #                   self.agents))
+        #
+        # shortest() must be called first
+        routes = list(map(self.reconstruct_path,
+                          self.path_lst,
+                          self.destinations,
+                          self.agents))
         return hill(routes, self.graph)
 
 
