@@ -13,6 +13,7 @@ except NameError:
 
 try:
     import itertools.izip as zip
+    import itertools.imap as map
 except ImportError:
     pass
 
@@ -139,12 +140,11 @@ def hill(driver_matrix, adjacency_matrix):
         new_cost = total_cost(temp_matrix)
         if new_cost < cost:
             return temp_matrix
-
         return driver_matrix
 
     for i in xrange(1000):
         driver_matrix = hill_runner(driver_matrix, adjacency_matrix)
-        costs.append(count_overlap(driver_matrix) + num_of_visited_nodes(driver_matrix))
+        costs.append(total_cost(driver_matrix))
         # Check if you can stop
         if len(costs) > 100 and len(set(costs[-100:])) == 1:
             return driver_matrix
@@ -173,7 +173,7 @@ if __name__ == "__main__":
     #cars = [5, 5, 5, 5, 5]
 
     obj = CooperativeSearch(graph_ort, cars)
-    sh = obj.shortest()
+    sh = obj.shortest().path_lst
     dest = [15, 15, 15, 15, 15]
     #dest = [6, 4, 5, 14, 0]
 
