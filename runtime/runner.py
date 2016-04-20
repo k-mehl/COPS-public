@@ -336,51 +336,46 @@ class Runtime(object):
         # containing all cooperative vehicle routes (only once in advance)
         # coopRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices)
         # shortestNeighbors = coopRouter.shortest()
+        nodeToEdge = self.convertNodeSequenceToEdgeSequence
         if self._config.getCfg("simulation").get("coopratioPhase2") == 1.0:
-            coopRouter = CoopSearchHillOptimized(self._environment._adjacencyMatrix,
-                                           allOriginNodeIndices,
-                                           allDestinationNodeIndices, 0.2)
+            coopRouter = CoopSearchHillOptimized(
+                                        self._environment._adjacencyMatrix,
+                                        allOriginNodeIndices,
+                                        allDestinationNodeIndices,
+                                        0.2)
             shortestNeighbors = coopRouter.optimized()
 
-            edges = (self.convertNodeSequenceToEdgeSequence(self._environment._adjacencyEdgeID,
-                                                                     shortestNeighbors[trip])
-                     for trip in xrange(len(allVehicleIDs)))
+            edges = (nodeToEdge(self._environment._adjacencyEdgeID,
+                                shortestNeighbors[trip]) for trip in
+                     xrange(len(allVehicleIDs)))
             l_cooperativeRoutes = dict(zip(allVehicleIDs, edges))
             l_individualRoutes = l_cooperativeRoutes
+
         elif self._config.getCfg("simulation").get("coopratioPhase2") == 0.0:
             indyRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices, 0)
-            indyShortestNeighbors = indyRouter.shortest()
-
-	    edgesIndy = (
-		self.convertNodeSequenceToEdgeSequence(
-		    self._environment._adjacencyEdgeID,
-		    indyRouter.reconstruct_path(indyShortestNeighbors[trip],
-						allDestinationNodeIndices[trip],
-						allOriginNodeIndices[trip]))
-		for trip in xrange(len(allVehicleIDs)))
+            indyShortestNeighbors = indyRouter.shortest().paths(allDestinationNodeIndices)
+            edgesIndy = (nodeToEdge(self._environment._adjacencyEdgeID,
+                                    indyShortestNeighbors[trip])
+                         for trip in xrange(len(allVehicleIDs)))
             l_individualRoutes = dict(zip(allVehicleIDs, edgesIndy))
             l_cooperativeRoutes = l_individualRoutes
+
         else:
             coopRouter = CoopSearchHillOptimized(self._environment._adjacencyMatrix,
                                            allOriginNodeIndices,
                                            allDestinationNodeIndices, 0.2)
             shortestNeighbors = coopRouter.optimized()
 
-            edges = (self.convertNodeSequenceToEdgeSequence(self._environment._adjacencyEdgeID,
-                                                                     shortestNeighbors[trip])
+            edges = (nodeToEdge(self._environment._adjacencyEdgeID,
+                                shortestNeighbors[trip])
                      for trip in xrange(len(allVehicleIDs)))
             l_cooperativeRoutes = dict(zip(allVehicleIDs, edges))
             
             indyRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices, 0)
-            indyShortestNeighbors = indyRouter.shortest()
-
-	    edgesIndy = (
-		self.convertNodeSequenceToEdgeSequence(
-		    self._environment._adjacencyEdgeID,
-		    indyRouter.reconstruct_path(indyShortestNeighbors[trip],
-						allDestinationNodeIndices[trip],
-						allOriginNodeIndices[trip]))
-		for trip in xrange(len(allVehicleIDs)))
+            indyShortestNeighbors = indyRouter.shortest().paths(allDestinationNodeIndices)
+            edgesIndy = (nodeToEdge(self._environment._adjacencyEdgeID,
+                                    indyShortestNeighbors[trip])
+                         for trip in xrange(len(allVehicleIDs)))
             l_individualRoutes = dict(zip(allVehicleIDs, edgesIndy))
         
         
