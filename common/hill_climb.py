@@ -13,7 +13,6 @@ except NameError:
 
 try:
     import itertools.izip as zip
-    import itertools.imap as map
 except ImportError:
     pass
 
@@ -79,14 +78,15 @@ def hill(driver_matrix, adjacency_matrix):
     # TODO normalize cost
     # TODO: make all this into a class
     costs = [total_cost(driver_matrix)]
+    feasible_ind = [x[0] for x in enumerate(driver_matrix) if len(x[1]) > 3]
+    # too short, no need to optimize
+    if not feasible_ind:
+        return driver_matrix
 
     def hill_runner(driver_matrix, adjacency_matrix):
-        num_of_drivers = len(driver_matrix)
         cost = total_cost(driver_matrix)
-        d = randint(0, num_of_drivers - 1)  # pick a random driver path
+        d = choice(feasible_ind)  # pick a random driver path index
         # do not use paths that are to small i.e. smaller than 4
-        while len(driver_matrix[d]) < 4:
-            d = randint(0, num_of_drivers - 1)
         path = driver_matrix[d]
         # pick a random node excluding first and the last (start and end)
         path_end = len(path) - 1
