@@ -276,13 +276,6 @@ class Runtime(object):
     #  @return edgeSequence route given as edge ID list
     def convertNodeSequenceToEdgeSequence(self, adjacencyEdgeID, nodeSequence):
 	node_pairs = zip(nodeSequence, nodeSequence[1:])
-        # for segment in xrange(len(nodeSequence) - 1):
-        #     nextEdge = adjacencyEdgeID[nodeSequence[segment]][nodeSequence[segment + 1]]
-        #     if nextEdge == "":
-        #         print("ERROR: could not convert node sequence to edge sequence.")
-        #         #exit() #TODO remove this exit, wtf?!
-        #     else:
-        #         edgeSequence.append(nextEdge)
         return [adjacencyEdgeID[row][col] for row, col in node_pairs]
 
     ## Get number of remaining searching vehicles
@@ -343,9 +336,7 @@ class Runtime(object):
         # containing all cooperative vehicle routes (only once in advance)
         # coopRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices)
         # shortestNeighbors = coopRouter.shortest()
-        
         if self._config.getCfg("simulation").get("coopratioPhase2") == 1.0:
-            print("only coop")
             coopRouter = CoopSearchHillOptimized(self._environment._adjacencyMatrix,
                                            allOriginNodeIndices,
                                            allDestinationNodeIndices, 0.2)
@@ -357,14 +348,17 @@ class Runtime(object):
             l_cooperativeRoutes = dict(zip(allVehicleIDs, edges))
             l_individualRoutes = l_cooperativeRoutes
         elif self._config.getCfg("simulation").get("coopratioPhase2") == 0.0:
-            print("only indy")
             indyRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices, 0)
             indyShortestNeighbors = indyRouter.shortest()
 
-            edges = (self.convertNodeSequenceToEdgeSequence(self._environment._adjacencyEdgeID,
-                                                                     indyShortestNeighbors[trip])
-                     for trip in xrange(len(allVehicleIDs)))
-            l_individualRoutes = dict(zip(allVehicleIDs, edges))
+	    edgesIndy = (
+		self.convertNodeSequenceToEdgeSequence(
+		    self._environment._adjacencyEdgeID,
+		    indyRouter.reconstruct_path(indyShortestNeighbors[trip],
+						allDestinationNodeIndices[trip],
+						allOriginNodeIndices[trip]))
+		for trip in xrange(len(allVehicleIDs)))
+            l_individualRoutes = dict(zip(allVehicleIDs, edgesIndy))
             l_cooperativeRoutes = l_individualRoutes
         else:
             coopRouter = CoopSearchHillOptimized(self._environment._adjacencyMatrix,
@@ -380,10 +374,14 @@ class Runtime(object):
             indyRouter = CooperativeSearch(self._environment._adjacencyMatrix, allOriginNodeIndices, 0)
             indyShortestNeighbors = indyRouter.shortest()
 
-            edges = (self.convertNodeSequenceToEdgeSequence(self._environment._adjacencyEdgeID,
-                                                                     indyShortestNeighbors[trip])
-                     for trip in xrange(len(allVehicleIDs)))
-            l_individualRoutes = dict(zip(allVehicleIDs, edges))
+	    edgesIndy = (
+		self.convertNodeSequenceToEdgeSequence(
+		    self._environment._adjacencyEdgeID,
+		    indyRouter.reconstruct_path(indyShortestNeighbors[trip],
+						allDestinationNodeIndices[trip],
+						allOriginNodeIndices[trip]))
+		for trip in xrange(len(allVehicleIDs)))
+            l_individualRoutes = dict(zip(allVehicleIDs, edgesIndy))
         
         
         # l_cooperativeRoutes = dict(map(
