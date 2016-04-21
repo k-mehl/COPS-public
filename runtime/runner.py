@@ -334,19 +334,11 @@ class Runtime(object):
 
         # use Aleksandar's Cooperative Search Router to create a dictionary
         # containing all cooperative vehicle routes (only once in advance)
+        from phase2 import Phase2Routes
         nodeToEdge = self.convertNodeSequenceToEdgeSequence
+        routes = Phase2Routes(self._config)
         if self._config.getCfg("simulation").get("coopratioPhase2") == 1.0:
-            coopRouter = CoopSearchHillOptimized(
-                                        self._environment._adjacencyMatrix,
-                                        allOriginNodeIndices,
-                                        allDestinationNodeIndices,
-                                        0.2)
-            coopPaths = coopRouter.shortest().optimized()
-
-            edges = (nodeToEdge(self._environment._adjacencyEdgeID,
-                                coopPaths[trip]) for trip in
-                     xrange(len(allVehicleIDs)))
-            l_cooperativeRoutes = dict(zip(allVehicleIDs, edges))
+            l_cooperativeRoutes = routes.cooperativeRoutes(0.2)
             l_individualRoutes = l_cooperativeRoutes
 
         elif self._config.getCfg("simulation").get("coopratioPhase2") == 0.0:
