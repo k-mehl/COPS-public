@@ -35,6 +35,8 @@ from common.cooperativeSearch import *
 from vehicle.parkingSearchVehicle import *
 from common.vehicleFactory import *
 from env.environment import *
+import phase2
+
 
 class Runtime(object):
 
@@ -309,70 +311,16 @@ class Runtime(object):
 
 
     def computePhase2Routings(self):
-        # prepare dictionaries with vehicle O/D data (IDs and indices)
-        # by parsing the generated route XML file
-        vehicleOriginNode = {}
-        vehicleOriginNodeIndex = {}
-        vehicleDestinationNode = {}
-        vehicleDestinationNodeIndex = {}
-        allVehicleIDs = []
-        allOriginNodeIndices = []
-        allDestinationNodeIndices = []
-        for trip in sumolib.output.parse_fast( \
-                os.path.join(self._config.getCfg("simulation").get("resourcedir"), self._routefile), 'trip', ['id','from','to']):
-            allVehicleIDs.append(trip.id)
-            vehicleOriginNode[trip.id] =  \
-                self._environment._net.getEdge(trip.attr_from).getFromNode().getID()
-            vehicleOriginNodeIndex[trip.id] = \
-                self._environment._convertNodeIDtoNodeIndex[vehicleOriginNode[trip.id]]
-            vehicleDestinationNode[trip.id] = \
-                self._environment._net.getEdge(trip.to).getToNode().getID()
-            vehicleDestinationNodeIndex[trip.id] = \
-                self._environment._convertNodeIDtoNodeIndex[vehicleDestinationNode[trip.id]]
-            allOriginNodeIndices.append(vehicleOriginNodeIndex[trip.id])
-            allDestinationNodeIndices.append(vehicleDestinationNodeIndex[trip.id])
 
-        # use Aleksandar's Cooperative Search Router to create a dictionary
-        # containing all cooperative vehicle routes (only once in advance)
-        from phase2 import Phase2Routes
-        nodeToEdge = self.convertNodeSequenceToEdgeSequence
-        routes = Phase2Routes(self._config)
+        routes = phase2.Phase2Routes(self)
         if self._config.getCfg("simulation").get("coopratioPhase2") == 1.0:
             l_cooperativeRoutes = routes.cooperativeRoutes(0.2)
             l_individualRoutes = l_cooperativeRoutes
-
         elif self._config.getCfg("simulation").get("coopratioPhase2") == 0.0:
-            indyRouter = CooperativeSearch(self._environment._adjacencyMatrix,
-                                           allOriginNodeIndices,
-                                           0)
-            indyRouter.shortest()
-            indyPaths = indyRouter.paths(allDestinationNodeIndices)
-            edgesIndy = (nodeToEdge(self._environment._adjacencyEdgeID,
-                                    indyPaths[trip])
-                         for trip in xrange(len(allVehicleIDs)))
-            l_individualRoutes = dict(zip(allVehicleIDs, edgesIndy))
+            l_individualRoutes = routes.individualRoutes()
             l_cooperativeRoutes = l_individualRoutes
-
         else:
-            coopRouter = CoopSearchHillOptimized(self._environment._adjacencyMatrix,
-                                                 allOriginNodeIndices,
-                                                 allDestinationNodeIndices,
-                                                 0.2)
-            coopPaths = coopRouter.shortest().optimized()
-
-            edges = (nodeToEdge(self._environment._adjacencyEdgeID,
-                                coopPaths[trip])
-                     for trip in xrange(len(allVehicleIDs)))
-            l_cooperativeRoutes = dict(zip(allVehicleIDs, edges))
-
-            indyRouter = CooperativeSearch(self._environment._adjacencyMatrix,
-                                           allOriginNodeIndices,
-                                           0)
-            indyRouter.shortest()
-            indyPaths = indyRouter.paths(allDestinationNodeIndices)
-            edgesIndy = (nodeToEdge(self._environment._adjacencyEdgeID,
-                                    indyPaths[trip])
-                         for trip in xrange(len(allVehicleIDs)))
-            l_individualRoutes = dict(zip(allVehicleIDs, edgesIndy))
+            l_cooperativeRoutes = routes.cooperativeRoutes(0.2)
+            l_individualRoutes = routes.individualRoutes()
 
         return l_individualRoutes, l_cooperativeRoutes

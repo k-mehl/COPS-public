@@ -24,9 +24,16 @@ except ImportError:
     pass
 
 
-class Phase2Routes(Runtime):
-    def __init__(self, conf):
-        super(Phase2Routes, self).__init__(conf)
+class Phase2Routes(object):
+    def __init__(self, parent_class):
+        # Take what you need from parent_class
+        self._config = parent_class._config
+        self._environment = parent_class._environment
+        self._routefile = parent_class._routefile
+        self.nodeToEdge = parent_class.convertNodeSequenceToEdgeSequence
+
+        # prepare dictionaries with vehicle O/D data (IDs and indices)
+        # by parsing the generated route XML file
         self.vehicleOriginNode = {}
         self.vehicleOriginNodeIndex = {}
         self.vehicleDestinationNode = {}
@@ -34,12 +41,7 @@ class Phase2Routes(Runtime):
         self.allVehicleIDs = []
         self.allOriginNodeIndices = []
         self.allDestinationNodeIndices = []
-        # HACK...
-        if os.path.isfile(os.path.join(self._config.getCfg("simulation").get("resourcedir"), self._config.getCfg("simulation").get("routefile"))) and self._config.getCfg("simulation").get("forceroutefile"):
-            self._routefile = self._config.getCfg("simulation").get("routefile")
-        else:
-            self._routefile = self._config.getCfg("simulation").get("routefile")
-            generatePsvDemand(self._config.getCfg("simulation").get("vehicles"), self._config.getCfg("simulation").get("resourcedir"), self._routefile)
+
         for trip in sumolib.output.parse_fast( \
                 os.path.join(self._config.getCfg("simulation").get("resourcedir"), self._routefile), 'trip', ['id','from','to']):
             self.allVehicleIDs.append(trip.id)
@@ -53,8 +55,6 @@ class Phase2Routes(Runtime):
                 self._environment._convertNodeIDtoNodeIndex[self.vehicleDestinationNode[trip.id]]
             self.allOriginNodeIndices.append(self.vehicleOriginNodeIndex[trip.id])
             self.allDestinationNodeIndices.append(self.vehicleDestinationNodeIndex[trip.id])
-
-        self.nodeToEdge = self.convertNodeSequenceToEdgeSequence
 
     def cooperativeRoutes(self, penalty):
         coopRouter = CoopSearchHillOptimized(
