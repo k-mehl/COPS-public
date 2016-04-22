@@ -6,9 +6,6 @@ import os
 import sumolib
 
 from common.cooperativeSearch import *
-from vehicle.parkingSearchVehicle import *
-from common.vehicleFactory import *
-from env.environment import *
 from runner import *
 
 # Python2-3 compatibility layer
@@ -19,7 +16,6 @@ except NameError:
 
 try:
     import itertools.izip as zip
-    import itertools.imap as map
 except ImportError:
     pass
 
