@@ -165,9 +165,9 @@ class Runtime(object):
                 result = psv.update(step)
                 # count edge visits of each vehicle
                 # TODO: make visit update more efficient
-		traversedRoute = psv.getTraversedRoute()
-		plannedRoute = psv.getActiveRoute()
-		name = psv.getName()
+                traversedRoute = psv.getTraversedRoute()
+                plannedRoute = psv.getActiveRoute()
+                name = psv.getName()
                 for edge in self._environment._roadNetwork["edges"]:
                     # traversedRoutePlusCurrentEdge.append(psv.getActiveRoute()[0])
                     oppositeEdgeID = self._environment._roadNetwork["edges"][edge]["oppositeEdgeID"]
@@ -198,8 +198,8 @@ class Runtime(object):
                     succEdgeCost = {}
 
                     for edge in succEdges:
-			# consider all successor edges, BUT if no opposite edge
-			# exists, don't try to exclude it.
+                        # consider all successor edges, BUT if no opposite edge
+                        # exists, don't try to exclude it.
                         if lastSegment in self._environment._oppositeEdgeID:
                             if not str(edge.getID()) == self._environment._oppositeEdgeID[lastSegment]:
                                 succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
@@ -278,7 +278,7 @@ class Runtime(object):
     #  @param nodeSequence route given as node index list
     #  @return edgeSequence route given as edge ID list
     def convertNodeSequenceToEdgeSequence(self, adjacencyEdgeID, nodeSequence):
-	node_pairs = zip(nodeSequence, nodeSequence[1:])
+        node_pairs = zip(nodeSequence, nodeSequence[1:])
         return [adjacencyEdgeID[row][col] for row, col in node_pairs]
 
     ## Get number of remaining searching vehicles
