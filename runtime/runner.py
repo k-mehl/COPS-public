@@ -136,6 +136,7 @@ class Runtime(object):
             # TODO: following was unused, why was it there?
             # l_run = str(i_run)
 
+            # TODO: separate l_individualRoutes and l_cooperativeRoutes
             l_parkingSearchVehicles.extend(map(
                     lambda vehID: ParkingSearchVehicle(vehID, self._environment, self._config, i_run, step,
                                                         self._environment._net.getEdge(l_individualRoutes[vehID][-1]).getToNode().getID(),
@@ -313,14 +314,19 @@ class Runtime(object):
     def computePhase2Routings(self):
 
         routes = phase2.Phase2Routes(self)
-        if self._config.getCfg("simulation").get("coopratioPhase2") == 1.0:
-            l_cooperativeRoutes = routes.cooperativeRoutes(0.2)
+        cooperation = self._config.getCfg("simulation").get("coopratioPhase2")
+        if cooperation == 1.0:
+            l_cooperativeRoutes = routes.routes(1.0, penalty=0.2)
             l_individualRoutes = l_cooperativeRoutes
-        elif self._config.getCfg("simulation").get("coopratioPhase2") == 0.0:
-            l_individualRoutes = routes.individualRoutes()
+        elif cooperation == 0.0:
+            l_individualRoutes = routes.routes(0.0, penalty=0)
             l_cooperativeRoutes = l_individualRoutes
         else:
-            l_cooperativeRoutes = routes.cooperativeRoutes(0.2)
+            l_cooperativeRoutes = routes.routes(cooperation, penalty=0.2)
             l_individualRoutes = routes.individualRoutes()
+
+        # For tests
+        # assert routes.routes(1.0, penalty=0.2) == routes.cooperativeRoutes(0.2)
+        # assert routes.routes(0.0, penalty=0.2) == l_cooperativeRoutes
 
         return l_individualRoutes, l_cooperativeRoutes

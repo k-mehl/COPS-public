@@ -2,6 +2,7 @@
 from __future__ import print_function
 
 import os
+import random
 
 import sumolib
 
@@ -52,32 +53,95 @@ class Phase2Routes(object):
             self.allOriginNodeIndices.append(self.vehicleOriginNodeIndex[trip.id])
             self.allDestinationNodeIndices.append(self.vehicleDestinationNodeIndex[trip.id])
 
-    def cooperativeRoutes(self, penalty):
-        coopRouter = CoopSearchHillOptimized(
-                                    self._environment._adjacencyMatrix,
-                                    self.allOriginNodeIndices,
-                                    self.allDestinationNodeIndices,
-                                    penalty)
+    def cooperativeRoutes(self, penalty, **kwargs):
+        """
+        Cooperative routes that are currently optimized.
+        """
+        adjacency_matrix = kwargs.get("adjacency_matrix",
+                                      self._environment._adjacencyMatrix)
+        adjacency_edge_id = kwargs.get("adjacency_edge_id",
+                                      self._environment._adjacencyEdgeID)
+        origin_node_ind = kwargs.get("origin_node_ind",
+                                     self.allOriginNodeIndices)
+        destination_node_ind = kwargs.get("destination_node_ind",
+                                          self.allDestinationNodeIndices)
+        vehicle_IDs = kwargs.get("vehicle_IDs", self.allVehicleIDs)
+
+        coopRouter = CoopSearchHillOptimized(adjacency_matrix,
+                                             origin_node_ind,
+                                             destination_node_ind,
+                                             penalty)
         coopPaths = coopRouter.shortest().optimized()
+        print("coopPahts", coopPaths)
+        edges = (self.nodeToEdge(adjacency_edge_id, coopPaths[trip])
+                 for trip in xrange(len(vehicle_IDs)))
+        return dict(zip(vehicle_IDs, edges))
 
-        edges = (self.nodeToEdge(self._environment._adjacencyEdgeID,
-                                 coopPaths[trip])
-                 for trip in xrange(len(self.allVehicleIDs)))
-        l_cooperativeRoutes = dict(zip(self.allVehicleIDs, edges))
-        return l_cooperativeRoutes
+    def individualRoutes(self, **kwargs):
+        """
+        Just a shortest path routes for multiple agents.
+        """
+        adjacency_matrix = kwargs.get("adjacency_matrix",
+                                      self._environment._adjacencyMatrix)
+        adjacency_edge_id = kwargs.get("adjacency_edge_id",
+                                      self._environment._adjacencyEdgeID)
+        origin_node_ind = kwargs.get("origin_node_ind",
+                                     self.allOriginNodeIndices)
+        destination_node_ind = kwargs.get("destination_node_ind",
+                                          self.allDestinationNodeIndices)
+        vehicle_IDs = kwargs.get("vehicle_IDs", self.allVehicleIDs)
 
-
-    def individualRoutes(self):
-        indyRouter = CooperativeSearch(self._environment._adjacencyMatrix,
-                                       self.allOriginNodeIndices,
+        indyRouter = CooperativeSearch(adjacency_matrix,
+                                       origin_node_ind,
                                        0)
         indyRouter.shortest()
-        indyPaths = indyRouter.paths(self.allDestinationNodeIndices)
-        edgesIndy = (self.nodeToEdge(self._environment._adjacencyEdgeID,
-                                indyPaths[trip])
-                     for trip in xrange(len(self.allVehicleIDs)))
-        l_individualRoutes = dict(zip(self.allVehicleIDs, edgesIndy))
-        return l_individualRoutes
+        indyPaths = indyRouter.paths(destination_node_ind)
+        edgesIndy = (self.nodeToEdge(adjacency_edge_id, indyPaths[trip])
+                     for trip in xrange(len(vehicle_IDs)))
+        return dict(zip(vehicle_IDs, edgesIndy))
 
-    def mixedCooperation(self):
-        raise NotImplementedError
+    def routes(self, coop_share, penalty=None):
+        """
+        Mixed cooperation routes.
+        Args:
+            coop_share: share of cooperative users
+        """
+        assert penalty is not None, "You must explicitly put penalty..."
+        if coop_share == 1:
+            return self.cooperativeRoutes(penalty)
+        if coop_share == 0:
+            return self.individualRoutes()
+        # prepare indices that will cooperate and the ones that wont
+        coop_num = int(round(len(self.allVehicleIDs) * coop_share))
+        coop_ind = []
+        while len(coop_ind) != coop_num:
+            num = random.randint(0, len(self.allVehicleIDs) - 1)
+            if num not in coop_ind:
+                coop_ind.append(num)
+
+        # TODO: transform this into normal for loop
+        non_coop_IDs = [val for ind, val in enumerate(self.allVehicleIDs) if
+                        ind not in coop_ind]
+        coop_IDs = [self.allVehicleIDs[x] for x in coop_ind]
+
+        non_coop_origins = [val for ind, val in enumerate(self.allOriginNodeIndices)
+                            if ind not in coop_ind]
+        coop_origins = [self.allOriginNodeIndices[x] for x in coop_ind]
+
+        non_coop_destinations = [val for ind, val in enumerate(self.allDestinationNodeIndices)
+                                 if ind not in coop_ind]
+        coop_destinations = [self.allDestinationNodeIndices[x] for x in coop_ind]
+
+        coop_routes = self.cooperativeRoutes(0.2,
+                                        origin_node_ind=coop_origins,
+                                        destination_node_ind=coop_destinations,
+                                        vehicle_IDs=coop_IDs)
+        non_coop_routes = self.individualRoutes(
+                                origin_node_ind=non_coop_origins,
+                                destination_node_ind=non_coop_destinations,
+                                vehicle_IDs=non_coop_IDs)
+        routes = {}
+        routes.update(coop_routes)
+        routes.update(non_coop_routes)
+        return routes
+
