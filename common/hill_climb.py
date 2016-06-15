@@ -20,18 +20,16 @@ reconstruct_path = CooperativeSearch.reconstruct_path
 
 
 def count_overlap(driver_matrix):
-    """
-    Calculate the overlap based on the number of edges that are visited
+    """ Calculate the overlap based on the number of edges that are visited
     multiple times.
 
     Args:
         driver_matrix (list of lists): A list whose members are lists that
         contain paths that are represented by consecutively visited nodes.
     Returns:
-        (int) A number of edges that were traversed multiple times.
+        int: A number of edges that were traversed multiple times.
     """
-    forward_edges = chain.from_iterable((zip(x, x[1:]) for x in
-                                         driver_matrix))
+    forward_edges = chain.from_iterable((zip(x, x[1:]) for x in driver_matrix))
     backward_edges = chain.from_iterable((zip(x[::-1], x[-2::-1]) for x in
                                           driver_matrix))
     edges = list(chain(forward_edges, backward_edges))
@@ -39,42 +37,39 @@ def count_overlap(driver_matrix):
 
 
 def num_of_visited_nodes(driver_matrix):
-    """
-    Calculate the total number of visited nodes for multiple paths.
+    """ Calculate the total number of visited nodes for multiple paths.
 
     Args:
         driver_matrix (list of lists): A list whose members are lists that
         contain paths that are represented by consecutively visited nodes.
     Returns:
-        Number of visited nodes
+        int: Number of visited nodes
     """
     return sum((len(x) for x in driver_matrix))
 
 
 def total_cost(driver_matrix):
-    """
-    Sum of number of total visited nodes and edge overlap.
-    """
+    """ Sum of number of total visited nodes and edge overlap. """
     return count_overlap(driver_matrix) + num_of_visited_nodes(driver_matrix)
 
 
 def hill(driver_matrix, adjacency_matrix):
-    """
-    A hill based optimizer for routes. Cost function is based on the sum of
-    number of visited nodes and edges that overlap. Goal is to minimize this
-    sum.
+    """ A hill based optimizer for routes.
+
+    Note:
+        Cost function is based on the sum of number of visited nodes and edges
+        that overlap. Goal is to minimize this sum.
 
     Args:
         driver_matrix (list of lists): A list whose members are lists that
-        contain paths that are represented by consecutively visited nodes.
+            contain paths that are represented by consecutively visited nodes.
 
         adjacency_matrix (list of lists): Adjacency matrix of an underlying
-        graph.
+            graph.
 
     Returns:
-        (list) Optimized list of routes.
+        list: Optimized list of routes.
     """
-
     # TODO normalize cost
     # TODO: make all this into a class
     costs = [total_cost(driver_matrix)]
