@@ -2,7 +2,7 @@ import traci
 import sumolib
 import numpy
 
-from parkingSpace import *
+from .parkingSpace import *
 
 import random
 import itertools

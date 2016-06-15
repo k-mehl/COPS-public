@@ -7,7 +7,7 @@ import random
 import sumolib
 
 from common.cooperativeSearch import *
-from runner import *
+from .runner import *
 
 # Python2-3 compatibility layer
 try:

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
-from cooperativeSearch import CooperativeSearch
+from .cooperativeSearch import CooperativeSearch
 from itertools import chain
 from random import randint, choice
 

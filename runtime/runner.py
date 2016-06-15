@@ -35,7 +35,7 @@ from common.cooperativeSearch import *
 from vehicle.parkingSearchVehicle import *
 from common.vehicleFactory import *
 from env.environment import *
-import phase2
+from . import phase2
 
 
 class Runtime(object):
