@@ -13,17 +13,27 @@ state = Enum(
      "PARKED"]
 )
 
+
 class ParkingSearchVehicle(object):
 
-    ## Constructor for searching vehicles, initializes vehicle attributes
-    #  @param p_name Corresponds to the vehicle ID obtained from the route XML file
-    #  @param p_environment Reference to environment
-    #  @param p_config Reference to configuration
-    #  @param p_run Current run number
-    #  @param p_coopRatio The fraction of cooperative drivers
-    #  @param p_timestep For memorizing the simulation time when a vehicle is created
-    def __init__(self, p_name, p_environment, p_config, p_run, p_timestep=-1001, p_destinationNodeID="", p_cooperativeRoute=[], p_individualRoute=[]):
+    def __init__(self, p_name, p_environment, p_config, p_run,
+                 p_timestep=-1001, p_destinationNodeID="",
+                 p_cooperativeRoute=[], p_individualRoute=[], p_coopRatio=1):
+        """ Initializer for searching vehicles, initializes vehicle attributes
 
+        Args:
+            p_name: Corresponds to the vehicle ID obtained from the route XML
+                file
+            p_environment: Reference to environment
+            p_config: Reference to configuration
+            p_run: Current run number
+            p_timestep: For memorizing the simulation time when a vehicle is
+                created
+            p_destinationNodeID (str): Destination ID
+            p_cooperativeRoute (list): predefined route
+            p_individualRoute (list): predefined route
+            p_coopRatio: The fraction of cooperative drivers
+        """
         self._environment = p_environment
         self._config = p_config
 
@@ -38,8 +48,8 @@ class ParkingSearchVehicle(object):
         self._timeParked = -1001
         # information about the lane position of a found parking space
         self._assignedParkingPosition = -1001
-        # information about the edge of an eventually found parking space in the
-        # opposite direction
+        # information about the edge of an eventually found parking space in
+        # the opposite direction
         self._seenOppositeParkingSpace = ""
         # information about the current position of a vehicle
         self._currentEdgeID = ""
@@ -58,7 +68,7 @@ class ParkingSearchVehicle(object):
 
         # information about the vehicle
         l_vcfg = {}
-        if self._config.getRunCfg(str(p_run)) != None and self._config.getRunCfg(str(p_run)).get("vehicles") != None:
+        if self._config.getRunCfg(str(p_run)) is not None and self._config.getRunCfg(str(p_run)).get("vehicles") != None:
             l_vcfg = self._config.getRunCfg(str(p_run)).get("vehicles").get(self._name)
 
         if not l_vcfg or len(l_vcfg) == 0:
@@ -72,11 +82,11 @@ class ParkingSearchVehicle(object):
 
             # update vehicle in run cfg
             l_initialvcfg = {
-                "name" : self._name,
-                "isSearchingVehicle" : self._isSearchingVehicle,
-                "activity" : self._activity,
-                "coopPhase2" : self._driverCooperatesPhase2,
-                "coopPhase3" : self._driverCooperatesPhase3,
+                "name": self._name,
+                "isSearchingVehicle": self._isSearchingVehicle,
+                "activity": self._activity,
+                "coopPhase2": self._driverCooperatesPhase2,
+                "coopPhase3": self._driverCooperatesPhase3,
             }
             self._config.updateRunCfgVehicle(p_run, l_initialvcfg)
 
@@ -104,21 +114,20 @@ class ParkingSearchVehicle(object):
             traci.vehicle.setRoute(self._name, self._individualRoute)
             self._destinationEdgeID = self._individualRoute[-1]
 
-
-
-
-    ## Check for equivalence by name attribute
     def __eq__(self, p_other):
+        """ Check for equivalence by name attribute """
         return self._name == p_other._name
 
-
-    ## Update vehicle state in the Python representation
-    #  @param p_parkingSpaces Information about (currently all) available parking
-    #                       spaces
-    #  @param p_oppositeEdgeID Contains a dictionary for identification of the
-    #                        current opposite direction edge
-    #  @param p_timestep Information about the current simulation time
     def update(self, p_timestep=-1001):
+        """ Update vehicle state in the Python representation
+
+        Args:
+            p_parkingSpaces: Information about (currently all) available
+                parking spaces
+            p_oppositeEdgeID: Contains a dictionary for identification of the
+                current opposite direction edge
+            p_timestep: Information about the current simulation time
+        """
         # get all relevant information about the vehicle from SUMO via TraCI
         # calls:
         # get vehicle _speed
@@ -130,12 +139,12 @@ class ParkingSearchVehicle(object):
         # as long as vehicle is not parked:
         # get information about the current lane (ID, length and vehicle
         # position)
-        if not self._activity==state.PARKED:
+        if not self._activity == state.PARKED:
             self._currentLaneID = traci.vehicle.getLaneID(self._name)
 
             # return if vehicle is currently being teleported or SUMO did other esoteric things resulting in no
             # information regarding current position in network
-            if self._currentLaneID == None or self._currentLaneID == "":
+            if self._currentLaneID is None or self._currentLaneID == "":
                 print("/!\ no information regarding {}'s position, skipping update()".format(self._name))
                 return
 
@@ -158,7 +167,7 @@ class ParkingSearchVehicle(object):
         self._activeRoute = self._currentRoute[:]
         self._traversedRoute = []
         if self._currentRouteIndex > 0:
-            for i in range (0, self._currentRouteIndex):
+            for i in range(0, self._currentRouteIndex):
                 self._traversedRoute.append(self._activeRoute[0])
                 self._activeRoute.remove(self._activeRoute[0])
 
@@ -181,7 +190,7 @@ class ParkingSearchVehicle(object):
             # reduce _speed for searching
             traci.vehicle.setMaxSpeed(self._name, self._config.getCfg("vehicle").get("maxspeed").get("phase2"))
             # set the vehicle color to yellow in the SUMO GUI
-            traci.vehicle.setColor(self._name,(255,255,0,0))
+            traci.vehicle.setColor(self._name, (255, 255, 0, 0))
 
         # if the vehicle has reached the last edge before phase 3 should start,
         # change to phase 3 as soon as the edge ID changes again
@@ -197,14 +206,13 @@ class ParkingSearchVehicle(object):
         # if the vehicle has stopped besides found parking space, basically
         # block the road for a while
         if (self._activity == state.FOUND_PARKING_SPACE and
-                    self._speed == 0.0 and
-                (abs(self._currentLanePosition-self._assignedParkingPosition)<0.1)
-            ):
+            self._speed == 0.0 and
+            (abs(self._currentLanePosition-self._assignedParkingPosition)<0.1)):
             self._activity = state.MANEUVERING_TO_PARK
             # memorize the time when maneuvering begins
             self._timeBeginManeuvering=self._timestep
             # set the vehicle color to red in the SUMO GUI
-            traci.vehicle.setColor(self._name,(255,0,0,0))
+            traci.vehicle.setColor(self._name, (255, 0, 0, 0))
 
         # twelve seconds after beginning to maneuver into a parking space,
         # 'jump' off the road and release queueing traffic
@@ -214,7 +222,6 @@ class ParkingSearchVehicle(object):
             return self._park()
 
         return(0)
-
 
     def _search(self):
         # if parking space is found ahead on current edge, change vehicle
@@ -259,39 +266,51 @@ class ParkingSearchVehicle(object):
 
         self._activity = state.PARKED
 
+        # TODO unused vars
         l_destCoords = self._environment._net.getNode(self._destinationNodeID).getCoord()
-       	l_vehicleCoords = traci.simulation.convert2D(self._currentEdgeID, self._currentLanePosition)
-        
+        l_vehicleCoords = traci.simulation.convert2D(self._currentEdgeID, self._currentLanePosition)
+
         if "entry" in self._destinationEdgeID:
-        	l_distanceRoad  = traci.simulation.getDistanceRoad(self._destinationEdgeID, self._environment._roadNetwork["edges"][self._destinationEdgeID]["length"], self._currentEdgeID, self._currentLanePosition, True)
+            l_distanceRoad = traci.simulation.getDistanceRoad(
+                self._destinationEdgeID,
+                self._environment._roadNetwork["edges"][self._destinationEdgeID]["length"],
+                self._currentEdgeID, self._currentLanePosition, True)
         else:
-        	l_distanceRoad = traci.simulation.getDistanceRoad(self._currentEdgeID, self._currentLanePosition, self._destinationEdgeID, self._environment._roadNetwork["edges"][self._destinationEdgeID]["length"], True)
-        
+            l_distanceRoad = traci.simulation.getDistanceRoad(
+                self._currentEdgeID, self._currentLanePosition,
+                self._destinationEdgeID,
+                self._environment._roadNetwork["edges"][self._destinationEdgeID]["length"],
+                True)
+
         l_walkingDistance = l_distanceRoad
-        l_walkingTime = l_distanceRoad / 1.111 # assume 4 km/h walking speed
-        
-        return [self._name, (self._timeParked -
-                             self._timeBeginSearch), l_walkingTime, traci.vehicle.getDistance(self._name), l_walkingDistance, self._currentSearchPhase]
+        l_walkingTime = l_distanceRoad / 1.111  # assume 4 km/h walking speed
 
+        # TODO why is list returned?
+        return [self._name, (self._timeParked - self._timeBeginSearch),
+                l_walkingTime, traci.vehicle.getDistance(self._name),
+                l_walkingDistance, self._currentSearchPhase]
 
-    ## Lookout for available parking spaces by checking vehicle position
-    #information against the 'map' of existing parking spaces
-    #  @param p_parkingSpaces Information about all parkingSpaces in the network
     def lookoutForParkingSpace(self, p_parkingSpaces):
+        """ Lookout for available parking spaces by checking vehicle position
+        information against the 'map' of existing parking spaces.
+
+        Args:
+            p_parkingSpaces: Information about all parkingSpaces in the network
+        """
         if self._speed > 0.0:
             # for all existing parking spaces, check if there is one available
             # within the assumed viewing distance of the driver
             for parkingSpace in p_parkingSpaces:
                 # only consider parking spaces on the current edge
                 if (parkingSpace.available and
-                        (parkingSpace.edgeID==self._currentEdgeID)):
+                        (parkingSpace.edgeID == self._currentEdgeID)):
                     # only consider parking spaces which are
                     # - far away enough so that the vehicle can safely stop
                     # (otherwise SUMO will create an error)
                     # - within a distance of max. 30 meters in front of the
                     # vehicle
-                    if ((parkingSpace.position-self._currentLanePosition > self._config.getCfg("vehicle").get("parking").get("distance").get("min"))
-                        and (parkingSpace.position-self._currentLanePosition
+                    if ((parkingSpace.position - self._currentLanePosition > self._config.getCfg("vehicle").get("parking").get("distance").get("min"))
+                        and (parkingSpace.position - self._currentLanePosition
                                  < self._config.getCfg("vehicle").get("parking").get("distance").get("max"))):
                         # found parking space is assigned to this vehicle
                         # (from now, parking space is no longer available to
@@ -301,11 +320,13 @@ class ParkingSearchVehicle(object):
                         return True
         return False
 
-
-    ## Lookout for available parking spaces in the opposite direction
-    #  @param p_parkingSpaces Information about all parkingSpaces in the network
-    #  @param p_oppositeEdgeID Name of the edge in opposite direction
     def lookoutForOppositeParkingSpace(self, p_parkingSpaces, p_oppositeEdgeID):
+        """ Lookout for available parking spaces in the opposite direction
+
+        Args:
+            p_parkingSpaces: Information about all parkingSpaces in the network
+            p_oppositeEdgeID: Name of the edge in opposite direction
+        """
         if self._speed > 0.0:
             # for all existing parking spaces, check if there is one available
             # within the assumed viewing distance of the driver
@@ -320,45 +341,51 @@ class ParkingSearchVehicle(object):
                             # if an opposite parking space has been found,
                             # insert a loop to the active route (just once back
                             # and forth)
-                            self._activeRoute.insert(0,
-                                                     p_oppositeEdgeID)
+                            self._activeRoute.insert(0, p_oppositeEdgeID)
                             self._activeRoute.insert(0, self._currentEdgeID)
                             # communicate the modified active route to the
                             # vehicle via TraCI
-                            traci.vehicle.setRoute(self._name, self._activeRoute)
+                            traci.vehicle.setRoute(self._name,
+                                                   self._activeRoute)
                             return self._oppositeEdgeID
         return ""
 
-    ## Retrieve stored cooperative routing information
     def getCooperativeRoute(self):
+        """ Retrieve stored cooperative routing information """
         return self._cooperativeRoute
 
-    ## Store cooperative routing information
-    #  @param coopRoute list with route information (edge IDs)
-    #  @param useCoopRouting if true, tell SUMO to set the cooperative routing
     def setCooperativeRoute(self, p_coopRoute):
+        """ Store cooperative routing information
+
+        Args:
+            coopRoute (list): Route information (edge IDs)
+            useCoopRouting (bool): If True, SUMO uses cooperative routing
+        """
         self._cooperativeRoute = p_coopRoute
         if self._driverCooperatesPhase2:
             traci.vehicle.setRoute(self._name, self._cooperativeRoute)
 
-
-    ## Retrieve stored individual routing information
     def getIndividualRoute(self):
+        """ Retrieve stored individual routing information """
         return self._individualRoute
 
-    ## Store individual routing information
-    #  @param p_indyRoute list with route information (edge IDs)
     def setIndividualRoute(self, p_indyRoute):
+        """ Store individual routing information
+
+        Args:
+            p_indyRoute (list): Route information (edge IDs)
+        """
         self._individualRoute = p_indyRoute
         if not self._driverCooperatesPhase2:
             traci.vehicle.setRoute(self._name, self._individualRoute)
 
-    ## Query whether vehicle has successfully parked
     def getParkedStatus(self):
+        """ Query whether vehicle has successfully parked """
         if self._activity == state.PARKED:
             return True
         return False
 
+    # TODO implement attributes and properties
     def getVehicleID(self):
         return self._name
 
@@ -393,9 +420,9 @@ class ParkingSearchVehicle(object):
         self._activeRoute.append(p_edgeID)
         traci.vehicle.setRoute(self._name, self._activeRoute)
 
-    ## Query whether vehicle is on last segment of planned route
     def isOnLastRouteSegment(self):
-        if self._currentRouteIndex == len(self._currentRoute)-1:
+        """ Query whether vehicle is on last segment of planned route """
+        if self._currentRouteIndex == len(self._currentRoute) - 1:
             if not self._currentSearchPhase == 3 and not self._lastEdgeBeforePhase3:
                 self._lastEdgeBeforePhase3 = self._currentEdgeID
             return True
@@ -403,5 +430,3 @@ class ParkingSearchVehicle(object):
 
 if __name__ == "__main__":
     print("Nothing to do.")
-#else:
-#print("ParkingSearchVehicle class imported.")
