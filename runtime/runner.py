@@ -39,10 +39,14 @@ import phase2
 
 
 class Runtime(object):
+    """ Runtime object """
 
-    ## C'tor
-    # @param p_args Arguments provided by command line via argparse
     def __init__(self, p_config):
+        """ Runtime object
+
+        Args:
+            p_args (str): Arguments provided by command line via argparse
+        """
 
         self._config = p_config
 
@@ -50,11 +54,14 @@ class Runtime(object):
         self._sumoBinary = checkBinary('sumo-gui') if not self._config.getCfg("simulation").get("headless") else checkBinary('sumo')
 
         self._environment = Environment(self._config)
-        #print(self._environment._roadNetwork["edges"])
+        # print(self._environment._roadNetwork["edges"])
 
-    ## Runs the simulation on both SUMO and Python layers
     def run(self, i_run):
+        """ Runs the simulation on both SUMO and Python layers
 
+        Args:
+            i_run (int): run number
+        """
         # if there is a run configuration loaded use it to populate
         # parkingspaces in environment otherwise initialize new
         if not self._config.getRunCfg(str(i_run)):
@@ -111,7 +118,8 @@ class Runtime(object):
         self.initPOI()
         self.updatePOIColors()
 
-        # do simulation time steps as long as vehicles are present in the network
+        # do simulation time steps as long as vehicles are present in the
+        # network
         while traci.simulation.getMinExpectedNumber() > 0:
             # tell SUMO to do a simulation step
             traci.simulationStep()
@@ -121,15 +129,15 @@ class Runtime(object):
             # every 1000 steps: ensure local time still corresponds to SUMO
             # simulation time
             # (just a safety check for now, can possibly be removed later)
-            if step != (traci.simulation.getCurrentTime()/1000):
+            if step != (traci.simulation.getCurrentTime() / 1000):
                 print("TIMESTEP ERROR", step, "getCurrentTime",
-                        traci.simulation.getCurrentTime())
+                      traci.simulation.getCurrentTime())
             # if a new vehicle has departed in SUMO, create the corresponding
             # Python representation and remove the vehicles that have
             # disappeared in SUMO
-            l_departedVehicles = (x for x in
-                                  traci.simulation.getDepartedIDList()
-                                  if x not in traci.simulation.getArrivedIDList())
+            dep_list = traci.simulation.getDepartedIDList()
+            arr_list = traci.simulation.getArrivedIDList()
+            l_departedVehicles = (x for x in dep_list if x not in arr_list)
 
             # get individual vehicle preferences from run config if present,
             # otherwise generate values
@@ -215,7 +223,7 @@ class Runtime(object):
                         phase3RandomProb = self._config.getCfg("vehicle").get("phase3randomprob")
                     else:
                         phase3RandomProb = 0.0
-                    
+
                     if (random.random() < phase3RandomProb):
                         nextRouteSegment = random.choice(succEdgeCost.keys())
                     else:
@@ -245,19 +253,24 @@ class Runtime(object):
         # Return results
         return self.getNumberOfParkedVehicles(l_parkingSearchVehicles), searchTimes, walkingTimes, searchDistances, walkingDistances, searchPhases
 
-    ## Calculate cost for an edge for a specific search vehicle
-    #  @param psv parking search vehicle
-    #  @param edge edge
-    #  @return cost of edge
     def calculateEdgeCost(self, psv, edge):
+        """ Calculate cost for an edge for a specific search vehicle
+
+        Args:
+            psv: parking search vehicle
+            edge: edge
+
+        Returns:
+            float: cost of edge
+        """
         toNodedestinationEdge = self._environment._roadNetwork["edges"][str(psv.getDestinationEdgeID())]["toNode"]
 
-        #get counts from environment
+        # get counts from environment
         selfVisitCount = self._environment._roadNetwork["edges"][edge.getID()]["visitCount"][psv.getName()]
         externalVisitCount = sum(self._environment._roadNetwork["edges"][edge.getID()]["visitCount"].values())-selfVisitCount
         externalPlannedCount = sum(self._environment._roadNetwork["edges"][edge.getID()]["plannedCount"].values())
 
-        #calculate cost
+        # calculate cost
         if psv._driverCooperatesPhase3:
             cost = self._config.getCfg("vehicle").get("weights").get("coop").get("distance") * \
                    self._environment._roadNetwork["edges"][edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
@@ -272,47 +285,61 @@ class Runtime(object):
             + externalPlannedCount * self._config.getCfg("vehicle").get("weights").get("noncoop").get("externalplanned")
         return cost
 
-    ## Convert a route given as sequence of node indices into the corresponding
-    #  sequence of edge IDs
-    #  @param adjacencyEdgeID adjacency matrix containing the edge IDs
-    #  @param nodeSequence route given as node index list
-    #  @return edgeSequence route given as edge ID list
     def convertNodeSequenceToEdgeSequence(self, adjacencyEdgeID, nodeSequence):
+        """ Convert a route given as sequence of node indices into the
+        corresponding sequence of edge IDs
+
+        Args:
+            adjacencyEdgeID adjacency matrix containing the edge IDs
+            nodeSequence route given as node index list
+
+        Returns:
+            list: edgeSequence route given as edge ID list
+        """
         node_pairs = zip(nodeSequence, nodeSequence[1:])
         return [adjacencyEdgeID[row][col] for row, col in node_pairs]
 
-    ## Get number of remaining searching vehicles
-    #  @param psvList List of parking search vehicle objects
-    #  @return Number of remaining vehicles which are not parked
     def getNumberOfRemainingVehicles(self, psvList):
+        """ Get number of remaining searching vehicles
+
+        Args:
+            psvList (list): List of parking search vehicle objects
+
+        Returns:
+            int: Number of remaining vehicles which are not parked
+        """
         return sum(1 for psv in psvList if not psv.getParkedStatus())
 
-
-    ## Get number of successfully parked vehicles
-    #  @param psvList List of parking search vehicle objects
-    #  @return Number of parked vehicles
     def getNumberOfParkedVehicles(self, psvList):
+        """ Get number of successfully parked vehicles
+
+        Args:
+            psvList (list): List of parking search vehicle objects
+
+        Returns:
+            int: Number of parked vehicles
+        """
         return sum(1 for psv in psvList if psv.getParkedStatus())
 
-
     def initPOI(self):
+        """ Initialize parking spaces geommetry in SUMO gui """
         for ps in self._environment._allParkingSpaces:
-            traci.poi.add("ParkingSpace" + str(ps.name),
-                        traci.simulation.convert2D(str(ps.edgeID),(ps.position-2.0))[0],
-                        traci.simulation.convert2D(str(ps.edgeID),(ps.position-2.0))[1],
-                        (255,0,0,0))
-
+            traci.poi.add(
+                "ParkingSpace" + str(ps.name),
+                traci.simulation.convert2D(str(ps.edgeID), (ps.position - 2.0))[0],
+                traci.simulation.convert2D(str(ps.edgeID), (ps.position - 2.0))[1],
+                (255, 0, 0, 0))
 
     def updatePOIColors(self):
+        """ Update color of parking places in SUMO gui """
         for ps in self._environment._allParkingSpaces:
             if ps.available:
-                traci.poi.setColor("ParkingSpace"+str(ps.name),(0,255,0,0))
+                traci.poi.setColor("ParkingSpace" + str(ps.name), (0, 255, 0, 0))
             if ps.assignedToVehicleID:
-                traci.poi.setColor("ParkingSpace"+str(ps.name),(255,165,0,0))
-
+                traci.poi.setColor("ParkingSpace" + str(ps.name), (255, 165, 0, 0))
 
     def computePhase2Routings(self):
-
+        """ Computes phase 2 routing """
         routes = phase2.Phase2Routes(self)
         cooperation = self._config.getCfg("simulation").get("coopratioPhase2")
         if cooperation == 1.0:
