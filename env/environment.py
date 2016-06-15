@@ -58,9 +58,9 @@ class Environment(object):
                         self._adjacencyEdgeID[fromNode][toNode] = \
                             str(self._net.getEdge(edge).getID())
 
-        self._oppositeEdgeID = dict( filter(
-                lambda (x,y): self._net.getEdge(x).getToNode().getID() == self._net.getEdge(y).getFromNode().getID() and
-                              self._net.getEdge(x).getFromNode().getID() == self._net.getEdge(y).getToNode().getID(),
+        self._oppositeEdgeID = dict(filter(
+                lambda x: self._net.getEdge(x[0]).getToNode().getID() == self._net.getEdge(x[1]).getFromNode().getID() and
+                              self._net.getEdge(x[0]).getFromNode().getID() == self._net.getEdge(x[1]).getToNode().getID(),
                 itertools.permutations(self._edges, 2)
         ))
 
@@ -109,11 +109,11 @@ class Environment(object):
         self._parkingSpaceNumber = self._config.getCfg("simulation").get("parkingspaces").get("free")
 
         l_cfgparkingspaces = self._config.getRunCfg(str(p_run)).get("parkingspaces")
-        self._allParkingSpaces = map(lambda (k,v): ParkingSpace(v.get("name"),
+        self._allParkingSpaces = map(lambda v: ParkingSpace(v.get("name"),
                                                          v.get("edgeID"),
                                                          v.get("position"),
                                                          available=v.get("available")),
-                              l_cfgparkingspaces.items())
+                              l_cfgparkingspaces.values())
 
         for edge in self._edges:
             self._roadNetwork["edges"][edge]["parkingSpaces"] = filter(lambda p: p.edgeID == edge, self._allParkingSpaces)

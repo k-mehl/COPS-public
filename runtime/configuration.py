@@ -170,8 +170,8 @@ class Configuration(object):
 
         # phase 3: check for enough available parkingspaces in each run (i.e. #available parkingspaces >= #vehicles)
         # contains amount of runs with mismatching available parkingspaces
-        l_available = filter(lambda (k,v): v.get("available"),
-                        self._runconfiguration.get(str(p_runid)).get("parkingspaces").items())
+        l_available = filter(lambda v: v.get("available"),
+                        self._runconfiguration.get(str(p_runid)).get("parkingspaces").values())
 
         if len(l_available) < self._configuration.get("simulation").get("vehicles"):
             print("/!\  run config does not match simulation parameters. Expecting at least {} available parking spaces due to {} searching vehicles. Found only {} in run {}".format(
