@@ -290,8 +290,8 @@ class Runtime(object):
         corresponding sequence of edge IDs
 
         Args:
-            adjacencyEdgeID adjacency matrix containing the edge IDs
-            nodeSequence route given as node index list
+            adjacencyEdgeID (matrix): adjacency matrix containing the edge IDs
+            nodeSequence (Iterable): route given as node index iterable
 
         Returns:
             list: edgeSequence route given as edge ID list
