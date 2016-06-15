@@ -3,6 +3,9 @@
 !.gitignore
 !*.md
 !*.py
+!*.rst
+!Makefile
+!make.bat
 !resources/gui-settings.cfg
 !resources/config.json.example
 !resources/reroute.edg.xml
