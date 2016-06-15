@@ -8,7 +8,10 @@ import random
 import itertools
 import os
 
+
 class Environment(object):
+    """ Environment class """
+
     def __init__(self, p_config):
 
         self._config = p_config
@@ -95,8 +98,12 @@ class Environment(object):
             else:
                 self._roadNetwork["edges"][edge]["oppositeEdgeID"] = []
 
-
     def loadParkingSpaces(self, p_run):
+        """ Load parking spaces
+
+        Args:
+            p_run (int): run number
+        """
         if self._config.getCfg("simulation").get("verbose"):
             print("* loading parking spaces from run cfg")
         self._parkingSpaceNumber = self._config.getCfg("simulation").get("parkingspaces").get("free")
@@ -114,6 +121,11 @@ class Environment(object):
             print("  -> done.")
 
     def initParkingSpaces(self, p_run):
+        """ Initialize parking spaces
+
+        Args:
+            p_run (int): run number
+        """
         for edge in self._edges:
             #self._roadNetwork["edges"][edge]["visitCount"] = 0
             self._roadNetwork["edges"][edge]["parkingSpaces"] = []
