@@ -21,6 +21,7 @@ try:
 except ImportError:
     pass
 
+
 class CooperativeSearch(object):
 
     def __init__(self, graph, agents, penalty=0.2):
@@ -33,7 +34,6 @@ class CooperativeSearch(object):
             agents (int list): Starting positions of agents
             penalty (float): How many times to increase the cost of traversing
             the edge for other agents.
-
         """
         self.graph = graph
         self.agents = agents
@@ -181,8 +181,7 @@ class CooperativeSearch(object):
 
     @staticmethod
     def reconstruct_path(path, destination, start=None):
-        """
-        Reconstruct a path from closes neighbourhood list.
+        """ Reconstruct a path from closes neighbourhood list.
 
         Args:
             path (list): list with integers and optional string where every
@@ -200,6 +199,7 @@ class CooperativeSearch(object):
                 3, 9], 14, start=3)
         [3, 14]
         """
+        # TODO remove from this class
         if start is None:
             start = path.index("start")
         sol = [destination]
@@ -209,11 +209,10 @@ class CooperativeSearch(object):
         return sol[::-1]
 
     def paths(self, destinations):
-        """
-        Return reconstructed shortest paths.
-        """
+        """ Return reconstructed shortest paths. """
         paths = list(map(self.reconstruct_path, self.path_lst, destinations))
         return paths
+
 
 class CoopSearchHillOptimized(CooperativeSearch):
 
