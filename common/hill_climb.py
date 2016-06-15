@@ -29,9 +29,9 @@ def count_overlap(driver_matrix):
     Returns:
         int: A number of edges that were traversed multiple times.
     """
-    forward_edges = chain.from_iterable((zip(x, x[1:]) for x in driver_matrix))
-    backward_edges = chain.from_iterable((zip(x[::-1], x[-2::-1]) for x in
-                                          driver_matrix))
+    forward_edges = chain.from_iterable(zip(x, x[1:]) for x in driver_matrix)
+    backward_edges = chain.from_iterable(zip(x[::-1], x[-2::-1]) for x in
+                                         driver_matrix)
     edges = list(chain(forward_edges, backward_edges))
     return len(edges) - len(set(edges))
 
@@ -45,7 +45,7 @@ def num_of_visited_nodes(driver_matrix):
     Returns:
         int: Number of visited nodes
     """
-    return sum((len(x) for x in driver_matrix))
+    return sum(len(x) for x in driver_matrix)
 
 
 def total_cost(driver_matrix):
