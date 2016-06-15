@@ -22,7 +22,15 @@ except ImportError:
 
 
 class Phase2Routes(object):
+
     def __init__(self, parent_class):
+        """ Phase 2 routing class with methods to compute mixed ratin
+        cooperation during parking search
+
+        Args:
+            parent_class: currently this is Runtime object but this should be
+                solved better
+        """
         # Take what you need from parent_class
         self._config = parent_class._config
         self._environment = parent_class._environment
@@ -54,13 +62,26 @@ class Phase2Routes(object):
             self.allDestinationNodeIndices.append(self.vehicleDestinationNodeIndex[trip.id])
 
     def cooperativeRoutes(self, penalty, **kwargs):
+        """ Cooperative routes that are currently optimized.
+
+        Args:
+            penalty (float): penalization for visiting the same edges in case
+                of cooperative routing
+            kwargs:
+                adjacency_matrix,
+                adjacency_edge_id,
+                origin_node_ind,
+                destination_node_ind,
+                vehicle_IDs
+
+        Returns:
+            dict: keys are vehicle ID's, and edgeID's
         """
-        Cooperative routes that are currently optimized.
-        """
+        # TODO: remove defaults? should there be so manz defaults?
         adjacency_matrix = kwargs.get("adjacency_matrix",
                                       self._environment._adjacencyMatrix)
         adjacency_edge_id = kwargs.get("adjacency_edge_id",
-                                      self._environment._adjacencyEdgeID)
+                                       self._environment._adjacencyEdgeID)
         origin_node_ind = kwargs.get("origin_node_ind",
                                      self.allOriginNodeIndices)
         destination_node_ind = kwargs.get("destination_node_ind",
@@ -72,50 +93,63 @@ class Phase2Routes(object):
                                              destination_node_ind,
                                              penalty)
         coopPaths = coopRouter.shortest().optimized()
-        print("coopPahts", coopPaths)
         edges = (self.nodeToEdge(adjacency_edge_id, coopPaths[trip])
                  for trip in xrange(len(vehicle_IDs)))
         return dict(zip(vehicle_IDs, edges))
 
     def individualRoutes(self, **kwargs):
-        """
-        Just a shortest path routes for multiple agents.
+        """ Just a shortest path routes for multiple agents.
+
+        Args:
+            kwargs:
+                adjacency_matrix,
+                adjacency_edge_id,
+                origin_node_ind,
+                destination_node_ind,
+                vehicle_IDs
+
+        Returns:
+            dict: keys are vehicle ID's, and edgeID's
         """
         adjacency_matrix = kwargs.get("adjacency_matrix",
                                       self._environment._adjacencyMatrix)
         adjacency_edge_id = kwargs.get("adjacency_edge_id",
-                                      self._environment._adjacencyEdgeID)
+                                       self._environment._adjacencyEdgeID)
         origin_node_ind = kwargs.get("origin_node_ind",
                                      self.allOriginNodeIndices)
         destination_node_ind = kwargs.get("destination_node_ind",
                                           self.allDestinationNodeIndices)
         vehicle_IDs = kwargs.get("vehicle_IDs", self.allVehicleIDs)
 
-        indyRouter = CooperativeSearch(adjacency_matrix,
-                                       origin_node_ind,
-                                       0)
+        indyRouter = CooperativeSearch(adjacency_matrix, origin_node_ind, 0)
         indyRouter.shortest()
         indyPaths = indyRouter.paths(destination_node_ind)
         edgesIndy = (self.nodeToEdge(adjacency_edge_id, indyPaths[trip])
                      for trip in xrange(len(vehicle_IDs)))
         return dict(zip(vehicle_IDs, edgesIndy))
 
-    def routes(self, coop_share, penalty=None):
-        """
-        Mixed cooperation routes.
+    def routes(self, coop_share, penalty):
+        """ Mixed cooperation routes.
+
         Args:
-            coop_share: share of cooperative users
+            coop_share (float): share of cooperative users
+            penalty (float): penalization for visiting the same edges in case
+                of cooperative routing
+
+        Returns:
+            dict: keys are vehicle ID's, and edgeID's
         """
-        assert penalty is not None, "You must explicitly put penalty..."
         if coop_share == 1:
             return self.cooperativeRoutes(penalty)
         if coop_share == 0:
             return self.individualRoutes()
         # prepare indices that will cooperate and the ones that wont
-        coop_num = int(round(len(self.allVehicleIDs) * coop_share))
+        len_vehIDs = len(self.allVehicleIDs)
+        coop_num = int(round(len_vehIDs * coop_share))
         coop_ind = []
+        tmp_end = len_vehIDs - 1
         while len(coop_ind) != coop_num:
-            num = random.randint(0, len(self.allVehicleIDs) - 1)
+            num = random.randint(0, tmp_end)
             if num not in coop_ind:
                 coop_ind.append(num)
 
@@ -132,14 +166,16 @@ class Phase2Routes(object):
                                  if ind not in coop_ind]
         coop_destinations = [self.allDestinationNodeIndices[x] for x in coop_ind]
 
-        coop_routes = self.cooperativeRoutes(0.2,
-                                        origin_node_ind=coop_origins,
-                                        destination_node_ind=coop_destinations,
-                                        vehicle_IDs=coop_IDs)
+        coop_routes = self.cooperativeRoutes(
+            penalty, origin_node_ind=coop_origins,
+            destination_node_ind=coop_destinations,
+            vehicle_IDs=coop_IDs)
+
         non_coop_routes = self.individualRoutes(
-                                origin_node_ind=non_coop_origins,
-                                destination_node_ind=non_coop_destinations,
-                                vehicle_IDs=non_coop_IDs)
+            origin_node_ind=non_coop_origins,
+            destination_node_ind=non_coop_destinations,
+            vehicle_IDs=non_coop_IDs)
+
         routes = {}
         routes.update(coop_routes)
         routes.update(non_coop_routes)
