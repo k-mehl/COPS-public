@@ -35,6 +35,8 @@ from common.cooperativeSearch import *
 from vehicle.parkingSearchVehicle import *
 from common.vehicleFactory import *
 from env.environment import *
+import phase2
+
 
 class Runtime(object):
 
@@ -134,6 +136,7 @@ class Runtime(object):
             # TODO: following was unused, why was it there?
             # l_run = str(i_run)
 
+            # TODO: separate l_individualRoutes and l_cooperativeRoutes
             l_parkingSearchVehicles.extend(map(
                     lambda vehID: ParkingSearchVehicle(vehID, self._environment, self._config, i_run, step,
                                                         self._environment._net.getEdge(l_individualRoutes[vehID][-1]).getToNode().getID(),
@@ -162,9 +165,9 @@ class Runtime(object):
                 result = psv.update(step)
                 # count edge visits of each vehicle
                 # TODO: make visit update more efficient
-		traversedRoute = psv.getTraversedRoute()
-		plannedRoute = psv.getActiveRoute()
-		name = psv.getName()
+                traversedRoute = psv.getTraversedRoute()
+                plannedRoute = psv.getActiveRoute()
+                name = psv.getName()
                 for edge in self._environment._roadNetwork["edges"]:
                     # traversedRoutePlusCurrentEdge.append(psv.getActiveRoute()[0])
                     oppositeEdgeID = self._environment._roadNetwork["edges"][edge]["oppositeEdgeID"]
@@ -195,8 +198,8 @@ class Runtime(object):
                     succEdgeCost = {}
 
                     for edge in succEdges:
-			# consider all successor edges, BUT if no opposite edge
-			# exists, don't try to exclude it.
+                        # consider all successor edges, BUT if no opposite edge
+                        # exists, don't try to exclude it.
                         if lastSegment in self._environment._oppositeEdgeID:
                             if not str(edge.getID()) == self._environment._oppositeEdgeID[lastSegment]:
                                 succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
@@ -275,7 +278,7 @@ class Runtime(object):
     #  @param nodeSequence route given as node index list
     #  @return edgeSequence route given as edge ID list
     def convertNodeSequenceToEdgeSequence(self, adjacencyEdgeID, nodeSequence):
-	node_pairs = zip(nodeSequence, nodeSequence[1:])
+        node_pairs = zip(nodeSequence, nodeSequence[1:])
         return [adjacencyEdgeID[row][col] for row, col in node_pairs]
 
     ## Get number of remaining searching vehicles
@@ -309,78 +312,21 @@ class Runtime(object):
 
 
     def computePhase2Routings(self):
-        # prepare dictionaries with vehicle O/D data (IDs and indices)
-        # by parsing the generated route XML file
-        vehicleOriginNode = {}
-        vehicleOriginNodeIndex = {}
-        vehicleDestinationNode = {}
-        vehicleDestinationNodeIndex = {}
-        allVehicleIDs = []
-        allOriginNodeIndices = []
-        allDestinationNodeIndices = []
-        for trip in sumolib.output.parse_fast( \
-                os.path.join(self._config.getCfg("simulation").get("resourcedir"), self._routefile), 'trip', ['id','from','to']):
-            allVehicleIDs.append(trip.id)
-            vehicleOriginNode[trip.id] =  \
-                self._environment._net.getEdge(trip.attr_from).getFromNode().getID()
-            vehicleOriginNodeIndex[trip.id] = \
-                self._environment._convertNodeIDtoNodeIndex[vehicleOriginNode[trip.id]]
-            vehicleDestinationNode[trip.id] = \
-                self._environment._net.getEdge(trip.to).getToNode().getID()
-            vehicleDestinationNodeIndex[trip.id] = \
-                self._environment._convertNodeIDtoNodeIndex[vehicleDestinationNode[trip.id]]
-            allOriginNodeIndices.append(vehicleOriginNodeIndex[trip.id])
-            allDestinationNodeIndices.append(vehicleDestinationNodeIndex[trip.id])
 
-        # use Aleksandar's Cooperative Search Router to create a dictionary
-        # containing all cooperative vehicle routes (only once in advance)
-        nodeToEdge = self.convertNodeSequenceToEdgeSequence
-        if self._config.getCfg("simulation").get("coopratioPhase2") == 1.0:
-            coopRouter = CoopSearchHillOptimized(
-                                        self._environment._adjacencyMatrix,
-                                        allOriginNodeIndices,
-                                        allDestinationNodeIndices,
-                                        0.2)
-            coopPaths = coopRouter.shortest().optimized()
-
-            edges = (nodeToEdge(self._environment._adjacencyEdgeID,
-                                coopPaths[trip]) for trip in
-                     xrange(len(allVehicleIDs)))
-            l_cooperativeRoutes = dict(zip(allVehicleIDs, edges))
+        routes = phase2.Phase2Routes(self)
+        cooperation = self._config.getCfg("simulation").get("coopratioPhase2")
+        if cooperation == 1.0:
+            l_cooperativeRoutes = routes.routes(1.0, penalty=0.2)
             l_individualRoutes = l_cooperativeRoutes
-
-        elif self._config.getCfg("simulation").get("coopratioPhase2") == 0.0:
-            indyRouter = CooperativeSearch(self._environment._adjacencyMatrix,
-                                           allOriginNodeIndices,
-                                           0)
-            indyRouter.shortest()
-            indyPaths = indyRouter.paths(allDestinationNodeIndices)
-            edgesIndy = (nodeToEdge(self._environment._adjacencyEdgeID,
-                                    indyPaths[trip])
-                         for trip in xrange(len(allVehicleIDs)))
-            l_individualRoutes = dict(zip(allVehicleIDs, edgesIndy))
+        elif cooperation == 0.0:
+            l_individualRoutes = routes.routes(0.0, penalty=0)
             l_cooperativeRoutes = l_individualRoutes
-
         else:
-            coopRouter = CoopSearchHillOptimized(self._environment._adjacencyMatrix,
-                                                 allOriginNodeIndices,
-                                                 allDestinationNodeIndices,
-                                                 0.2)
-            coopPaths = coopRouter.shortest().optimized()
+            l_cooperativeRoutes = routes.routes(cooperation, penalty=0.2)
+            l_individualRoutes = routes.individualRoutes()
 
-            edges = (nodeToEdge(self._environment._adjacencyEdgeID,
-                                coopPaths[trip])
-                     for trip in xrange(len(allVehicleIDs)))
-            l_cooperativeRoutes = dict(zip(allVehicleIDs, edges))
-
-            indyRouter = CooperativeSearch(self._environment._adjacencyMatrix,
-                                           allOriginNodeIndices,
-                                           0)
-            indyRouter.shortest()
-            indyPaths = indyRouter.paths(allDestinationNodeIndices)
-            edgesIndy = (nodeToEdge(self._environment._adjacencyEdgeID,
-                                    indyPaths[trip])
-                         for trip in xrange(len(allVehicleIDs)))
-            l_individualRoutes = dict(zip(allVehicleIDs, edgesIndy))
+        # For tests
+        # assert routes.routes(1.0, penalty=0.2) == routes.cooperativeRoutes(0.2)
+        # assert routes.routes(0.0, penalty=0.2) == l_cooperativeRoutes
 
         return l_individualRoutes, l_cooperativeRoutes
