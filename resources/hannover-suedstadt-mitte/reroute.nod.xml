@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on Fr  7 Okt 14:23:21 2016 by Netedit Version 0.27.1
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netedit.exeConfiguration.xsd">
+
+    <input>
+        <sumo-net-file value="suedstadt_mitte_correct.net.xml"/>
+    </input>
+
+    <output>
+        <output-file value="suedstadt_mitte_correct.net.xml"/>
+        <plain-output-prefix value="/Users/mry/Documents/SocialCars/Projekte/COPS/Simulation/2016-10-05-parking-hannover/resources-files-supriya/2016-10-07-edit-MR/suedstadt_mitte_correct"/>
+    </output>
+
+    <processing>
+        <no-turnarounds value="true"/>
+        <offset.disable-normalization value="true"/>
+        <lefthand value="false"/>
+        <junctions.corner-detail value="0"/>
+    </processing>
+
+</configuration>
+-->
+
+<nodes version="0.27" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/nodes_file.xsd">
+    <location netOffset="-551006.83,-5800835.03" convBoundary="-15.13,-8.28,969.50,1000.20" origBoundary="9.749054,52.355394,9.763128,52.364246" projParameter="+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"/>
+
+    <node id="1" x="393.69" y="9.56" type="priority"/>
+    <node id="105" x="697.30" y="691.43" type="priority"/>
+    <node id="106" x="149.45" y="424.99" type="priority"/>
+    <node id="117" x="567.85" y="628.34" type="right_before_left"/>
+    <node id="12" x="473.27" y="30.64" type="priority"/>
+    <node id="126" x="0.00" y="723.83" type="priority"/>
+    <node id="13" x="462.23" y="115.22" type="right_before_left"/>
+    <node id="140" x="500.88" y="763.81" type="right_before_left"/>
+    <node id="15" x="446.44" y="230.74" type="right_before_left"/>
+    <node id="171" x="438.25" y="351.97" type="right_before_left"/>
+    <node id="19" x="619.06" y="304.79" type="right_before_left"/>
+    <node id="21" x="603.86" y="169.13" type="right_before_left"/>
+    <node id="23" x="591.74" y="63.00" type="priority"/>
+    <node id="24" x="407.61" y="871.27" type="priority"/>
+    <node id="26" x="85.08" y="563.96" type="priority"/>
+    <node id="27" x="172.45" y="606.20" type="right_before_left"/>
+    <node id="29" x="250.63" y="643.97" type="right_before_left"/>
+    <node id="33" x="339.09" y="686.42" type="right_before_left"/>
+    <node id="39" x="235.87" y="467.22" type="right_before_left"/>
+    <node id="40" x="315.26" y="504.91" type="right_before_left"/>
+    <node id="43" x="406.38" y="549.18" type="right_before_left"/>
+    <node id="45" x="561.48" y="796.23" type="right_before_left"/>
+    <node id="47" x="629.87" y="657.64" type="right_before_left"/>
+    <node id="49" x="328.47" y="405.51" type="right_before_left"/>
+    <node id="51" x="370.71" y="317.18" type="right_before_left"/>
+    <node id="52" x="192.87" y="334.74" type="priority"/>
+    <node id="57" x="500.76" y="254.17" type="right_before_left"/>
+    <node id="59" x="550.86" y="276.76" type="right_before_left"/>
+    <node id="63" x="531.50" y="141.14" type="right_before_left"/>
+    <node id="64" x="725.41" y="214.40" type="right_before_left"/>
+    <node id="65" x="712.65" y="426.23" type="right_before_left"/>
+    <node id="68" x="666.86" y="675.85" type="right_before_left"/>
+    <node id="70" x="509.43" y="386.43" type="right_before_left"/>
+    <node id="72" x="355.22" y="74.91" type="right_before_left"/>
+    <node id="79" x="841.53" y="394.48" type="priority"/>
+    <node id="80" x="780.14" y="517.38" type="priority"/>
+    <node id="83" x="522.50" y="529.74" type="right_before_left"/>
+    <node id="87" x="456.03" y="595.79" type="unregulated"/>
+    <node id="9" x="277.29" y="786.88" type="priority"/>
+    <node id="entrypointgneJ112" x="-15.13" y="715.77" type="unregulated"/>
+    <node id="entrypointgneJ114" x="545.32" y="1000.20" type="unregulated"/>
+    <node id="entrypointgneJ116" x="969.50" y="184.62" type="unregulated"/>
+    <node id="entrypointgneJ117" x="366.03" y="-8.28" type="unregulated"/>
+    <node id="gneJ101" x="958.66" y="177.44" type="priority"/>
+    <node id="gneJ110" x="308.63" y="671.80" type="right_before_left"/>
+    <node id="gneJ111" x="367.28" y="702.18" type="right_before_left"/>
+    <node id="gneJ118" x="476.27" y="955.60" type="priority"/>
+    <node id="gneJ123" x="466.47" y="577.93" type="priority"/>
+    <node id="gneJ124" x="285.98" y="490.00" type="priority"/>
+    <node id="gneJ127" x="423.17" y="345.09" type="priority"/>
+    <node id="gneJ34" x="383.70" y="914.39" type="priority"/>
+    <node id="gneJ35" x="551.25" y="988.45" type="priority"/>
+    <node id="gneJ41" x="229.98" y="840.70" type="priority"/>
+    <node id="gneJ43" x="446.98" y="856.13" type="priority"/>
+    <node id="gneJ44" x="361.26" y="781.85" type="priority"/>
+    <node id="gneJ47" x="399.14" y="717.95" type="right_before_left"/>
+    <node id="gneJ49" x="624.12" y="832.32" type="priority"/>
+    <node id="gneJ56" x="259.83" y="762.80" type="priority"/>
+    <node id="gneJ66" x="229.83" y="255.18" type="priority"/>
+    <node id="gneJ67" x="419.36" y="453.28" type="right_before_left"/>
+    <node id="gneJ70" x="654.12" y="460.42" type="right_before_left"/>
+    <node id="gneJ71" x="626.02" y="444.71" type="right_before_left"/>
+    <node id="gneJ75" x="776.97" y="402.33" type="right_before_left"/>
+    <node id="gneJ78" x="324.60" y="60.90" type="priority"/>
+    <node id="gneJ80" x="354.12" y="3.76" type="priority"/>
+    <node id="gneJ81" x="792.69" y="237.09" type="right_before_left"/>
+    <node id="gneJ82" x="900.31" y="276.14" type="priority"/>
+    <node id="gneJ83" x="757.93" y="110.90" type="priority"/>
+</nodes>
