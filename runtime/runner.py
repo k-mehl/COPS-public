@@ -209,7 +209,9 @@ class Runtime(object):
                         # consider all successor edges, BUT if no opposite edge
                         # exists, don't try to exclude it.
                         if lastSegment in self._environment._oppositeEdgeID:
-                            if not str(edge.getID()) == self._environment._oppositeEdgeID[lastSegment]:
+                            if len(succEdges) == 1:
+                                succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
+                            elif not str(edge.getID()) == self._environment._oppositeEdgeID[lastSegment]:
                                 succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
                         else:
                             succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
@@ -217,7 +219,7 @@ class Runtime(object):
                     # calculate minima of succEdgeCost
                     minValue = numpy.min(succEdgeCost.values())
                     minKeys = [key for key in succEdgeCost if succEdgeCost[key] == minValue]
-
+                    
                     # choose randomly if costs are equal
                     if self._config.getCfg("vehicle").get("phase3randomprob"):
                         phase3RandomProb = self._config.getCfg("vehicle").get("phase3randomprob")
@@ -231,7 +233,7 @@ class Runtime(object):
                             nextRouteSegment = random.choice(minKeys)
                         else:
                             nextRouteSegment = minKeys[0]
-
+                            
                     psv.setNextRouteSegment(nextRouteSegment)
 
             # break the while-loop if all remaining SUMO vehicles have
