@@ -283,27 +283,42 @@ class Runtime(object):
         Returns:
             float: cost of edge
         """
-        toNodedestinationEdge = self._environment._roadNetwork["edges"][str(psv.getDestinationEdgeID())]["toNode"]
+        env_edges = self._environment._roadNetwork["edges"]
+        veh_weights = self._config.getCfg("vehicle")["weights"]
+
+        toNodedestinationEdge = env_edges[str(psv.getDestinationEdgeID())]["toNode"]
 
         # get counts from environment
-        selfVisitCount = self._environment._roadNetwork["edges"][edge.getID()]["visitCount"][psv.getName()]
-        externalVisitCount = sum(self._environment._roadNetwork["edges"][edge.getID()]["visitCount"].values()) - selfVisitCount
-        externalPlannedCount = sum(self._environment._roadNetwork["edges"][edge.getID()]["plannedCount"].values())
+        selfVisitCount = env_edges[edge.getID()]["visitCount"][psv.getName()]
+        externalVisitCount = sum(env_edges[edge.getID()]["visitCount"].values()) - selfVisitCount
+        externalPlannedCount = sum(env_edges[edge.getID()]["plannedCount"].values())
 
-        veh_weights = self._config.getCfg("vehicle")["weights"]
+        
+        def cost_wrap(coop):
+            return veh_weights[coop]["distance"] \
+                   * env_edges[edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
+                   + selfVisitCount * veh_weights[coop]["selfvisit"]\
+                   + externalVisitCount * veh_weights[coop]["externalvisit"]\
+                   + externalPlannedCount * veh_weights[coop]["externalplanned"]
+
         if psv._driverCooperatesPhase3:
-            cost = veh_weights["coop"]["distance"] * \
-                   self._environment._roadNetwork["edges"][edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
-                   + selfVisitCount * veh_weights["coop"]["selfvisit"]\
-                   + externalVisitCount * veh_weights["coop"]["externalvisit"]\
-                   + externalPlannedCount * veh_weights["coop"]["externalplanned"]
+            return cost_wrap("coop")
         else:
-            cost = veh_weights["noncoop"]["distance"] * \
-                   self._environment._roadNetwork["edges"][edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
-                   + selfVisitCount * veh_weights["noncoop"]["selfvisit"]\
-                   + externalVisitCount * veh_weights["noncoop"]["externalvisit"]\
-                   + externalPlannedCount * veh_weights["noncoop"]["externalplanned"]
-        return cost
+            return cost_wrap("noncoop")
+
+        # if psv._driverCooperatesPhase3:
+        #     cost = veh_weights["coop"]["distance"] * \
+        #            env_edges[edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
+        #            + selfVisitCount * veh_weights["coop"]["selfvisit"]\
+        #            + externalVisitCount * veh_weights["coop"]["externalvisit"]\
+        #            + externalPlannedCount * veh_weights["coop"]["externalplanned"]
+        # else:
+        #     cost = veh_weights["noncoop"]["distance"] * \
+        #            env_edges[edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
+        #            + selfVisitCount * veh_weights["noncoop"]["selfvisit"]\
+        #            + externalVisitCount * veh_weights["noncoop"]["externalvisit"]\
+        #            + externalPlannedCount * veh_weights["noncoop"]["externalplanned"]
+        # return cost
 
     def convertNodeSequenceToEdgeSequence(self, adjacencyEdgeID, nodeSequence):
         """ Convert a route given as sequence of node indices into the
