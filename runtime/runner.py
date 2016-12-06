@@ -4,6 +4,7 @@ from __future__ import print_function
 import os
 import subprocess
 import sys
+import random
 
 try:
     xrange
@@ -234,14 +235,16 @@ class Runtime(object):
                     minKeys = [key for key in succEdgeCost if succEdgeCost[key] == minValue]
 
                     # choose randomly if costs are equal
-                    if self._config.getCfg("vehicle").get("phase3randomprob"):
-                        phase3RandomProb = self._config.getCfg("vehicle").get("phase3randomprob")
+                    # TODO: if "vehicle" always has "phase3randomprob" then
+                    # this is reduntant i.e. there is no None from get method.
+                    p3_prob = self._config.getCfg("vehicle").get("phase3randomprob")
+                    if p3_prob:
+                        phase3RandomProb = p3_prob
                     else:
                         phase3RandomProb = 0.0
 
-                    if (random.random() < phase3RandomProb):
-                        nextRouteSegment = random.choice(
-                            list(succEdgeCost.keys()))
+                    if random.random() < phase3RandomProb:
+                        nextRouteSegment = random.choice(list(succEdgeCost.keys()))
                     else:
                         nextRouteSegment = random.choice(minKeys)
 
@@ -287,18 +290,19 @@ class Runtime(object):
         externalVisitCount = sum(self._environment._roadNetwork["edges"][edge.getID()]["visitCount"].values()) - selfVisitCount
         externalPlannedCount = sum(self._environment._roadNetwork["edges"][edge.getID()]["plannedCount"].values())
 
+        veh_weights = self._config.getCfg("vehicle")["weights"]
         if psv._driverCooperatesPhase3:
-            cost = self._config.getCfg("vehicle")["weights"]["coop"]["distance"] * \
+            cost = veh_weights["coop"]["distance"] * \
                    self._environment._roadNetwork["edges"][edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
-                   + selfVisitCount*self._config.getCfg("vehicle")["weights"]["coop"]["selfvisit"]\
-                   + externalVisitCount * self._config.getCfg("vehicle")["weights"]["coop"]["externalvisit"]\
-                   + externalPlannedCount * self._config.getCfg("vehicle")["weights"]["coop"]["externalplanned"]
+                   + selfVisitCount * veh_weights["coop"]["selfvisit"]\
+                   + externalVisitCount * veh_weights["coop"]["externalvisit"]\
+                   + externalPlannedCount * veh_weights["coop"]["externalplanned"]
         else:
-            cost = self._config.getCfg("vehicle")["weights"]["noncoop"]["distance"] * \
+            cost = veh_weights["noncoop"]["distance"] * \
                    self._environment._roadNetwork["edges"][edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
-                   + selfVisitCount * self._config.getCfg("vehicle")["weights"]["noncoop"]["selfvisit"]\
-                   + externalVisitCount * self._config.getCfg("vehicle")["weights"]["noncoop"]["externalvisit"]\
-                   + externalPlannedCount * self._config.getCfg("vehicle")["weights"]["noncoop"]["externalplanned"]
+                   + selfVisitCount * veh_weights["noncoop"]["selfvisit"]\
+                   + externalVisitCount * veh_weights["noncoop"]["externalvisit"]\
+                   + externalPlannedCount * veh_weights["noncoop"]["externalplanned"]
         return cost
 
     def convertNodeSequenceToEdgeSequence(self, adjacencyEdgeID, nodeSequence):
