@@ -49,12 +49,12 @@ class Runtime(object):
         """
 
         self._config = p_config
+        self._sim_dir = self._config.getCfg("simulation")
 
         # run sumo with gui or headless, depending on the --gui flag
-        self._sumoBinary = checkBinary('sumo-gui') if not self._config.getCfg("simulation").get("headless") else checkBinary('sumo')
+        self._sumoBinary = checkBinary('sumo-gui') if not self._sim_dir.get("headless") else checkBinary('sumo')
 
         self._environment = Environment(self._config)
-        # print(self._environment._roadNetwork["edges"])
 
     def run(self, i_run):
         """ Runs the simulation on both SUMO and Python layers
@@ -65,7 +65,7 @@ class Runtime(object):
         # if there is a run configuration loaded use it to populate
         # parkingspaces in environment otherwise initialize new
         if not self._config.getRunCfg(str(i_run)):
-            if self._config.getCfg("simulation").get("verbose"):
+            if self._sim_dir.get("verbose"):
                 print("* no run cfg found. Initializing random parking spaces.")
             self._environment.initParkingSpaces(i_run)
 
@@ -77,27 +77,27 @@ class Runtime(object):
         # if --routefile flag is provided, use the file for routing, otherwise
         # generate (and overwrite if exists) route file (reroute.rou.xml) for
         # this simulation run using the given number of parking search vehicles
-        if os.path.isfile(os.path.join(self._config.getCfg("simulation").get("resourcedir"), self._config.getCfg("simulation").get("routefile"))) and self._config.getCfg("simulation").get("forceroutefile"):
-            self._routefile = self._config.getCfg("simulation").get("routefile")
+        if os.path.isfile(os.path.join(self._sim_dir.get("resourcedir"), self._sim_dir.get("routefile"))) and self._sim_dir.get("forceroutefile"):
+            self._routefile = self._sim_dir.get("routefile")
         else:
-            self._routefile = self._config.getCfg("simulation").get("routefile")
-            generatePsvDemand(self._config.getCfg("simulation").get("vehicles"), self._config.getCfg("simulation").get("resourcedir"), self._routefile)
+            self._routefile = self._sim_dir.get("routefile")
+            generatePsvDemand(self._sim_dir.get("vehicles"), self._sim_dir.get("resourcedir"), self._routefile)
 
         # this is the normal way of using traci. sumo is started as a
         # subprocess and then the python script connects and runs
         l_sumoProcess = subprocess.Popen(
             [self._sumoBinary,
-             "-n", os.path.join(self._config.getCfg("simulation").get("resourcedir"), "reroute.net.xml"),
-             "-r", os.path.join(self._config.getCfg("simulation").get("resourcedir"), self._routefile),
-             "--tripinfo-output", os.path.join(self._config.getCfg("simulation").get("resourcedir"), "tripinfo.xml"),
-             "--gui-settings-file", os.path.join(self._config.getCfg("simulation").get("resourcedir"), "gui-settings.cfg"),
+             "-n", os.path.join(self._sim_dir.get("resourcedir"), "reroute.net.xml"),
+             "-r", os.path.join(self._sim_dir.get("resourcedir"), self._routefile),
+             "--tripinfo-output", os.path.join(self._sim_dir.get("resourcedir"), "tripinfo.xml"),
+             "--gui-settings-file", os.path.join(self._sim_dir.get("resourcedir"), "gui-settings.cfg"),
              "--no-step-log",
-             "--remote-port", str(self._config.getCfg("simulation").get("sumoport"))],
+             "--remote-port", str(self._sim_dir.get("sumoport"))],
             stdout=sys.stdout,
             stderr=sys.stderr)
 
         # execute the TraCI control loop
-        traci.init(self._config.getCfg("simulation").get("sumoport"))
+        traci.init(self._sim_dir.get("sumoport"))
 
         # internal clock variable, start with 0
         step = 0
@@ -236,10 +236,10 @@ class Runtime(object):
             # break the while-loop if all remaining SUMO vehicles have
             # successfully parked
             if self.getNumberOfRemainingVehicles(l_parkingSearchVehicles)==0:
-                if self._config.getCfg("simulation").get("verbose"):
+                if self._sim_dir.get("verbose"):
                     print("SUCCESSFULLY PARKED:",
                         self.getNumberOfParkedVehicles(l_parkingSearchVehicles),
-                        "OUT OF", self._config.getCfg("simulation").get("vehicles"))
+                        "OUT OF", self._sim_dir.get("vehicles"))
                 break
 
         # (from SUMO examples):
@@ -340,7 +340,7 @@ class Runtime(object):
     def computePhase2Routings(self):
         """ Computes phase 2 routing """
         routes = phase2.Phase2Routes(self)
-        cooperation = self._config.getCfg("simulation").get("coopratioPhase2")
+        cooperation = self._sim_dir.get("coopratioPhase2")
         if cooperation == 1.0:
             l_cooperativeRoutes = routes.routes(1.0, penalty=0.2)
             l_individualRoutes = l_cooperativeRoutes
