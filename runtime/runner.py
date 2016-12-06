@@ -15,18 +15,18 @@ try:
 except ImportError:
     pass
 
-# (from SUMO examples:)
-# we need to import python modules from the $SUMO_HOME/tools directory
 try:
-    sys.path.append(os.path.join(os.path.dirname(
-        "__file__"), '..', '..', '..', "tools"))  # tutorial in tests
-    sys.path.append(os.path.join(os.environ.get("SUMO_HOME", os.path.join(
-        os.path.dirname("__file__"), "..", "..")), "tools"))  # tutorial in docs
+    # we need to import python modules from the $SUMO_HOME/tools directory
+    # check: http://sumo.dlr.de/wiki/TraCI/Interfacing_TraCI_from_Python#importing_traci_in_a_script
+    tools = os.path.join(os.environ['SUM_HOME'], 'tools')
+    sys.path.append(tools)
     from sumolib import checkBinary
-except ImportError:
-    sys.exit("please declare environment variable 'SUMO_HOME' as the root"+ \
-    "directory of your sumo installation (it should contain folders 'bin'," + \
-    "'tools' and 'docs')")
+except KeyError:
+    sys.exit(
+        """
+        Declare environment variable 'SUMO_HOME', for more info refer to:
+        http://sumo.dlr.de/wiki/TraCI/Interfacing_TraCI_from_Python
+        """)
 
 import traci
 import sumolib
@@ -52,7 +52,8 @@ class Runtime(object):
         self._sim_dir = self._config.getCfg("simulation")
 
         # run sumo with gui or headless, depending on the --gui flag
-        self._sumoBinary = checkBinary('sumo-gui') if not self._sim_dir.get("headless") else checkBinary('sumo')
+        self._sumoBinary = checkBinary('sumo-gui') if not self._sim_dir.get(
+            "headless") else checkBinary('sumo')
 
         self._environment = Environment(self._config)
 
@@ -66,7 +67,8 @@ class Runtime(object):
         # parkingspaces in environment otherwise initialize new
         if not self._config.getRunCfg(str(i_run)):
             if self._sim_dir.get("verbose"):
-                print("* no run cfg found. Initializing random parking spaces.")
+                print(
+                    "* no run cfg found. Initializing random parking spaces.")
             self._environment.initParkingSpaces(i_run)
 
         elif self._config.isRunCfgOk(i_run):
@@ -77,22 +79,33 @@ class Runtime(object):
         # if --routefile flag is provided, use the file for routing, otherwise
         # generate (and overwrite if exists) route file (reroute.rou.xml) for
         # this simulation run using the given number of parking search vehicles
-        if os.path.isfile(os.path.join(self._sim_dir.get("resourcedir"), self._sim_dir.get("routefile"))) and self._sim_dir.get("forceroutefile"):
+        if os.path.isfile(
+                os.path.join(
+                    self._sim_dir.get("resourcedir"),
+                    self._sim_dir.get("routefile"))) and self._sim_dir.get(
+                        "forceroutefile"):
             self._routefile = self._sim_dir.get("routefile")
         else:
             self._routefile = self._sim_dir.get("routefile")
-            generatePsvDemand(self._sim_dir.get("vehicles"), self._sim_dir.get("resourcedir"), self._routefile)
+            generatePsvDemand(
+                self._sim_dir.get("vehicles"),
+                self._sim_dir.get("resourcedir"), self._routefile)
 
         # this is the normal way of using traci. sumo is started as a
         # subprocess and then the python script connects and runs
         l_sumoProcess = subprocess.Popen(
-            [self._sumoBinary,
-             "-n", os.path.join(self._sim_dir.get("resourcedir"), "reroute.net.xml"),
-             "-r", os.path.join(self._sim_dir.get("resourcedir"), self._routefile),
-             "--tripinfo-output", os.path.join(self._sim_dir.get("resourcedir"), "tripinfo.xml"),
-             "--gui-settings-file", os.path.join(self._sim_dir.get("resourcedir"), "gui-settings.cfg"),
-             "--no-step-log",
-             "--remote-port", str(self._sim_dir.get("sumoport"))],
+            [
+                self._sumoBinary, "-n", os.path.join(
+                    self._sim_dir.get("resourcedir"), "reroute.net.xml"), "-r",
+                os.path.join(
+                    self._sim_dir.get("resourcedir"), self._routefile),
+                "--tripinfo-output",
+                os.path.join(self._sim_dir.get("resourcedir"), "tripinfo.xml"),
+                "--gui-settings-file", os.path.join(
+                    self._sim_dir.get("resourcedir"), "gui-settings.cfg"),
+                "--no-step-log", "--remote-port",
+                str(self._sim_dir.get("sumoport"))
+            ],
             stdout=sys.stdout,
             stderr=sys.stderr)
 
@@ -178,13 +191,16 @@ class Runtime(object):
                 name = psv.getName()
                 for edge in self._environment._roadNetwork["edges"]:
                     # traversedRoutePlusCurrentEdge.append(psv.getActiveRoute()[0])
-                    oppositeEdgeID = self._environment._roadNetwork["edges"][edge]["oppositeEdgeID"]
+                    oppositeEdgeID = self._environment._roadNetwork["edges"][
+                        edge]["oppositeEdgeID"]
                     visitCount = traversedRoute.count(str(edge)) \
                         + traversedRoute.count(oppositeEdgeID)
                     plannedCount = plannedRoute.count(str(edge)) \
                         + plannedRoute.count(oppositeEdgeID)
-                    self._environment._roadNetwork["edges"][edge]["visitCount"][name] = visitCount
-                    self._environment._roadNetwork["edges"][edge]["plannedCount"][name] = plannedCount
+                    self._environment._roadNetwork["edges"][edge][
+                        "visitCount"][name] = visitCount
+                    self._environment._roadNetwork["edges"][edge][
+                        "plannedCount"][name] = plannedCount
 
                 # if result values could be obtained, the vehicle found
                 # a parking space in the last time step
@@ -210,36 +226,47 @@ class Runtime(object):
                         # exists, don't try to exclude it.
                         if lastSegment in self._environment._oppositeEdgeID:
                             if len(succEdges) == 1:
-                                succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
-                            elif not str(edge.getID()) == self._environment._oppositeEdgeID[lastSegment]:
-                                succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
+                                succEdgeCost[str(edge.getID(
+                                ))] = self.calculateEdgeCost(psv, edge)
+                            elif not str(edge.getID(
+                            )) == self._environment._oppositeEdgeID[
+                                    lastSegment]:
+                                succEdgeCost[str(edge.getID(
+                                ))] = self.calculateEdgeCost(psv, edge)
                         else:
-                            succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
+                            succEdgeCost[str(edge.getID(
+                            ))] = self.calculateEdgeCost(psv, edge)
 
                     # calculate minima of succEdgeCost
                     minValue = min(succEdgeCost.values())
-                    minKeys = [key for key in succEdgeCost if succEdgeCost[key] == minValue]
-                    
+                    minKeys = [
+                        key for key in succEdgeCost
+                        if succEdgeCost[key] == minValue
+                    ]
+
                     # choose randomly if costs are equal
                     if self._config.getCfg("vehicle").get("phase3randomprob"):
-                        phase3RandomProb = self._config.getCfg("vehicle").get("phase3randomprob")
+                        phase3RandomProb = self._config.getCfg("vehicle").get(
+                            "phase3randomprob")
                     else:
                         phase3RandomProb = 0.0
 
                     if (random.random() < phase3RandomProb):
-                        nextRouteSegment = random.choice(list(succEdgeCost.keys()))
+                        nextRouteSegment = random.choice(
+                            list(succEdgeCost.keys()))
                     else:
                         nextRouteSegment = random.choice(minKeys)
-                            
+
                     psv.setNextRouteSegment(nextRouteSegment)
 
             # break the while-loop if all remaining SUMO vehicles have
             # successfully parked
-            if self.getNumberOfRemainingVehicles(l_parkingSearchVehicles)==0:
+            if self.getNumberOfRemainingVehicles(l_parkingSearchVehicles) == 0:
                 if self._sim_dir.get("verbose"):
                     print("SUCCESSFULLY PARKED:",
-                        self.getNumberOfParkedVehicles(l_parkingSearchVehicles),
-                        "OUT OF", self._sim_dir.get("vehicles"))
+                          self.getNumberOfParkedVehicles(
+                              l_parkingSearchVehicles), "OUT OF",
+                          self._sim_dir.get("vehicles"))
                 break
 
         # (from SUMO examples):
@@ -250,7 +277,9 @@ class Runtime(object):
         l_sumoProcess.wait()
 
         # Return results
-        return self.getNumberOfParkedVehicles(l_parkingSearchVehicles), searchTimes, walkingTimes, searchDistances, walkingDistances, searchPhases
+        return self.getNumberOfParkedVehicles(
+            l_parkingSearchVehicles
+        ), searchTimes, walkingTimes, searchDistances, walkingDistances, searchPhases
 
     def calculateEdgeCost(self, psv, edge):
         """ Calculate cost for an edge for a specific search vehicle
@@ -262,12 +291,16 @@ class Runtime(object):
         Returns:
             float: cost of edge
         """
-        toNodedestinationEdge = self._environment._roadNetwork["edges"][str(psv.getDestinationEdgeID())]["toNode"]
+        toNodedestinationEdge = self._environment._roadNetwork["edges"][str(
+            psv.getDestinationEdgeID())]["toNode"]
 
         # get counts from environment
-        selfVisitCount = self._environment._roadNetwork["edges"][edge.getID()]["visitCount"][psv.getName()]
-        externalVisitCount = sum(self._environment._roadNetwork["edges"][edge.getID()]["visitCount"].values())-selfVisitCount
-        externalPlannedCount = sum(self._environment._roadNetwork["edges"][edge.getID()]["plannedCount"].values())
+        selfVisitCount = self._environment._roadNetwork["edges"][edge.getID()][
+            "visitCount"][psv.getName()]
+        externalVisitCount = sum(self._environment._roadNetwork["edges"][
+            edge.getID()]["visitCount"].values()) - selfVisitCount
+        externalPlannedCount = sum(self._environment._roadNetwork["edges"][
+            edge.getID()]["plannedCount"].values())
 
         # calculate cost
         if psv._driverCooperatesPhase3:
@@ -323,19 +356,22 @@ class Runtime(object):
     def initPOI(self):
         """ Initialize parking spaces geommetry in SUMO gui """
         for ps in self._environment._allParkingSpaces:
-            traci.poi.add(
-                "ParkingSpace" + str(ps.name),
-                traci.simulation.convert2D(str(ps.edgeID), (ps.position - 2.0))[0],
-                traci.simulation.convert2D(str(ps.edgeID), (ps.position - 2.0))[1],
-                (255, 0, 0, 0))
+            traci.poi.add("ParkingSpace" + str(ps.name),
+                          traci.simulation.convert2D(
+                              str(ps.edgeID), (ps.position - 2.0))[0],
+                          traci.simulation.convert2D(
+                              str(ps.edgeID), (ps.position - 2.0))[1],
+                          (255, 0, 0, 0))
 
     def updatePOIColors(self):
         """ Update color of parking places in SUMO gui """
         for ps in self._environment._allParkingSpaces:
             if ps.available:
-                traci.poi.setColor("ParkingSpace" + str(ps.name), (0, 255, 0, 0))
+                traci.poi.setColor("ParkingSpace" + str(ps.name),
+                                   (0, 255, 0, 0))
             if ps.assignedToVehicleID:
-                traci.poi.setColor("ParkingSpace" + str(ps.name), (255, 165, 0, 0))
+                traci.poi.setColor("ParkingSpace" + str(ps.name),
+                                   (255, 165, 0, 0))
 
     def computePhase2Routings(self):
         """ Computes phase 2 routing """
