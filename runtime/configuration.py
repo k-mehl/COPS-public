@@ -1,5 +1,6 @@
 from __future__ import print_function
 import json
+import sys
 import os
 import gzip
 
@@ -97,7 +98,9 @@ class Configuration(object):
         return self._runconfiguration.get(p_key)
 
     def _writeCfg(self, p_config, p_location, p_sort_keys=True, p_indent=4, p_separators=(',', ' : ')):
-        if p_location.endswith(".gz"):
+        if sys.version_info > (3, ):
+            fp = open(p_location, 'w')
+        elif p_location.endswith(".gz"):
             fp = gzip.GzipFile(p_location, 'w')
         else:
             fp = open(p_location, mode="w")
@@ -170,8 +173,10 @@ class Configuration(object):
 
         # phase 3: check for enough available parkingspaces in each run (i.e. #available parkingspaces >= #vehicles)
         # contains amount of runs with mismatching available parkingspaces
-        l_available = filter(lambda v: v.get("available"),
-                        self._runconfiguration.get(str(p_runid)).get("parkingspaces").values())
+        tmp_vals = self._runconfiguration.get(str(p_runid)).get("parkingspaces").values()
+        l_available = [v for v in tmp_vals if v.get("available")]
+        # l_available = filter(lambda v: v.get("available"),
+        #                 self._runconfiguration.get(str(p_runid)).get("parkingspaces").values())
 
         if len(l_available) < self._configuration.get("simulation").get("vehicles"):
             print("/!\  run config does not match simulation parameters. Expecting at least {} available parking spaces due to {} searching vehicles. Found only {} in run {}".format(
@@ -187,7 +192,9 @@ class Configuration(object):
         if not os.path.isfile(self._runcfgfilename):
             return {}
 
-        if self._runcfgfilename.endswith(".gz"):
+        if sys.version_info > (3, ):
+            fp = open(self._runcfgfilename, mode="r")
+        elif self._runcfgfilename.endswith(".gz"):
             fp = gzip.GzipFile(self._runcfgfilename, 'r')
         else:
             fp = open(self._runcfgfilename, mode="r")

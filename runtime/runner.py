@@ -217,7 +217,7 @@ class Runtime(object):
                             succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
 
                     # calculate minima of succEdgeCost
-                    minValue = numpy.min(succEdgeCost.values())
+                    minValue = min(succEdgeCost.values())
                     minKeys = [key for key in succEdgeCost if succEdgeCost[key] == minValue]
                     
                     # choose randomly if costs are equal
@@ -227,12 +227,9 @@ class Runtime(object):
                         phase3RandomProb = 0.0
 
                     if (random.random() < phase3RandomProb):
-                        nextRouteSegment = random.choice(succEdgeCost.keys())
+                        nextRouteSegment = random.choice(list(succEdgeCost.keys()))
                     else:
-                        if (len(minKeys) > 1):
-                            nextRouteSegment = random.choice(minKeys)
-                        else:
-                            nextRouteSegment = minKeys[0]
+                        nextRouteSegment = random.choice(minKeys)
                             
                     psv.setNextRouteSegment(nextRouteSegment)
 

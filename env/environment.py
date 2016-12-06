@@ -8,6 +8,13 @@ import random
 import itertools
 import os
 
+try:
+    xrange
+    import itertools
+    map = itertools.imap
+    filter = itertools.ifilter
+except NameError:
+    xrange = range
 
 class Environment(object):
     """ Environment class """
@@ -21,8 +28,8 @@ class Environment(object):
         self._roadNetwork["nodes"] = {}
         self._roadNetwork["edges"] = {}
 
-        self._nodes = map(lambda x: str(x.id), sumolib.output.parse(os.path.join(self._config.getCfg("simulation").get("resourcedir"), 'reroute.nod.xml'), ['node']))
-        self._edges = map(lambda x: str(x.id), sumolib.output.parse(os.path.join(self._config.getCfg("simulation").get("resourcedir"), 'reroute.edg.xml'), ['edge']))
+        self._nodes = list(map(lambda x: str(x.id), sumolib.output.parse(os.path.join(self._config.getCfg("simulation").get("resourcedir"), 'reroute.nod.xml'), ['node'])))
+        self._edges = list(map(lambda x: str(x.id), sumolib.output.parse(os.path.join(self._config.getCfg("simulation").get("resourcedir"), 'reroute.edg.xml'), ['edge'])))
 
         for node in self._nodes:
             self._roadNetwork["nodes"][node] = {}
@@ -77,7 +84,7 @@ class Environment(object):
 
             self._roadNetwork["edges"][edge]["meanCoord"] = tuple(numpy.divide(numpy.add(fromNodeCoord,toNodeCoord),2))
 
-            self._roadNetwork["edges"][edge]["succEdgeID"] = map(lambda x: str(x.getID()), self._net.getEdge(edge).getToNode().getOutgoing())
+            self._roadNetwork["edges"][edge]["succEdgeID"] = list(map(lambda x: str(x.getID()), self._net.getEdge(edge).getToNode().getOutgoing()))
 
             self._roadNetwork["edges"][edge]["nodeDistanceFromEndNode"] = {}
 
@@ -109,14 +116,14 @@ class Environment(object):
         self._parkingSpaceNumber = self._config.getCfg("simulation").get("parkingspaces").get("free")
 
         l_cfgparkingspaces = self._config.getRunCfg(str(p_run)).get("parkingspaces")
-        self._allParkingSpaces = map(lambda v: ParkingSpace(v.get("name"),
+        self._allParkingSpaces = list(map(lambda v: ParkingSpace(v.get("name"),
                                                          v.get("edgeID"),
                                                          v.get("position"),
                                                          available=v.get("available")),
-                              l_cfgparkingspaces.values())
+                              l_cfgparkingspaces.values()))
 
         for edge in self._edges:
-            self._roadNetwork["edges"][edge]["parkingSpaces"] = filter(lambda p: p.edgeID == edge, self._allParkingSpaces)
+            self._roadNetwork["edges"][edge]["parkingSpaces"] = list(filter(lambda p: p.edgeID == edge, self._allParkingSpaces))
         if self._config.getCfg("simulation").get("verbose"):
             print("  -> done.")
 
@@ -171,7 +178,7 @@ class Environment(object):
             # available
             success = False
             while not success:
-                availableParkingSpaceID = int(random.random()*self._parkingSpaceNumber)
+                availableParkingSpaceID = int(random.random() * self._parkingSpaceNumber)
                 if not self._allParkingSpaces[availableParkingSpaceID].available:
                     success = True
             # make sure the available parking space is not assigned to any vehicle

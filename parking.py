@@ -10,6 +10,10 @@ from runtime import runner
 from runtime import configuration
 
 
+try:
+    xrange
+except NameError:
+    xrange = range
 
 # Main entry point for the wrapper module.
 # For now: starts repetitive simulation runs with identical parameters, 
@@ -43,7 +47,9 @@ if __name__ == "__main__":
 
     print("* pre-testing runcfg for all runs")
     if l_config.existRunCfg():
-        if len(filter(lambda i_run: not l_config.isRunCfgOk(i_run), xrange(l_config.getCfg("simulation").get("runs")))) > 0:
+        tmp_iter = xrange(l_config.getCfg("simulation").get("runs"))
+        if len([run for run in tmp_iter if not l_config.isRunCfgOk(run)]) > 0:
+        #if len(list(filter(lambda i_run: not l_config.isRunCfgOk(i_run), xrange(l_config.getCfg("simulation").get("runs"))))) > 0:
             raise BaseException("/!\ error(s) in run configuration")
         else:
             print("  -> passed.")
