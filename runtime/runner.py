@@ -57,6 +57,7 @@ class Runtime(object):
             "headless") else checkBinary('sumo')
 
         self._environment = Environment(self._config)
+        self._vehicle_config = self._config.getCfg("vehicle")
 
     def run(self, i_run):
         """ Runs the simulation on both SUMO and Python layers
@@ -178,22 +179,19 @@ class Runtime(object):
             #       selectRouting() ...... select whether to cooperate or not
             #       setVehicleData() ..... all TraCI setSomething commands
             for psv in l_parkingSearchVehicles:
-
                 result = psv.update(step)
                 # count edge visits of each vehicle
                 # TODO: make visit update more efficient
                 traversedRoute = psv.getTraversedRoute()
                 plannedRoute = psv.getActiveRoute()
                 name = psv.getName()
-                for edge in self._environment._roadNetwork["edges"]:
-                    # traversedRoutePlusCurrentEdge.append(psv.getActiveRoute()[0])
-                    oppositeEdgeID = self._environment._roadNetwork["edges"][edge]["oppositeEdgeID"]
-                    visitCount = traversedRoute.count(str(edge)) \
-                                 + traversedRoute.count(oppositeEdgeID)
-                    plannedCount = plannedRoute.count(str(edge)) \
-                                 + plannedRoute.count(oppositeEdgeID)
-                    self._environment._roadNetwork["edges"][edge]["visitCount"][name] = visitCount
-                    self._environment._roadNetwork["edges"][edge]["plannedCount"][name] = plannedCount
+                env_edges = self._environment._roadNetwork["edges"]
+                for edge in env_edges:
+                    oppositeEdgeID = env_edges[edge]["oppositeEdgeID"]
+                    visitCount = traversedRoute.count(str(edge)) + traversedRoute.count(oppositeEdgeID)
+                    plannedCount = plannedRoute.count(str(edge)) + plannedRoute.count(oppositeEdgeID)
+                    env_edges[edge]["visitCount"][name] = visitCount
+                    env_edges[edge]["plannedCount"][name] = plannedCount
 
                 # if result values could be obtained, the vehicle found
                 # a parking space in the last time step
@@ -203,9 +201,9 @@ class Runtime(object):
                     searchDistances.append(result[3])
                     walkingDistances.append(result[4])
                     searchPhases.append(result[5])
+                # if the vehicle is on the last route segment,
+                # choose one of the possible next edges to continue
                 elif psv.isOnLastRouteSegment():
-                    # if the vehicle is on the last route segment,
-                    # choose one of the possible next edges to continue
                     lastSegment = psv.getVehicleRoute()[-1]
                     succEdges = self._environment._net.getEdge(lastSegment).getToNode().getOutgoing()
 
@@ -218,27 +216,20 @@ class Runtime(object):
                         # exists, don't try to exclude it.
                         if lastSegment in self._environment._oppositeEdgeID:
                             if len(succEdges) == 1:
-                                succEdgeCost[str(edge.getID())] = \
-                                    self.calculateEdgeCost(psv, edge)
+                                succEdgeCost[str(edge.getID())] = self.edgeCost(psv, edge)
                             elif not str(edge.getID()) == self._environment._oppositeEdgeID[lastSegment]:
-                                succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
+                                succEdgeCost[str(edge.getID())] = self.edgeCost(psv, edge)
                         else:
-                            succEdgeCost[str(edge.getID())] = self.calculateEdgeCost(psv, edge)
+                            succEdgeCost[str(edge.getID())] = self.edgeCost(psv, edge)
 
                     # calculate minima of succEdgeCost
                     minValue = min(succEdgeCost.values())
                     minKeys = [key for key in succEdgeCost if succEdgeCost[key] == minValue]
 
                     # choose randomly if costs are equal
-                    # TODO: if "vehicle" always has "phase3randomprob" then
-                    # this is reduntant i.e. there is no None from get method.
-                    p3_prob = self._config.getCfg("vehicle").get("phase3randomprob")
-                    if p3_prob:
-                        phase3RandomProb = p3_prob
-                    else:
-                        phase3RandomProb = 0.0
+                    p3_prob = self._vehicle_config["phase3randomprob"]
 
-                    if random.random() < phase3RandomProb:
+                    if random.random() < p3_prob:
                         next_link = random.choice(list(succEdgeCost.keys()))
                     else:
                         next_link = random.choice(minKeys)
@@ -268,7 +259,7 @@ class Runtime(object):
                 walkingDistances,
                 searchPhases)
 
-    def calculateEdgeCost(self, psv, edge):
+    def edgeCost(self, psv, edge):
         """ Calculate cost for an edge for a specific search vehicle
 
         Args:
@@ -279,7 +270,7 @@ class Runtime(object):
             float: cost of edge
         """
         env_edges = self._environment._roadNetwork["edges"]
-        veh_weights = self._config.getCfg("vehicle")["weights"]
+        veh_weights = self._vehicle_config["weights"]
 
         psv_dest_edge = str(psv.getDestinationEdgeID())
         toNodedestinationEdge = env_edges[psv_dest_edge]["toNode"]
