@@ -152,11 +152,6 @@ class Runtime(object):
             arr_list = traci.simulation.getArrivedIDList()
             l_departedVehicles = (x for x in dep_list if x not in arr_list)
 
-            # get individual vehicle preferences from run config if present,
-            # otherwise generate values
-            # TODO: following was unused, why was it there?
-            # l_run = str(i_run)
-
             # TODO: separate l_individualRoutes and l_cooperativeRoutes
             l_parkingSearchVehicles.extend(
                     ParkingSearchVehicle(vehID, self._environment,
@@ -244,11 +239,11 @@ class Runtime(object):
                         phase3RandomProb = 0.0
 
                     if random.random() < phase3RandomProb:
-                        nextRouteSegment = random.choice(list(succEdgeCost.keys()))
+                        next_link = random.choice(list(succEdgeCost.keys()))
                     else:
-                        nextRouteSegment = random.choice(minKeys)
+                        next_link = random.choice(minKeys)
 
-                    psv.setNextRouteSegment(nextRouteSegment)
+                    psv.setNextRouteSegment(next_link)
 
             # break the while-loop if all remaining SUMO vehicles have
             # successfully parked
@@ -286,39 +281,29 @@ class Runtime(object):
         env_edges = self._environment._roadNetwork["edges"]
         veh_weights = self._config.getCfg("vehicle")["weights"]
 
-        toNodedestinationEdge = env_edges[str(psv.getDestinationEdgeID())]["toNode"]
+        psv_dest_edge = str(psv.getDestinationEdgeID())
+        toNodedestinationEdge = env_edges[psv_dest_edge]["toNode"]
 
         # get counts from environment
-        selfVisitCount = env_edges[edge.getID()]["visitCount"][psv.getName()]
-        externalVisitCount = sum(env_edges[edge.getID()]["visitCount"].values()) - selfVisitCount
-        externalPlannedCount = sum(env_edges[edge.getID()]["plannedCount"].values())
+        edge_id = edge.getID()
+        psv_name = psv.getName()
+        selfVisitCount = env_edges[edge_id]["visitCount"][psv_name]
 
-        
+        visit_count_sum = sum(env_edges[edge_id]["visitCount"].values())
+        externalVisitCount = visit_count_sum - selfVisitCount
+
+        externalPlannedCount = sum(env_edges[edge_id]["plannedCount"].values())
+
         def cost_wrap(coop):
             return veh_weights[coop]["distance"] \
-                   * env_edges[edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
+                   * env_edges[edge_id]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
                    + selfVisitCount * veh_weights[coop]["selfvisit"]\
                    + externalVisitCount * veh_weights[coop]["externalvisit"]\
                    + externalPlannedCount * veh_weights[coop]["externalplanned"]
 
         if psv._driverCooperatesPhase3:
             return cost_wrap("coop")
-        else:
-            return cost_wrap("noncoop")
-
-        # if psv._driverCooperatesPhase3:
-        #     cost = veh_weights["coop"]["distance"] * \
-        #            env_edges[edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
-        #            + selfVisitCount * veh_weights["coop"]["selfvisit"]\
-        #            + externalVisitCount * veh_weights["coop"]["externalvisit"]\
-        #            + externalPlannedCount * veh_weights["coop"]["externalplanned"]
-        # else:
-        #     cost = veh_weights["noncoop"]["distance"] * \
-        #            env_edges[edge.getID()]["nodeDistanceFromEndNode"][toNodedestinationEdge]\
-        #            + selfVisitCount * veh_weights["noncoop"]["selfvisit"]\
-        #            + externalVisitCount * veh_weights["noncoop"]["externalvisit"]\
-        #            + externalPlannedCount * veh_weights["noncoop"]["externalplanned"]
-        # return cost
+        return cost_wrap("noncoop")
 
     def convertNodeSequenceToEdgeSequence(self, adjacencyEdgeID, nodeSequence):
         """ Convert a route given as sequence of node indices into the
