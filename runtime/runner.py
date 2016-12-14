@@ -51,13 +51,13 @@ class Runtime(object):
 
         self._config = p_config
         self._sim_dir = self._config.getCfg("simulation")
+        self._environment = Environment(self._config)
+        self._vehicle_config = self._config.getCfg("vehicle")
 
         # run sumo with gui or headless, depending on the --gui flag
         self._sumoBinary = checkBinary('sumo-gui') if not self._sim_dir.get(
             "headless") else checkBinary('sumo')
 
-        self._environment = Environment(self._config)
-        self._vehicle_config = self._config.getCfg("vehicle")
 
     def run(self, i_run):
         """ Runs the simulation on both SUMO and Python layers
@@ -153,7 +153,6 @@ class Runtime(object):
             arr_list = traci.simulation.getArrivedIDList()
             l_departedVehicles = (x for x in dep_list if x not in arr_list)
 
-            # TODO: separate l_individualRoutes and l_cooperativeRoutes
             l_parkingSearchVehicles.extend(
                     ParkingSearchVehicle(vehID, self._environment,
                         self._config, i_run, step,
@@ -219,6 +218,7 @@ class Runtime(object):
                                 succEdgeCost[str(edge.getID())] = self.edgeCost(psv, edge)
                             elif not str(edge.getID()) == self._environment._oppositeEdgeID[lastSegment]:
                                 succEdgeCost[str(edge.getID())] = self.edgeCost(psv, edge)
+                            # TODO: there is missing else here?
                         else:
                             succEdgeCost[str(edge.getID())] = self.edgeCost(psv, edge)
 
@@ -228,7 +228,6 @@ class Runtime(object):
 
                     # choose randomly if costs are equal
                     p3_prob = self._vehicle_config["phase3randomprob"]
-
                     if random.random() < p3_prob:
                         next_link = random.choice(list(succEdgeCost.keys()))
                     else:
@@ -337,26 +336,24 @@ class Runtime(object):
         for ps in self._environment._allParkingSpaces:
             traci.poi.add(
                     "ParkingSpace" + str(ps.name),
-                    traci.simulation.convert2D(
-                        str(ps.edgeID), (ps.position - 2.0))[0], 
-                    traci.simulation.convert2D(
-                        str(ps.edgeID), (ps.position - 2.0))[1],
+                    traci.simulation.convert2D(str(ps.edgeID), (ps.position - 2.0))[0], 
+                    traci.simulation.convert2D(str(ps.edgeID), (ps.position - 2.0))[1],
                     (255, 0, 0, 0))
 
     def updatePOIColors(self):
         """ Update color of parking places in SUMO gui """
         for ps in self._environment._allParkingSpaces:
+            p_name = "ParkingSpace" + str(ps.name)
             if ps.available:
-                traci.poi.setColor("ParkingSpace" + str(ps.name),
-                                   (0, 255, 0, 0))
+                traci.poi.setColor(p_name, (0, 255, 0, 0))
             if ps.assignedToVehicleID:
-                traci.poi.setColor("ParkingSpace" + str(ps.name),
-                                   (255, 165, 0, 0))
+                traci.poi.setColor(p_name, (255, 165, 0, 0))
 
     def computePhase2Routings(self):
         """ Computes phase 2 routing """
         routes = phase2.Phase2Routes(self)
-        cooperation = self._sim_dir.get("coopratioPhase2")
+        cooperation = self._sim_dir["coopratioPhase2"]
+        # TODO: this is still hardcoded
         if cooperation == 1.0:
             l_cooperativeRoutes = routes.routes(1.0, penalty=0.2)
             l_individualRoutes = l_cooperativeRoutes
