@@ -109,7 +109,7 @@ class Configuration(object):
         Returns:
             dict: configuration for a given key
         """
-        return self._runconfiguration[p_key]
+        return self._runconfiguration.get(p_key)
 
     def _writeCfg(self, p_config, p_location, p_sort_keys=True, p_indent=4,
                   p_separators=(',', ' : ')):
