@@ -1,12 +1,5 @@
 #!usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-File: CooperativeSearch.py
-Author: Aleksandar Trifunovic
-Email: firtek.ex@gmail.com
-Github: https://github.com/akstrfn
-Description: Cooperatively searhing space
-"""
 
 from __future__ import print_function
 from sys import maxsize  # faster like this then like sys.maxsize 40ns vs 17ns
@@ -221,7 +214,7 @@ class CoopSearchHillOptimized(CooperativeSearch):
         self.destinations = destinations
 
     def optimized(self):
-        from hill_climb import hill
+        from common.hill_climb import hill
         # this thing with dest[ind] works when you pass dest as an argument
         # i.e. CoopSearchHillOptimized(graph_ort, cars, dest, 0.2).optimized()
         # now that is crazy

@@ -2,8 +2,6 @@ import traci
 import sumolib
 import numpy
 
-from .parkingSpace import *
-
 import random
 import itertools
 import os
@@ -15,6 +13,9 @@ try:
     filter = itertools.ifilter
 except NameError:
     xrange = range
+
+from env.parkingSpace import ParkingSpace
+
 
 class Environment(object):
     """ Environment class """

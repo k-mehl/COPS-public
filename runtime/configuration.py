@@ -29,7 +29,7 @@ class Configuration(object):
                     "free": 5,
                 },
                 "vehicles": 5,
-                "coopratioPhase2": 0.0,
+                "coopratioPhase2": 1.0,
                 "coopratioPhase3": 0.0,
             },
             "vehicle": {

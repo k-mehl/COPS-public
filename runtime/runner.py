@@ -32,7 +32,7 @@ import traci
 from vehicle.parkingSearchVehicle import ParkingSearchVehicle
 from common.vehicleFactory import generatePsvDemand
 from env.environment import Environment
-from . import phase2
+from runtime.phase2 import Phase2Routes
 
 
 class Runtime(object):
@@ -346,7 +346,7 @@ class Runtime(object):
 
     def computePhase2Routings(self):
         """ Computes phase 2 routing """
-        routes = phase2.Phase2Routes(self)
+        routes = Phase2Routes(self)
         cooperation = self._sim_dir["coopratioPhase2"]
         # TODO: this is still hardcoded
         if cooperation == 1.0:

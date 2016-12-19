@@ -6,19 +6,13 @@ import random
 
 import sumolib
 
-from common.cooperativeSearch import *
-from .runner import *
+from common.cooperativeSearch import CooperativeSearch, CoopSearchHillOptimized
 
-# Python2-3 compatibility layer
 try:
     xrange
+    import itertools.izip as zip
 except NameError:
     xrange = range
-
-try:
-    import itertools.izip as zip
-except ImportError:
-    pass
 
 
 class Phase2Routes(object):
@@ -180,4 +174,3 @@ class Phase2Routes(object):
         routes.update(coop_routes)
         routes.update(non_coop_routes)
         return routes
-

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
-from .cooperativeSearch import CooperativeSearch
+
 from itertools import chain
 from random import randint, choice
 
@@ -16,6 +16,7 @@ try:
 except ImportError:
     pass
 
+from common.cooperativeSearch import CooperativeSearch
 reconstruct_path = CooperativeSearch.reconstruct_path
 
 
