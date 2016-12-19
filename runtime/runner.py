@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 
 import os
 import subprocess
@@ -24,18 +24,14 @@ try:
     from sumolib import checkBinary
 except KeyError:
     sys.exit(
-        """
-        Declare environment variable 'SUMO_HOME', for more info refer to:
-        http://sumo.dlr.de/wiki/TraCI/Interfacing_TraCI_from_Python
-        """)
+        """ Declare environment variable 'SUMO_HOME', for more info refer to:
+        http://sumo.dlr.de/wiki/TraCI/Interfacing_TraCI_from_Python """)
 
 import traci
-import sumolib
 
-from common.cooperativeSearch import *
-from vehicle.parkingSearchVehicle import *
-from common.vehicleFactory import *
-from env.environment import *
+from vehicle.parkingSearchVehicle import ParkingSearchVehicle
+from common.vehicleFactory import generatePsvDemand
+from env.environment import Environment
 from . import phase2
 
 
@@ -57,7 +53,6 @@ class Runtime(object):
         # run sumo with gui or headless, depending on the --gui flag
         self._sumoBinary = checkBinary('sumo-gui') if not self._sim_dir.get(
             "headless") else checkBinary('sumo')
-
 
     def run(self, i_run):
         """ Runs the simulation on both SUMO and Python layers
@@ -103,7 +98,7 @@ class Runtime(object):
              "--tripinfo-output",
              os.path.join(self._sim_dir.get("resourcedir"), "tripinfo.xml"),
              "--gui-settings-file", os.path.join(
-             self._sim_dir.get("resourcedir"), "gui-settings.cfg"),
+                 self._sim_dir.get("resourcedir"), "gui-settings.cfg"),
              "--no-step-log",
              "--remote-port",
              str(self._sim_dir.get("sumoport"))],
