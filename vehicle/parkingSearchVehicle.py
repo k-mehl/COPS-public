@@ -181,9 +181,8 @@ class ParkingSearchVehicle(object):
         self._activeRoute = self._currentRoute[:]
         self._traversedRoute = []
         if self._currentRouteIndex > 0:
-            for i in range(self._currentRouteIndex):
-                self._traversedRoute.append(self._activeRoute[0])
-                self._activeRoute.remove(self._activeRoute[0])
+            self._traversedRoute.extend(self._activeRoute[:self._currentRouteIndex])
+            self._activeRoute = self._activeRoute[self._currentRouteIndex:]
 
         # if the vehicle has turned due to a seen opposite parking space,
         # (i.e. as soon as the current edge equals the previoulsy opposite edge)
