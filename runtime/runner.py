@@ -173,12 +173,14 @@ class Runtime(object):
             #       selectRouting() ...... select whether to cooperate or not
             #       setVehicleData() ..... all TraCI setSomething commands
             for psv in l_parkingSearchVehicles:
+                # TODO: after psv is updated there is no need to keep the
+                # result like this
                 result = psv.update(step)
                 # count edge visits of each vehicle
                 # TODO: make visit update more efficient
-                traversedRoute = psv.getTraversedRoute()
-                plannedRoute = psv.getActiveRoute()
-                name = psv.getName()
+                traversedRoute = psv.traversed_route
+                plannedRoute = psv.active_route
+                name = psv.name
                 env_edges = self._environment._roadNetwork["edges"]
                 for edge in env_edges:
                     oppositeEdgeID = env_edges[edge]["oppositeEdgeID"]
@@ -197,8 +199,8 @@ class Runtime(object):
                     searchPhases.append(result[5])
                 # if the vehicle is on the last route segment,
                 # choose one of the possible next edges to continue
-                elif psv.isOnLastRouteSegment():
-                    lastSegment = psv.getVehicleRoute()[-1]
+                elif psv.last_edge():
+                    lastSegment = psv.current_route[-1]
                     succEdges = self._environment._net.getEdge(lastSegment).getToNode().getOutgoing()
 
                     # calculate costs for every edge except opposite
@@ -228,7 +230,7 @@ class Runtime(object):
                     else:
                         next_link = random.choice(minKeys)
 
-                    psv.setNextRouteSegment(next_link)
+                    psv.append_route(next_link)
 
             # break the while-loop if all remaining SUMO vehicles have
             # successfully parked
@@ -266,12 +268,12 @@ class Runtime(object):
         env_edges = self._environment._roadNetwork["edges"]
         veh_weights = self._vehicle_config["weights"]
 
-        psv_dest_edge = str(psv.getDestinationEdgeID())
+        psv_dest_edge = str(psv.destination_edge_id)
         toNodedestinationEdge = env_edges[psv_dest_edge]["toNode"]
 
         # get counts from environment
         edge_id = edge.getID()
-        psv_name = psv.getName()
+        psv_name = psv.name
         selfVisitCount = env_edges[edge_id]["visitCount"][psv_name]
 
         visit_count_sum = sum(env_edges[edge_id]["visitCount"].values())
@@ -313,7 +315,7 @@ class Runtime(object):
         Returns:
             int: Number of remaining vehicles which are not parked
         """
-        return sum(1 for psv in psvList if not psv.getParkedStatus())
+        return sum(1 for psv in psvList if not psv.is_parked())
 
     def getNumberOfParkedVehicles(self, psvList):
         """ Get number of successfully parked vehicles
@@ -324,7 +326,7 @@ class Runtime(object):
         Returns:
             int: Number of parked vehicles
         """
-        return sum(1 for psv in psvList if psv.getParkedStatus())
+        return sum(1 for psv in psvList if psv.is_parked())
 
     def initPOI(self):
         """ Initialize parking spaces geommetry in SUMO gui """

@@ -69,8 +69,8 @@ class ParkingSearchVehicle(object):
         self._lastEdgeBeforePhase3 = ""
 
         self._destinationNodeID = p_destinationNodeID
-        self._cooperativeRoute = p_cooperativeRoute
-        self._individualRoute = p_individualRoute
+        self._cooperative_route = p_cooperativeRoute
+        self._individual_route = p_individualRoute
 
         # information about the vehicle
         l_vcfg = {}
@@ -122,11 +122,11 @@ class ParkingSearchVehicle(object):
         self._activeRoute = []
         self._traversedRoute = []
         if self._driverCooperatesPhase2:
-            traci.vehicle.setRoute(self._name, self._cooperativeRoute)
-            self._destinationEdgeID = self._cooperativeRoute[-1]
+            traci.vehicle.setRoute(self._name, self._cooperative_route)
+            self._destinationEdgeID = self._cooperative_route[-1]
         else:
-            traci.vehicle.setRoute(self._name, self._individualRoute)
-            self._destinationEdgeID = self._individualRoute[-1]
+            traci.vehicle.setRoute(self._name, self._individual_route)
+            self._destinationEdgeID = self._individual_route[-1]
 
     def __eq__(self, p_other):
         """ Check for equivalence by name attribute """
@@ -171,10 +171,13 @@ class ParkingSearchVehicle(object):
             self._oppositeEdgeID = self._environment._oppositeEdgeID[self._currentEdgeID]
         else:
             self._oppositeEdgeID = ""
+
         # get current vehicle routing from SUMO
         self._currentRoute = traci.vehicle.getRoute(self._name)
+
         # get the sequence index of the current element within the whole route
         self._currentRouteIndex = traci.vehicle.getRouteIndex(self._name)
+
         # create a copy of the _currentRoute for further modification
         # and divide current route into remaining segments ('active') and
         # traversed segments
@@ -199,11 +202,9 @@ class ParkingSearchVehicle(object):
             self._timeBeginSearch = self._timestep
             self._currentSearchPhase = 2
             self._activity = state.SEARCHING
-            # reduce _speed for searching
             _max = self._config.getCfg("vehicle")["maxspeed"]["phase2"]
             traci.vehicle.setMaxSpeed(self._name, _max)
-            # set the vehicle color to yellow in the SUMO GUI
-            traci.vehicle.setColor(self._name, (255, 255, 0, 0))
+            traci.vehicle.setColor(self._name, (255, 255, 0, 0))  # yellow car
 
         # if the vehicle has reached the last edge before phase 3 should start,
         # change to phase 3 as soon as the edge ID changes again
@@ -240,10 +241,9 @@ class ParkingSearchVehicle(object):
             self._activity = state.FOUND_PARKING_SPACE
             # let the vehicle stop besides the parking space
             traci.vehicle.setStop(self._name, self._currentEdgeID,
-                                  self._assignedParkingPosition, 0, 2**31 - 1,
-                                  0)
-            # set the vehicle color to orange to indicate braking in the
-            # SUMO GUI
+                                  self._assignedParkingPosition,
+                                  0, 2**31 - 1, 0)
+            # set the vehicle color to orange to indicate braking in the GUI
             traci.vehicle.setColor(self._name, (255, 165, 0, 0))
         # if still searching and an opposite edge exists, look there as well
         if (self._activity == state.SEARCHING and
@@ -256,23 +256,27 @@ class ParkingSearchVehicle(object):
         # for the change between 'stopped' and 'parked' in SUMO, first the
         # issued stop command has to be deleted by 'resume'
         traci.vehicle.resume(self._name)
+
         # now, we can directly stop the vehicle again, this time as 'parked'
         # (last parameter 1 instead of 0)
         traci.vehicle.setStop(self._name, self._currentEdgeID,
                               self._assignedParkingPosition, 0, 2**31 - 1, 1)
-        # set the vehicle color to black in the SUMO GUI
-        traci.vehicle.setColor(self._name, (0, 0, 0, 0))
+        traci.vehicle.setColor(self._name, (0, 0, 0, 0))  # black vehicle
+
         # memorize time
         self._timeParked = self._timestep
+
         # print statistics of the successfully parked vehicle
-        # (at the moment output to console)
         if self._config.getCfg("simulation").get("verbose"):
-            print(self._name, "parked after",
-                  (self._timeParked - self._timeBeginSearch), "sec,",
-                  traci.vehicle.getDistance(self._name), "m. coop?",
-                  self._driverCooperatesPhase2, "/",
-                  self._driverCooperatesPhase3, ". phase",
-                  self._currentSearchPhase)
+            pars = {"veh": self._name,
+                    "time": self._timeParked - self._timeBeginSearch,
+                    "distance": traci.vehicle.getDistance(self._name),
+                    "p2_coop": self._driverCooperatesPhase2,
+                    "p3_coop": self._driverCooperatesPhase3,
+                    "current_phase": self._currentSearchPhase}
+            print("{veh:<5} parked after {time:>4}s and {distance:>5.0f}m "
+                  "phase2Coop={p2_coop}, phase3Coop={p3_coop}. "
+                  "Current search phase: {current_phase}".format(**pars))
 
         self._activity = state.PARKED
 
@@ -290,12 +294,9 @@ class ParkingSearchVehicle(object):
         l_walkingDistance = l_distanceRoad
         l_walkingTime = l_distanceRoad / 1.111  # assume 4 km/h walking speed
 
-        # TODO why is list returned?
-        return [
-            self._name, (self._timeParked - self._timeBeginSearch),
-            l_walkingTime, traci.vehicle.getDistance(self._name),
-            l_walkingDistance, self._currentSearchPhase
-        ]
+        return (self._name, (self._timeParked - self._timeBeginSearch),
+                l_walkingTime, traci.vehicle.getDistance(self._name),
+                l_walkingDistance, self._currentSearchPhase)
 
     def lookoutForParkingSpace(self, p_parkingSpaces):
         """ Lookout for available parking spaces by checking vehicle position
@@ -357,84 +358,79 @@ class ParkingSearchVehicle(object):
                     return self._oppositeEdgeID
         return ""
 
-    def getCooperativeRoute(self):
-        """ Retrieve stored cooperative routing information """
-        return self._cooperativeRoute
-
-    def setCooperativeRoute(self, p_coopRoute):
-        """ Store cooperative routing information
-
-        Args:
-            coopRoute (list): Route information (edge IDs)
-            useCoopRouting (bool): If True, SUMO uses cooperative routing
-        """
-        self._cooperativeRoute = p_coopRoute
-        if self._driverCooperatesPhase2:
-            traci.vehicle.setRoute(self._name, self._cooperativeRoute)
-
-    def getIndividualRoute(self):
-        """ Retrieve stored individual routing information """
-        return self._individualRoute
-
-    def setIndividualRoute(self, p_indyRoute):
-        """ Store individual routing information
-
-        Args:
-            p_indyRoute (list): Route information (edge IDs)
-        """
-        self._individualRoute = p_indyRoute
-        if not self._driverCooperatesPhase2:
-            traci.vehicle.setRoute(self._name, self._individualRoute)
-
-    def getParkedStatus(self):
-        """ Query whether vehicle has successfully parked """
-        if self._activity == state.PARKED:
-            return True
-        return False
-
-    # TODO implement attributes and properties
-    def getVehicleID(self):
-        return self._name
-
-    def getVehicleRoute(self):
-        return self._currentRoute
-
-    def getDestinationEdgeID(self):
-        return self._destinationEdgeID
-
-    def setDestinationEdgeID(self, destinationEdgeID):
-        self._destinationEdgeID = destinationEdgeID
-
-    def getTraversedRoute(self):
-        return self._traversedRoute
-
-    def setTraversedRoute(self, traversedRoute):
-        self._traversedRoute = traversedRoute
-
-    def getActiveRoute(self):
-        return self._activeRoute
-
-    def setActiveRoute(self, activeRoute):
-        self._activeRoute = activeRoute
-
-    def getName(self):
-        return self._name
-
-    def getCooperation(self):
-        return self._driverCooperatesPhase2
-
-    def setNextRouteSegment(self, p_edgeID):
-        self._activeRoute.append(p_edgeID)
-        traci.vehicle.setRoute(self._name, self._activeRoute)
-
-    def isOnLastRouteSegment(self):
-        """ Query whether vehicle is on last segment of planned route """
+    def last_edge(self):
+        """ Check if vehicle is on the last segment of planned route """
         if self._currentRouteIndex == len(self._currentRoute) - 1:
             if not self._currentSearchPhase == 3 and not self._lastEdgeBeforePhase3:
                 self._lastEdgeBeforePhase3 = self._currentEdgeID
             return True
         return False
 
+    def append_route(self, p_edgeID):
+        """ Add edge to vehicle active route and to vehicle representation in
+        SUMO """
+        self._activeRoute.append(p_edgeID)
+        # TODO: Is adding a whole active route to SUMO ok to do like this? Is
+        # there a better way?
+        traci.vehicle.setRoute(self._name, self._activeRoute)
 
-if __name__ == "__main__":
-    print("Nothing to do.")
+    def is_parked(self):
+        """ Check if vehicle has successfully parked """
+        if self._activity == state.PARKED:
+            return True
+        return False
+
+    @property
+    def cooperative_route(self):
+        """ Cooperative routing information (list) """
+        return self._cooperative_route
+
+    @cooperative_route.setter
+    def cooperative_route(self, value):
+        self._cooperative_route = value
+        if self._driverCooperatesPhase2:
+            traci.vehicle.setRoute(self._name, self._cooperative_route)
+
+    @property
+    def individual_route(self):
+        """ Individual routing information (list) """
+        return self._individual_route
+
+    @individual_route.setter
+    def individual_route(self, value):
+        self._individual_route = value
+        if not self._driverCooperatesPhase2:
+            traci.vehicle.setRoute(self._name, self._individual_route)
+
+    @property
+    def current_route(self):
+        """ Current route information """
+        return self._currentRoute
+
+    @property
+    def destination_edge_id(self):
+        return self._destinationEdgeID
+
+    @destination_edge_id.setter
+    def destination_edge_id(self, destinationEdgeID):
+        self._destinationEdgeID = destinationEdgeID
+
+    @property
+    def traversed_route(self):
+        return self._traversedRoute
+
+    @traversed_route.setter
+    def traversed_route(self, traversedRoute):
+        self._traversedRoute = traversedRoute
+
+    @property
+    def active_route(self):
+        return self._activeRoute
+
+    @active_route.setter
+    def active_route(self, activeRoute):
+        self._activeRoute = activeRoute
+
+    @property
+    def name(self):
+        return self._name

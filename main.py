@@ -16,15 +16,14 @@ except NameError:
     xrange = range
 
 # Main entry point for the wrapper module.
-# For now: starts repetitive simulation runs with identical parameters, 
-# and presents the results afterwards.
+# For now: starts repetitive simulation runs with identical parameters, and
+# presents the results afterwards.
 if __name__ == "__main__":
     l_configdir = os.path.expanduser(u"~/.parkingsearch")
     l_parser = argparse.ArgumentParser(description="Process parameters for headless simulation runs.")
     l_parser.add_argument("--config", dest="config", type=str, default=os.path.join(l_configdir, u"config.json"))
     l_parser.add_argument("-p","--parkingspaces", dest="parkingspaces", type=int, help="number of available parking spaces")
     l_parser.add_argument("-s","--parking-search-vehicles", dest="psv", type=int, help="number of parking search vehicles")
-    #TODO bug?? parameters with 2 lines are not accepted?
     l_parser.add_argument("--cooperative-ratio-phase-two", dest="coopratioPhase2", type=float, help="force cooperative driver ratio in phase 2 to value [0,1]")
     l_parser.add_argument("--cooperative-ratio-phase-three", dest="coopratioPhase3", type=float, help="force cooperative driver ratio in phase 3 to value [0,1]")
     l_parser.add_argument("--port", dest="sumoport", type=int, help="port used for communicating with sumo instance")
