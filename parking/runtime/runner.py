@@ -29,10 +29,10 @@ except KeyError:
 
 import traci
 
-from vehicle.parkingSearchVehicle import ParkingSearchVehicle
-from common.vehicleFactory import generatePsvDemand
-from env.environment import Environment
-from runtime.phase2 import Phase2Routes
+from parking.vehicle.parkingSearchVehicle import ParkingSearchVehicle
+from parking.common.vehicleFactory import generatePsvDemand
+from parking.env.environment import Environment
+from parking.runtime.phase2 import Phase2Routes
 
 
 class Runtime(object):

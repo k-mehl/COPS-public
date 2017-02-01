@@ -2,7 +2,8 @@
 from __future__ import print_function
 import traci
 import random
-from common.enum import Enum
+
+from parking.common.enum import Enum
 
 # Activity states of a vehicle
 state = Enum(

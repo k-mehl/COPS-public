@@ -16,7 +16,7 @@ try:
 except ImportError:
     pass
 
-from common.cooperativeSearch import CooperativeSearch
+from parking.common.cooperativeSearch import CooperativeSearch
 reconstruct_path = CooperativeSearch.reconstruct_path
 
 

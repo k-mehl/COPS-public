@@ -1,7 +1,7 @@
-parking module
-==============
+main module
+===========
 
-.. automodule:: parking
+.. automodule:: main
     :members:
     :undoc-members:
     :show-inheritance:

@@ -6,7 +6,8 @@ import random
 
 import sumolib
 
-from common.cooperativeSearch import CooperativeSearch, CoopSearchHillOptimized
+from parking.common.cooperativeSearch import CooperativeSearch
+from parking.common.cooperativeSearch import CoopSearchHillOptimized
 
 try:
     xrange

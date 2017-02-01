@@ -17,7 +17,7 @@ try:
 except ImportError:
     pass
 
-from env.parkingSpace import ParkingSpace
+from parking.env.parkingSpace import ParkingSpace
 
 
 class Environment(object):

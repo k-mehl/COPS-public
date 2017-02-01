@@ -214,7 +214,7 @@ class CoopSearchHillOptimized(CooperativeSearch):
         self.destinations = destinations
 
     def optimized(self):
-        from common.hill_climb import hill
+        from parking.common.hill_climb import hill
         # this thing with dest[ind] works when you pass dest as an argument
         # i.e. CoopSearchHillOptimized(graph_ort, cars, dest, 0.2).optimized()
         # now that is crazy

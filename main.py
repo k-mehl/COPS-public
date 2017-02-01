@@ -6,8 +6,8 @@ import os
 import time
 import traceback
 
-from runtime import runner
-from runtime import configuration
+from parking.runtime import runner
+from parking.runtime import configuration
 
 
 try:
