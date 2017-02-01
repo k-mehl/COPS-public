@@ -8,11 +8,14 @@ import os
 
 try:
     xrange
-    import itertools
-    map = itertools.imap
-    filter = itertools.ifilter
 except NameError:
     xrange = range
+
+try:
+    import itertools.imap as map
+    import itertools.ifilter as filter
+except ImportError:
+    pass
 
 from env.parkingSpace import ParkingSpace
 

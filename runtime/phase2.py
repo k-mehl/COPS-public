@@ -10,9 +10,13 @@ from common.cooperativeSearch import CooperativeSearch, CoopSearchHillOptimized
 
 try:
     xrange
-    import itertools.izip as zip
 except NameError:
     xrange = range
+
+try:
+    import itertools.izip as zip
+except ImportError:
+    pass
 
 
 class Phase2Routes(object):
