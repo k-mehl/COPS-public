@@ -236,12 +236,11 @@ class Runtime(object):
 
             # break the while-loop if all remaining SUMO vehicles have
             # successfully parked
-            if self.getNumberOfRemainingVehicles(l_parkingSearchVehicles) == 0:
+            if remaining_vehicles(l_parkingSearchVehicles) == 0:
                 if self._sim_dir.get("verbose"):
                     print("SUCCESSFULLY PARKED:",
-                          self.getNumberOfParkedVehicles(
-                              l_parkingSearchVehicles), "OUT OF",
-                          self._sim_dir.get("vehicles"))
+                          parked_vehicles(l_parkingSearchVehicles), "OUT OF",
+                                          self._sim_dir.get("vehicles"))
                 break
 
         # close the TraCI control loop
@@ -250,7 +249,7 @@ class Runtime(object):
 
         l_sumoProcess.wait()
 
-        return (self.getNumberOfParkedVehicles(l_parkingSearchVehicles),
+        return (parked_vehicles(l_parkingSearchVehicles),
                 searchTimes,
                 walkingTimes,
                 searchDistances,
@@ -308,28 +307,6 @@ class Runtime(object):
         node_pairs = zip(nodeSequence, nodeSequence[1:])
         return [adjacencyEdgeID[row][col] for row, col in node_pairs]
 
-    def getNumberOfRemainingVehicles(self, psvList):
-        """ Get number of remaining searching vehicles
-
-        Args:
-            psvList (list): List of parking search vehicle objects
-
-        Returns:
-            int: Number of remaining vehicles which are not parked
-        """
-        return sum(1 for psv in psvList if not psv.is_parked())
-
-    def getNumberOfParkedVehicles(self, psvList):
-        """ Get number of successfully parked vehicles
-
-        Args:
-            psvList (list): List of parking search vehicle objects
-
-        Returns:
-            int: Number of parked vehicles
-        """
-        return sum(1 for psv in psvList if psv.is_parked())
-
     def initPOI(self):
         """ Initialize parking spaces geommetry in SUMO gui """
         for ps in self._environment._allParkingSpaces:
@@ -368,3 +345,26 @@ class Runtime(object):
         # assert routes.routes(0.0, penalty=0.2) == l_cooperativeRoutes
 
         return l_individualRoutes, l_cooperativeRoutes
+
+
+def remaining_vehicles(psvList):
+    """ Get number of remaining searching vehicles.
+
+    Args:
+        psvList (list): List of parking search vehicle objects
+
+    Returns:
+        int: Number of remaining vehicles which are not parked
+    """
+    return sum(1 for psv in psvList if not psv.is_parked())
+
+def parked_vehicles(psvList):
+    """ Get number of successfully parked vehicles.
+
+    Args:
+        psvList (list): List of parking search vehicle objects
+
+    Returns:
+        int: Number of parked vehicles
+    """
+    return sum(1 for psv in psvList if psv.is_parked())
