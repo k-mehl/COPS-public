@@ -117,13 +117,6 @@ class Runtime(object):
         # compute phase 2 routing information (individual and cooperative)
         l_individualRoutes, l_cooperativeRoutes = self.computePhase2Routings()
 
-        # create lists for search time and distance results
-        searchTimes = []
-        walkingTimes = []
-        searchDistances = []
-        walkingDistances = []
-        searchPhases = []
-
         self.initPOI()
         self.updatePOIColors()
 
@@ -148,6 +141,9 @@ class Runtime(object):
             arr_list = traci.simulation.getArrivedIDList()
             l_departedVehicles = (x for x in dep_list if x not in arr_list)
 
+            # TODO: from one debugging session I got the order of
+            # parkinSearchVehicles = [veh0, veh1, veh3, veh2, veh4]
+            # probably arr_list is not given in order...
             l_parkingSearchVehicles.extend(
                     ParkingSearchVehicle(vehID, self._environment,
                         self._config, i_run, step,
@@ -172,10 +168,8 @@ class Runtime(object):
             #       computeCoopRouting() . cooperative routing
             #       selectRouting() ...... select whether to cooperate or not
             #       setVehicleData() ..... all TraCI setSomething commands
-            for psv in l_parkingSearchVehicles:
-                # TODO: after psv is updated there is no need to keep the
-                # result like this
-                result = psv.update(step)
+            for psv in (v for v in l_parkingSearchVehicles if v.is_parked() is False):
+                psv.update(step)
                 # count edge visits of each vehicle
                 # TODO: make visit update more efficient
                 traversedRoute = psv.traversed_route
@@ -191,17 +185,9 @@ class Runtime(object):
                     env_edges[edge]["visitCount"][name] = visitCount
                     env_edges[edge]["plannedCount"][name] = plannedCount
 
-                # if result values could be obtained, the vehicle found
-                # a parking space in the last time step
-                if result:
-                    searchTimes.append(result[1])
-                    walkingTimes.append(result[2])
-                    searchDistances.append(result[3])
-                    walkingDistances.append(result[4])
-                    searchPhases.append(result[5])
                 # if the vehicle is on the last route segment,
                 # choose one of the possible next edges to continue
-                elif psv.last_edge():
+                if psv.last_edge():
                     lastSegment = psv.current_route[-1]
                     succEdges = self._environment._net.getEdge(lastSegment).getToNode().getOutgoing()
 
@@ -246,10 +232,18 @@ class Runtime(object):
         # close the TraCI control loop
         traci.close()
         sys.stdout.flush()
-
         l_sumoProcess.wait()
 
-        return (parked_vehicles(l_parkingSearchVehicles),
+        total_parked = parked_vehicles(l_parkingSearchVehicles)
+        searchTimes = [veh.search_time for veh in l_parkingSearchVehicles]
+        searchDistances = [veh.search_distance for veh in l_parkingSearchVehicles]
+        walkingTimes = [veh.walk_time for veh in l_parkingSearchVehicles]
+        walkingDistances = [veh.walk_distance for veh in l_parkingSearchVehicles]
+        searchPhases = [veh.search_phase for veh in l_parkingSearchVehicles]
+
+        # TODO: this should probably just return vehicles and leave processing
+        # to other instances
+        return (total_parked,
                 searchTimes,
                 walkingTimes,
                 searchDistances,

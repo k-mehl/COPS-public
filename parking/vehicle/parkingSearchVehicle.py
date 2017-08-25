@@ -53,11 +53,14 @@ class ParkingSearchVehicle(object):
         self._timeBeginSearch = -1001
         self._timeBeginManeuvering = -1001
         self._timeParked = -1001
+
         # information about the lane position of a found parking space
         self._assignedParkingPosition = -1001
+
         # information about the edge of an eventually found parking space in
         # the opposite direction
         self._seenOppositeParkingSpace = ""
+
         # information about the current position of a vehicle
         self._currentEdgeID = ""
         self._currentLaneID = ""
@@ -66,8 +69,14 @@ class ParkingSearchVehicle(object):
         self._currentOppositeEdgeID = ""
 
         # information needed to separate search phases
-        self._currentSearchPhase = 1
+        self._search_phase = 1
         self._lastEdgeBeforePhase3 = ""
+
+        # information for result analysis. None used as defensive programming.
+        self._search_time = None
+        self._search_distance = None
+        self._walk_time = None
+        self._walk_distance = None
 
         self._destinationNodeID = p_destinationNodeID
         self._cooperative_route = p_cooperativeRoute
@@ -201,7 +210,7 @@ class ParkingSearchVehicle(object):
         if (self._isSearchingVehicle and self._activity == state.CRUISING and
                 self._currentRouteIndex >= 1):
             self._timeBeginSearch = self._timestep
-            self._currentSearchPhase = 2
+            self._search_phase = 2
             self._activity = state.SEARCHING
             _max = self._config.getCfg("vehicle")["maxspeed"]["phase2"]
             traci.vehicle.setMaxSpeed(self._name, _max)
@@ -209,9 +218,9 @@ class ParkingSearchVehicle(object):
 
         # if the vehicle has reached the last edge before phase 3 should start,
         # change to phase 3 as soon as the edge ID changes again
-        if self._lastEdgeBeforePhase3 and not self._currentSearchPhase == 3:
+        if self._lastEdgeBeforePhase3 and not self._search_phase == 3:
             if not self._currentEdgeID == self._lastEdgeBeforePhase3:
-                self._currentSearchPhase = 3
+                self._search_phase = 3
 
         # search phase 2 (and later also 3)
         if self._activity == state.SEARCHING:
@@ -238,8 +247,9 @@ class ParkingSearchVehicle(object):
     def _search(self):
         # if parking space is found ahead on current edge, change vehicle
         # status accordingly
-        if ((self._timestep >= self._timeBeginSearch) and self._currentEdgeID in self._environment._roadNetwork["edges"]
-                and self.lookoutForParkingSpace(self._environment._roadNetwork["edges"][self._currentEdgeID]["parkingSpaces"])):
+        if ((self._timestep >= self._timeBeginSearch)
+            and self._currentEdgeID in self._environment._roadNetwork["edges"]
+            and self.lookoutForParkingSpace(self._environment._roadNetwork["edges"][self._currentEdgeID]["parkingSpaces"])):
             self._activity = state.FOUND_PARKING_SPACE
             # let the vehicle stop besides the parking space
             traci.vehicle.setStop(self._name, self._currentEdgeID,
@@ -275,7 +285,7 @@ class ParkingSearchVehicle(object):
                     "distance": traci.vehicle.getDistance(self._name),
                     "p2_coop": self._driverCooperatesPhase2,
                     "p3_coop": self._driverCooperatesPhase3,
-                    "current_phase": self._currentSearchPhase}
+                    "current_phase": self._search_phase}
             print("{veh:<5} parked after {time:>4}s and {distance:>5.0f}m "
                   "phase2Coop={p2_coop}, phase3Coop={p3_coop}. "
                   "Current search phase: {current_phase}".format(**pars))
@@ -296,9 +306,15 @@ class ParkingSearchVehicle(object):
         l_walkingDistance = l_distanceRoad
         l_walkingTime = l_distanceRoad / 1.111  # assume 4 km/h walking speed
 
+        self._search_time = (self._timeParked - self._timeBeginSearch)
+        self._walk_time = l_walkingTime
+        self._search_distance = traci.vehicle.getDistance(self._name)
+        self._walk_distance = l_walkingDistance
+
+        # TODO: remove this return since it is not necessary now
         return (self._name, (self._timeParked - self._timeBeginSearch),
                 l_walkingTime, traci.vehicle.getDistance(self._name),
-                l_walkingDistance, self._currentSearchPhase)
+                l_walkingDistance, self._search_phase)
 
     def lookoutForParkingSpace(self, p_parkingSpaces):
         """ Lookout for available parking spaces by checking vehicle position
@@ -363,7 +379,7 @@ class ParkingSearchVehicle(object):
     def last_edge(self):
         """ Check if vehicle is on the last segment of planned route """
         if self._currentRouteIndex == len(self._currentRoute) - 1:
-            if not self._currentSearchPhase == 3 and not self._lastEdgeBeforePhase3:
+            if not self._search_phase == 3 and not self._lastEdgeBeforePhase3:
                 self._lastEdgeBeforePhase3 = self._currentEdgeID
             return True
         return False
@@ -436,3 +452,20 @@ class ParkingSearchVehicle(object):
     @property
     def name(self):
         return self._name
+
+    def __getattr__(self, name):
+        class_name = "_" + name
+        if hasattr(self, class_name):
+            return getattr(self, class_name)
+        else:
+            raise AttributeError("{} has no attribute {}".format(
+                type(self).__name__, name))
+
+    # this is called uncoditionally hence be careful with this
+    # def __setattr__(self, name, val):
+    #     class_name = "_" + name
+    #     if hasattr(self, class_name):
+    #         setattr(self, class_name, val)
+    #     else:
+    #         raise AttributeError("You can not set {}".format(name))
+
