@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 
 import argparse
@@ -23,25 +23,51 @@ except NameError:
 # presents the results afterwards.
 if __name__ == "__main__":
     l_configdir = os.path.expanduser(u"~/.parkingsearch")
-    l_parser = argparse.ArgumentParser(description="Process parameters for headless simulation runs.")
-    l_parser.add_argument("--config", dest="config", type=str, default=os.path.join(l_configdir, u"config.json"))
-    l_parser.add_argument("-p","--parkingspaces", dest="parkingspaces", type=int, help="number of available parking spaces")
-    l_parser.add_argument("-s","--parking-search-vehicles", dest="psv", type=int, help="number of parking search vehicles")
-    l_parser.add_argument("--cooperative-ratio-phase-two", dest="coopratioPhase2", type=float, help="force cooperative driver ratio in phase 2 to value [0,1]")
-    l_parser.add_argument("--cooperative-ratio-phase-three", dest="coopratioPhase3", type=float, help="force cooperative driver ratio in phase 3 to value [0,1]")
-    l_parser.add_argument("--port", dest="sumoport", type=int, help="port used for communicating with sumo instance")
-    l_parser.add_argument("--load-route-file", dest="routefile", type=str, help="provide a route file (SUMO xml format), overrides use of auto-generated routes")
-    l_parser.add_argument("--resourcedir", dest="resourcedir", type=str, help="base directory, relative to current working directory, for reading/writing temporary and SUMO related files")
-    l_parser.add_argument("-r","--runs", dest="runs", type=int, help="number of iterations to run")
-    l_parser.add_argument("--runconfig", dest="runconfiguration", type=str, help="json configuration file containing environment information for each run")
-    l_parser.add_argument("--verbose", dest="verbose", default=False, action='store_true', help="output more full vehicle parking data")
-    l_parser.add_argument("--timestamp", dest="resulttimestamped", default=False, action='store_true', help="create timestamped folders for output")
+    l_parser = argparse.ArgumentParser(
+        description="Command line interfrace for whole project.")
+    l_parser.add_argument("--config", dest="config", type=str,
+                          default=os.path.join(l_configdir, u"config.json"))
+    l_parser.add_argument("-p", "--parkingspaces", dest="parkingspaces",
+                          type=int, help="number of available parking spaces")
+    l_parser.add_argument("-s", "--parking-search-vehicles", dest="psv",
+                          type=int, help="number of parking search vehicles")
+    l_parser.add_argument("--cooperative-ratio-phase-two",
+                          dest="coopratioPhase2", type=float,
+                          help="force cooperative driver ratio in phase 2 to value [0,1]")
+    l_parser.add_argument("--cooperative-ratio-phase-three",
+                          dest="coopratioPhase3", type=float,
+                          help="force cooperative driver ratio in phase 3 to value [0,1]")
+    l_parser.add_argument("--port", dest="sumoport", type=int,
+                          help="port used for communicating with sumo instance")
+    l_parser.add_argument("--load-route-file", dest="routefile", type=str,
+                          help="provide a route file (SUMO xml format), "
+                               "overrides use of auto-generated routes")
+    l_parser.add_argument("--resourcedir", dest="resourcedir", type=str,
+                          help="base directory, relative to current working "
+                               "directory, for reading/writing temporary and "
+                               "SUMO related files")
+    l_parser.add_argument("-r", "--runs", dest="runs", type=int,
+                          help="number of iterations to run")
+    l_parser.add_argument("--runconfig", dest="runconfiguration", type=str,
+                          help="json configuration file containing environment"
+                               " information for each run")
+    l_parser.add_argument("--verbose", dest="verbose", default=False,
+                          action='store_true',
+                          help="output more full vehicle parking data")
+    l_parser.add_argument("--timestamp", dest="resulttimestamped",
+                          default=False, action='store_true',
+                          help="create timestamped folders for output")
 
     # if display GUI, restrict to one run (implies --run 1)
     # for more than one run, disallow use of --gui
     l_mutexgroup = l_parser.add_mutually_exclusive_group(required=False)
-    l_mutexgroup.add_argument("--gui", dest="gui", default=False, action='store_true', help="start simulation with SUMO GUI")
-    l_mutexgroup.add_argument("--headless", dest="headless", default=False, action='store_true', help="start simulation in headless mode without SUMO GUI")
+    l_mutexgroup.add_argument("--gui", dest="gui", default=False,
+                              action='store_true',
+                              help="start simulation with SUMO GUI")
+    l_mutexgroup.add_argument("--headless", dest="headless", default=False,
+                              action='store_true',
+                              help="start simulation in headless mode without "
+                                   "SUMO GUI")
 
     l_args = l_parser.parse_args()
 
@@ -51,9 +77,8 @@ if __name__ == "__main__":
     print("* pre-testing runcfg for all runs")
     if l_config.existRunCfg():
         tmp_iter = xrange(l_config.getCfg("simulation").get("runs"))
-        if len([run for run in tmp_iter if not l_config.isRunCfgOk(run)]) > 0:
-        #if len(list(filter(lambda i_run: not l_config.isRunCfgOk(i_run), xrange(l_config.getCfg("simulation").get("runs"))))) > 0:
-            raise BaseException("/!\ error(s) in run configuration")
+        if [run for run in tmp_iter if not l_config.isRunCfgOk(run)]:
+            raise BaseException("Error(s) in run configuration")
         else:
             print("  -> passed.")
     else:
@@ -61,18 +86,17 @@ if __name__ == "__main__":
 
 
     l_resultSum = 0
-
-    l_successesSum       = 0
-    l_searchTimesSum     = 0
-    l_walkingTimesSum    = 0
-    l_totalTimesSum      = 0
+    l_successesSum = 0
+    l_searchTimesSum = 0
+    l_walkingTimesSum = 0
+    l_totalTimesSum = 0
     l_searchDistancesSum = 0.0
-    l_walkingDistancesSum= 0.0
-    l_totalDistancesSum  = 0.0
-    l_parkedInPhase2Sum  = 0
-    l_parkedInPhase3Sum  = 0
-    l_maxTimeSum      = 0
-    l_maxDistanceSum  = 0.0
+    l_walkingDistancesSum = 0.0
+    l_totalDistancesSum = 0.0
+    l_parkedInPhase2Sum = 0
+    l_parkedInPhase3Sum = 0
+    l_maxTimeSum = 0
+    l_maxDistanceSum = 0.0
 
     l_numParkingSpaces = l_config.getCfg("simulation").get("parkingspaces")['free']
     l_numVehicles = l_config.getCfg("simulation").get("vehicles")
@@ -88,7 +112,7 @@ if __name__ == "__main__":
     l_mainresultdir = "results"
 
     if not os.path.isdir(l_mainresultdir):
-            os.mkdir(l_mainresultdir)
+        os.mkdir(l_mainresultdir)
 
     if l_config.getCfg("simulation").get("resulttimestamped"):
         l_resultdir = time.strftime("%Y%m%d%H%M%S")
@@ -104,7 +128,7 @@ if __name__ == "__main__":
         "-ev" + str(l_externalVisit) + \
         "-sv" + str(l_selfVisit) + ".csv"
 
-    l_summaryfile= "summary-s" + str(l_numVehicles) + \
+    l_summaryfile = "summary-s" + str(l_numVehicles) + \
         "-p" + str(l_numParkingSpaces) + \
         "-c" + str(int(l_numCoopPhase2)) + \
         "-" + str(int(l_numCoopPhase3)) + \
@@ -112,8 +136,8 @@ if __name__ == "__main__":
         "-ep" + str(l_externalPlanned) + \
         "-ev" + str(l_externalVisit) + \
         "-sv" + str(l_selfVisit) + ".txt"
-        
-    l_convergencefile="convergence-s" + str(l_numVehicles) + \
+
+    l_convergencefile = "convergence-s" + str(l_numVehicles) + \
         "-p" + str(l_numParkingSpaces) + \
         "-c" + str(int(l_numCoopPhase2)) + \
         "-" + str(int(l_numCoopPhase3)) + \
@@ -128,14 +152,23 @@ if __name__ == "__main__":
     else:
         rf = open(os.path.join(l_mainresultdir, l_resultfile), 'w')
         cf = open(os.path.join(l_mainresultdir, l_convergencefile), 'w')
-    rf.write("numVeh,numParkSp,run,coopPhase2,coopPhase3,searchTime,walkTime,totalTime,searchDist,walkDist,totalDist,phase,maxSearchTimeThisRun,maxSearchDistThisRun\n")
-    cf.write("run,avgSearchTime,avgWalkTime,avgTotalTime,avgSearchDist,avgWalkDist,avgTotalDist,avgParkPhase2,avgMaxSearchTime,avgMaxSearchDist\n")
+
+    rf.write("numVeh,numParkSp,run,coopPhase2,coopPhase3,searchTime,walkTime,"
+             "totalTime,searchDist,walkDist,totalDist,phase,"
+             "maxSearchTimeThisRun,maxSearchDistThisRun\n")
+
+    cf.write("run,avgSearchTime,avgWalkTime,avgTotalTime,avgSearchDist,"
+             "avgWalkDist,avgTotalDist,avgParkPhase2,avgMaxSearchTime,"
+             "avgMaxSearchDist\n")
 
     l_successfulruns = True
     for i_run in xrange(l_config.getCfg("simulation").get("runs")):
-        print("PID", os.getpid(), "RUNCFG:", l_config.getCfg("simulation").get("runconfiguration"), "RUN:", i_run+1, "of", l_config.getCfg("simulation").get("runs"))
+        print("PID", os.getpid(), "RUNCFG:",
+              l_config.getCfg("simulation").get("runconfiguration"),
+              "RUN:", i_run+1, "of", l_config.getCfg("simulation").get("runs"))
         try:
-            l_successes, l_searchTimes, l_walkingTimes, l_searchDistances, l_walkingDistances, l_searchPhases = l_runtime.run(i_run)
+            l_successes, l_searchTimes, l_walkingTimes, l_searchDistances, \
+                    l_walkingDistances, l_searchPhases = l_runtime.run(i_run)
 
             for i_result in range(len(l_searchTimes)):
                 rf.write(str(l_numVehicles) + ",")

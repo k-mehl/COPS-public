@@ -230,7 +230,8 @@ class ParkingSearchVehicle(object):
         # twelve seconds after beginning to maneuver into a parking space,
         # 'jump' off the road and release queueing traffic
         if (self._activity == state.MANEUVERING_TO_PARK and
-            (self._timestep > (self._timeBeginManeuvering + self._config.getCfg("vehicle")["parking"]["duration"]))):
+            (self._timestep > (self._timeBeginManeuvering +
+                               self._config.getCfg("vehicle")["parking"]["duration"]))):
             return self._park()
         return 0
 

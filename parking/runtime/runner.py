@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function, absolute_import
 
 import os
@@ -184,8 +184,10 @@ class Runtime(object):
                 env_edges = self._environment._roadNetwork["edges"]
                 for edge in env_edges:
                     oppositeEdgeID = env_edges[edge]["oppositeEdgeID"]
-                    visitCount = traversedRoute.count(str(edge)) + traversedRoute.count(oppositeEdgeID)
-                    plannedCount = plannedRoute.count(str(edge)) + plannedRoute.count(oppositeEdgeID)
+                    visitCount = (traversedRoute.count(str(edge)) +
+                                  traversedRoute.count(oppositeEdgeID))
+                    plannedCount = (plannedRoute.count(str(edge)) +
+                                    plannedRoute.count(oppositeEdgeID))
                     env_edges[edge]["visitCount"][name] = visitCount
                     env_edges[edge]["plannedCount"][name] = plannedCount
 
