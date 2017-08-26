@@ -120,8 +120,7 @@ class Runtime(object):
         self.initPOI()
         self.updatePOIColors()
 
-        # do simulation time steps as long as vehicles are present in the
-        # network
+        # do simulation as long as vehicles are present in the network
         while traci.simulation.getMinExpectedNumber() > 0:
             # tell SUMO to do a simulation step
             traci.simulationStep()
@@ -129,8 +128,6 @@ class Runtime(object):
             # increase local time counter
             step += 1
             # every 1000 steps: ensure local time still corresponds to SUMO
-            # simulation time
-            # (just a safety check for now, can possibly be removed later)
             if step != (traci.simulation.getCurrentTime() / 1000):
                 print("TIMESTEP ERROR", step, "getCurrentTime",
                       traci.simulation.getCurrentTime())
@@ -138,6 +135,8 @@ class Runtime(object):
             # Python representation and remove the vehicles that have
             # disappeared in SUMO
             dep_list = traci.simulation.getDepartedIDList()
+            # TODO: arr list is always empty? Possible bug i.e. we dont set
+            # vehicles to arrived or something
             arr_list = traci.simulation.getArrivedIDList()
             l_departedVehicles = (x for x in dep_list if x not in arr_list)
 
@@ -152,49 +151,27 @@ class Runtime(object):
                         l_individualRoutes[vehID])
                     for vehID in l_departedVehicles)
 
-            # if a vehicle has disappeared in SUMO, remove the corresponding Python
-            # representation
-            # for vehID in traci.simulation.getArrivedIDList():
-            #         # for now: output to console that the vehicle disappeared upon
-            #         # reaching the destination
-            #     print(str(vehID),
-            #             "did not find an available parking space during phase 2.")
-            #     l_parkingSearchVehicles.remove(ParkingSearchVehicle(vehID))
-
             # update status of all vehicles
-            # TODO: differentiate this update method into e.g.
-            #       getVehicleData() ..... all TraCI getSomething commands
-            #       computeRouting() ..... non-cooperative routing
-            #       computeCoopRouting() . cooperative routing
-            #       selectRouting() ...... select whether to cooperate or not
-            #       setVehicleData() ..... all TraCI setSomething commands
             for psv in (v for v in l_parkingSearchVehicles if v.is_parked() is False):
                 psv.update(step)
-                # count edge visits of each vehicle
-                # TODO: make visit update more efficient
-                traversedRoute = psv.traversed_route
-                plannedRoute = psv.active_route
-                name = psv.name
                 env_edges = self._environment._roadNetwork["edges"]
                 for edge in env_edges:
                     oppositeEdgeID = env_edges[edge]["oppositeEdgeID"]
-                    visitCount = (traversedRoute.count(str(edge)) +
-                                  traversedRoute.count(oppositeEdgeID))
-                    plannedCount = (plannedRoute.count(str(edge)) +
-                                    plannedRoute.count(oppositeEdgeID))
-                    env_edges[edge]["visitCount"][name] = visitCount
-                    env_edges[edge]["plannedCount"][name] = plannedCount
+                    visitCount = (psv.traversed_route.count(str(edge)) +
+                                  psv.traversed_route.count(oppositeEdgeID))
+                    plannedCount = (psv.active_route.count(str(edge)) +
+                                    psv.active_route.count(oppositeEdgeID))
+                    env_edges[edge]["visitCount"][psv.name] = visitCount
+                    env_edges[edge]["plannedCount"][psv.name] = plannedCount
 
-                # if the vehicle is on the last route segment,
-                # choose one of the possible next edges to continue
+                # if last edge, choose next possible edges to continue
                 if psv.last_edge():
                     lastSegment = psv.current_route[-1]
                     succEdges = self._environment._net.getEdge(lastSegment).getToNode().getOutgoing()
 
-                    # calculate costs for every edge except opposite
-                    # direction of current edge
+                    # calculate costs for every edge except opposite direction
+                    # of current edge
                     succEdgeCost = {}
-
                     for edge in succEdges:
                         # consider all successor edges, BUT if no opposite edge
                         # exists, don't try to exclude it.
@@ -220,8 +197,7 @@ class Runtime(object):
 
                     psv.append_route(next_link)
 
-            # break the while-loop if all remaining SUMO vehicles have
-            # successfully parked
+            # break the while-loop if all SUMO vehicles have parked
             if remaining_vehicles(l_parkingSearchVehicles) == 0:
                 if self._sim_dir.get("verbose"):
                     print("SUCCESSFULLY PARKED:",
