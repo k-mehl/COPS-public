@@ -46,7 +46,7 @@ class Runtime(object):
         """
 
         self._config = p_config
-        self._sim_dir = self._config.getCfg("simulation")
+        self._sim_config = self._config.getCfg("simulation")
         self._environment = Environment(self._config)
         self._vehicle_config = self._config.getCfg("vehicle")
 
@@ -59,7 +59,7 @@ class Runtime(object):
         # if there is a run configuration loaded use it to populate
         # parkingspaces in environment otherwise initialize new
         if not self._config.getRunCfg(str(i_run)):
-            if self._sim_dir.get("verbose"):
+            if self._sim_config.get("verbose"):
                 print("* no run cfg found. Initializing random parking spaces.")
             self._environment.initParkingSpaces(i_run)
 
@@ -71,23 +71,18 @@ class Runtime(object):
         # if --routefile flag is provided, use the file for routing, otherwise
         # generate (and overwrite if exists) route file (reroute.rou.xml) for
         # this simulation run using the given number of parking search vehicles
-        if os.path.isfile(
-                os.path.join(
-                    self._sim_dir.get("resourcedir"),
-                    self._sim_dir.get("routefile"))) and self._sim_dir.get(
-                        "forceroutefile"):
-            self._routefile = self._sim_dir.get("routefile")
-        else:
-            self._routefile = self._sim_dir.get("routefile")
-            generatePsvDemand(
-                self._sim_dir.get("vehicles"),
-                self._sim_dir.get("resourcedir"), self._routefile)
+        route_file = os.path.join(self._sim_config.get("resourcedir"),
+                                  self._sim_config.get("routefile"))
+        if not (os.path.isfile(route_file) and self._sim_config.get("forceroutefile")):
+            generatePsvDemand(self._sim_config.get("vehicles"),
+                              self._sim_config.get("resourcedir"),
+                              self._sim_config.get("routefile"))
 
         # start sumo as a subprocess otherwise it wont work (because reasons)
-        l_sumoProcess = open_sumo(self._sim_dir)
+        l_sumoProcess = open_sumo(self._sim_config)
 
         # execute the TraCI control loop
-        traci.init(self._sim_dir.get("sumoport"))
+        traci.init(self._sim_config.get("sumoport"))
 
         # internal clock variable, start with 0
         step = 0
@@ -180,10 +175,10 @@ class Runtime(object):
 
             # break the while-loop if all SUMO vehicles have parked
             if remaining_vehicles(l_parkingSearchVehicles) == 0:
-                if self._sim_dir.get("verbose"):
+                if self._sim_config.get("verbose"):
                     print("SUCCESSFULLY PARKED:",
                           parked_vehicles(l_parkingSearchVehicles), "OUT OF",
-                                          self._sim_dir.get("vehicles"))
+                                          self._sim_config.get("vehicles"))
                 break
 
         sumo_close(l_sumoProcess)
@@ -276,7 +271,7 @@ class Runtime(object):
     def computePhase2Routings(self):
         """ Computes phase 2 routing """
         routes = Phase2Routes(self)
-        cooperation = self._sim_dir["coopratioPhase2"]
+        cooperation = self._sim_config["coopratioPhase2"]
         # TODO: this is still hardcoded
         if cooperation == 1.0:
             l_cooperativeRoutes = routes.routes(1.0, penalty=0.2)
@@ -317,11 +312,11 @@ def parked_vehicles(psvList):
     """
     return sum(1 for psv in psvList if psv.is_parked())
 
-def open_sumo(sim_dir):
+def open_sumo(sim_config):
     """ Start a sumo binary in the background.
 
     Args:
-        sim_dir (dict): Values from parking configuration file that contains
+        sim_config (dict): Values from parking configuration file that contains
             simulation parameters from configuration.
 
     Returns:
@@ -329,9 +324,9 @@ def open_sumo(sim_dir):
             closed later.
     """
     # run sumo with gui or headless, depending on the --gui flag
-    sumo_binary = checkBinary('sumo') if sim_dir.get("headless") else checkBinary('sumo')
-    route_file = sim_dir.get("routefile")
-    resource_dir = sim_dir.get("resourcedir")
+    sumo_binary = checkBinary('sumo') if sim_config.get("headless") else checkBinary('sumo')
+    route_file = sim_config.get("routefile")
+    resource_dir = sim_config.get("resourcedir")
     return subprocess.Popen(
                 [sumo_binary,
                  "-n",
@@ -344,7 +339,7 @@ def open_sumo(sim_dir):
                  os.path.join(resource_dir, "gui-settings.cfg"),
                  "--no-step-log",
                  "--remote-port",
-                 str(sim_dir.get("sumoport"))],
+                 str(sim_config.get("sumoport"))],
                 stdout=sys.stdout,
                 stderr=sys.stderr)
 

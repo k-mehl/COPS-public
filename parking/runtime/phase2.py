@@ -33,7 +33,7 @@ class Phase2Routes(object):
         # Take what you need from parent_class
         self._config = parent_class._config
         self._environment = parent_class._environment
-        self._routefile = parent_class._routefile
+        self._routefile = parent_class._sim_config.get("routefile")
         self.nodeToEdge = parent_class.convertNodeSequenceToEdgeSequence
 
         # prepare dictionaries with vehicle O/D data (IDs and indices)
