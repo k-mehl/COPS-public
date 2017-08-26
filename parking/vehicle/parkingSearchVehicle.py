@@ -311,11 +311,6 @@ class ParkingSearchVehicle(object):
         self._search_distance = traci.vehicle.getDistance(self._name)
         self._walk_distance = l_walkingDistance
 
-        # TODO: remove this return since it is not necessary now
-        return (self._name, (self._timeParked - self._timeBeginSearch),
-                l_walkingTime, traci.vehicle.getDistance(self._name),
-                l_walkingDistance, self._search_phase)
-
     def lookoutForParkingSpace(self, p_parkingSpaces):
         """ Lookout for available parking spaces by checking vehicle position
         information against the 'map' of existing parking spaces.
