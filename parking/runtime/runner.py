@@ -50,10 +50,6 @@ class Runtime(object):
         self._environment = Environment(self._config)
         self._vehicle_config = self._config.getCfg("vehicle")
 
-        # run sumo with gui or headless, depending on the --gui flag
-        self._sumoBinary = checkBinary('sumo-gui') if not self._sim_dir.get(
-            "headless") else checkBinary('sumo')
-
     def run(self, i_run):
         """ Runs the simulation on both SUMO and Python layers
 
@@ -87,23 +83,8 @@ class Runtime(object):
                 self._sim_dir.get("vehicles"),
                 self._sim_dir.get("resourcedir"), self._routefile)
 
-        # this is the normal way of using traci. sumo is started as a
-        # subprocess and then the python script connects and runs
-        l_sumoProcess = subprocess.Popen(
-            [self._sumoBinary,
-             "-n",
-             os.path.join(self._sim_dir.get("resourcedir"), "reroute.net.xml"),
-             "-r",
-             os.path.join(self._sim_dir.get("resourcedir"), self._routefile),
-             "--tripinfo-output",
-             os.path.join(self._sim_dir.get("resourcedir"), "tripinfo.xml"),
-             "--gui-settings-file", os.path.join(
-                 self._sim_dir.get("resourcedir"), "gui-settings.cfg"),
-             "--no-step-log",
-             "--remote-port",
-             str(self._sim_dir.get("sumoport"))],
-            stdout=sys.stdout,
-            stderr=sys.stderr)
+        # start sumo as a subprocess otherwise it wont work (because reasons)
+        l_sumoProcess = open_sumo(self._sim_dir)
 
         # execute the TraCI control loop
         traci.init(self._sim_dir.get("sumoport"))
@@ -205,10 +186,7 @@ class Runtime(object):
                                           self._sim_dir.get("vehicles"))
                 break
 
-        # close the TraCI control loop
-        traci.close()
-        sys.stdout.flush()
-        l_sumoProcess.wait()
+        sumo_close(l_sumoProcess)
 
         total_parked = parked_vehicles(l_parkingSearchVehicles)
         searchTimes = [veh.search_time for veh in l_parkingSearchVehicles]
@@ -338,3 +316,44 @@ def parked_vehicles(psvList):
         int: Number of parked vehicles
     """
     return sum(1 for psv in psvList if psv.is_parked())
+
+def open_sumo(sim_dir):
+    """ Start a sumo binary in the background.
+
+    Args:
+        sim_dir (dict): Values from parking configuration file that contains
+            simulation parameters from configuration.
+
+    Returns:
+        (subprocess.Popen): A process that owns sumo binary. Mainly to be
+            closed later.
+    """
+    # run sumo with gui or headless, depending on the --gui flag
+    sumo_binary = checkBinary('sumo') if sim_dir.get("headless") else checkBinary('sumo')
+    route_file = sim_dir.get("routefile")
+    resource_dir = sim_dir.get("resourcedir")
+    return subprocess.Popen(
+                [sumo_binary,
+                 "-n",
+                 os.path.join(resource_dir, "reroute.net.xml"),
+                 "-r",
+                 os.path.join(resource_dir, route_file),
+                 "--tripinfo-output",
+                 os.path.join(resource_dir, "tripinfo.xml"),
+                 "--gui-settings-file",
+                 os.path.join(resource_dir, "gui-settings.cfg"),
+                 "--no-step-log",
+                 "--remote-port",
+                 str(sim_dir.get("sumoport"))],
+                stdout=sys.stdout,
+                stderr=sys.stderr)
+
+def sumo_close(sumo_process):
+    """ Close the traci control loop and wait for sumo process to finish.
+
+    Args:
+        sumo_process (subprocess.Popen): sumo process object.
+    """
+    traci.close()
+    sys.stdout.flush()
+    sumo_process.wait()
