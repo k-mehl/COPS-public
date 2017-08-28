@@ -52,11 +52,11 @@ class Phase2Routes(object):
             self.vehicleOriginNode[trip.id] =  \
                 self._environment._net.getEdge(trip.attr_from).getFromNode().getID()
             self.vehicleOriginNodeIndex[trip.id] = \
-                self._environment._convertNodeIDtoNodeIndex[self.vehicleOriginNode[trip.id]]
+                self._environment.nodes.index(self.vehicleOriginNode[trip.id])
             self.vehicleDestinationNode[trip.id] = \
                 self._environment._net.getEdge(trip.to).getToNode().getID()
             self.vehicleDestinationNodeIndex[trip.id] = \
-                self._environment._convertNodeIDtoNodeIndex[self.vehicleDestinationNode[trip.id]]
+                self._environment.nodes.index(self.vehicleDestinationNode[trip.id])
             self.allOriginNodeIndices.append(self.vehicleOriginNodeIndex[trip.id])
             self.allDestinationNodeIndices.append(self.vehicleDestinationNodeIndex[trip.id])
 

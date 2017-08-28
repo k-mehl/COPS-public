@@ -24,92 +24,77 @@ class Environment(object):
     """ Environment class """
 
     def __init__(self, p_config):
-
         self._config = p_config
 
-        self._roadNetwork = {}
-
-        self._roadNetwork["nodes"] = {}
-        self._roadNetwork["edges"] = {}
-
         resource_dir = self._config.getCfg("simulation").get("resourcedir")
-        self._nodes = [str(x.id) for x in sumolib.output.parse(
-            os.path.join(resource_dir, 'reroute.nod.xml'), ['node'])]
-        self._edges = [str(x.id) for x in sumolib.output.parse(
-            os.path.join(resource_dir, 'reroute.edg.xml'), ['edge'])]
+        reroute_nodes = os.path.join(resource_dir, 'reroute.nod.xml')
+        reroute_edges = os.path.join(resource_dir, 'reroute.edg.xml')
+        self._nodes = [str(x.id) for x in sumolib.output.parse(reroute_nodes, ['node'])]
+        self._edges = [str(x.id) for x in sumolib.output.parse(reroute_edges, ['edge'])]
 
-        for node in self._nodes:
-            self._roadNetwork["nodes"][node] = {}
-        for edge in self._edges:
-            self._roadNetwork["edges"][edge] = {}
+        # TODO: make a proper object from this and then finish refactoring this
+        # class
+        self._roadNetwork = {"nodes": {node: {} for node in self._nodes},
+                             "edges": {edge: {} for edge in self._edges}}
 
-        self._numberOfNodesinNetwork = len(self._nodes)
-        self._numberOfEdgesinNetwork = len(self._edges)
 
-        self._net = sumolib.net.readNet(os.path.join(resource_dir, 'reroute.net.xml'))
+        reroute_network = os.path.join(resource_dir, 'reroute.net.xml')
+        self._net = sumolib.net.readNet(reroute_network)
 
-        self._convertNodeIDtoNodeIndex = {}
-        self._convertNodeIndexToNodeID = {}
+        # temporary functions to get id of nodes from edge
+        def edg_to_id(edge):
+            return self._net.getEdge(edge).getToNode().getID()
 
-        self._adjacencyMatrix = [[0 for x in xrange(self._numberOfNodesinNetwork)] \
-            for x in xrange(self._numberOfNodesinNetwork)]
+        def edg_from_id(edge):
+            return self._net.getEdge(edge).getFromNode().getID()
 
-        self._adjacencyEdgeID = [["" for x in xrange(self._numberOfNodesinNetwork)] \
-            for x in xrange(self._numberOfNodesinNetwork)]
-
-        for fromNode in xrange(self._numberOfNodesinNetwork):
-            fromNodeID = self._nodes[fromNode]
-            # fill node dictionaries by the way
-            self._convertNodeIndexToNodeID[fromNode]=fromNodeID
-            self._convertNodeIDtoNodeIndex[fromNodeID]=fromNode
-            for toNode in xrange(self._numberOfNodesinNetwork):
-                toNodeID = self._nodes[toNode]
-                for edge in self._edges:
-                    if (self._net.getEdge(edge).getFromNode().getID()==fromNodeID and
-                        self._net.getEdge(edge).getToNode().getID()==toNodeID):
-                        self._adjacencyMatrix[fromNode][toNode] = \
-                            self._net.getEdge(edge).getLength()
-                        self._adjacencyEdgeID[fromNode][toNode] = \
-                            str(self._net.getEdge(edge).getID())
+        # create and fill adjacency matrices
+        num_nodes = len(self._nodes)
+        self._adjacencyMatrix = [[0] * num_nodes for _ in xrange(num_nodes)]
+        self._adjacencyEdgeID = [[""] * num_nodes for _ in xrange(num_nodes)]
+        for i, j in itertools.product(*[xrange(num_nodes)] * 2):
+            from_id = self._nodes[i]
+            to_id = self._nodes[j]
+            for edge in self._edges:
+                if (edg_from_id(edge) == from_id and edg_to_id(edge) == to_id):
+                    e = self._net.getEdge(edge)
+                    self._adjacencyMatrix[i][j] = e.getLength()
+                    self._adjacencyEdgeID[i][j] = str(e.getID())
 
         self._oppositeEdgeID = dict(filter(
-                lambda x: self._net.getEdge(x[0]).getToNode().getID() == self._net.getEdge(x[1]).getFromNode().getID() and
-                              self._net.getEdge(x[0]).getFromNode().getID() == self._net.getEdge(x[1]).getToNode().getID(),
-                itertools.permutations(self._edges, 2)
-        ))
+            lambda x: (edg_to_id(x[0]) == edg_from_id(x[1])
+                       and edg_from_id(x[0]) == edg_to_id(x[1])),
+            itertools.permutations(self._edges, 2)))
 
         for node in self._nodes:
             self._roadNetwork["nodes"][node]["coordinates"] = self._net.getNode(node).getCoord()
 
         for edge in self._edges:
-            tmp_edge = self._roadNetwork["edges"][edge]
-            tmp_edge["length"] = self._net.getEdge(edge).getLength()
-            tmp_edge["fromNode"] = str(self._net.getEdge(edge).getFromNode().getID())
-            fromNodeCoord = self._roadNetwork["nodes"][tmp_edge["fromNode"]]["coordinates"]
-
-            tmp_edge["toNode"] = str(self._net.getEdge(edge).getToNode().getID())
-            toNodeCoord = self._roadNetwork["nodes"][tmp_edge["toNode"]]["coordinates"]
-
-            tmp_edge["meanCoord"] = tuple(numpy.divide(numpy.add(fromNodeCoord,toNodeCoord), 2))
-            tmp_edge["succEdgeID"] = [str(x.getID()) for x in self._net.getEdge(edge).getToNode().getOutgoing()]
-
-            tmp_edge["nodeDistanceFromEndNode"] = {}
+            e = self._roadNetwork["edges"][edge]
+            e["length"] = self._net.getEdge(edge).getLength()
+            e["fromNode"] = str(edg_from_id(edge))
+            fromNodeCoord = self._roadNetwork["nodes"][e["fromNode"]]["coordinates"]
+            e["toNode"] = str(edg_to_id(edge))
+            toNodeCoord = self._roadNetwork["nodes"][e["toNode"]]["coordinates"]
+            e["meanCoord"] = tuple(numpy.divide(numpy.add(fromNodeCoord, toNodeCoord), 2))
+            e["succEdgeID"] = [str(x.getID()) 
+                    for x in self._net.getEdge(edge).getToNode().getOutgoing()]
+            e["nodeDistanceFromEndNode"] = {}
 
             for node in self._nodes:
                 #TODO: discuss the relevant distance measure
                 #endNote synonym to toNote used to avoid confusion in variable names
-                lineEndNodeToNode = numpy.subtract(tmp_edge["meanCoord"], self._roadNetwork["nodes"][node]["coordinates"])
+                lineEndNodeToNode = numpy.subtract(e["meanCoord"], self._roadNetwork["nodes"][node]["coordinates"])
                 #lineEndNodeToNode = numpy.subtract(toNodeCoord, self._roadNetwork["nodes"][node]["coordinates"])
-                tmp_edge["nodeDistanceFromEndNode"][node] = \
-                    numpy.sqrt(numpy.sum(lineEndNodeToNode**2))
+                e["nodeDistanceFromEndNode"][node] = numpy.sqrt(numpy.sum(lineEndNodeToNode**2))
 
-            tmp_edge["visitCount"] = {}
-            tmp_edge["plannedCount"] = {}
+            e["visitCount"] = {}
+            e["plannedCount"] = {}
 
             if edge in self._oppositeEdgeID:
-                tmp_edge["oppositeEdgeID"] = self._oppositeEdgeID[edge]
+                e["oppositeEdgeID"] = self._oppositeEdgeID[edge]
             else:
-                tmp_edge["oppositeEdgeID"] = []
+                e["oppositeEdgeID"] = []
 
     def loadParkingSpaces(self, p_run):
         """ Load parking spaces
@@ -193,3 +178,11 @@ class Environment(object):
 
         # update parking spaces in run configuration
         self._config.updateRunCfgParkingspaces(p_run, self._allParkingSpaces)
+
+    @property
+    def nodes(self):
+        return self._nodes
+
+    @property
+    def edges(self):
+        return self._edges

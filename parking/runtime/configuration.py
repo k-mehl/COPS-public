@@ -7,6 +7,9 @@ import gzip
 # TODO: add run configuration, i.e. occupancy of parking spaces.
 # TODO: Generate for each run occupancy by POIid if config doesn't match, i.e
 # too few/many runs,parkingspaces configured,
+# TODO: allow dot access to config dict members, it would clean up a lot of code
+# TODO: look for common use patterns of config in other classes and create
+# helper methods
 
 
 class Configuration(object):
