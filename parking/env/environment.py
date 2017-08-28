@@ -32,8 +32,11 @@ class Environment(object):
         self._roadNetwork["nodes"] = {}
         self._roadNetwork["edges"] = {}
 
-        self._nodes = list(map(lambda x: str(x.id), sumolib.output.parse(os.path.join(self._config.getCfg("simulation").get("resourcedir"), 'reroute.nod.xml'), ['node'])))
-        self._edges = list(map(lambda x: str(x.id), sumolib.output.parse(os.path.join(self._config.getCfg("simulation").get("resourcedir"), 'reroute.edg.xml'), ['edge'])))
+        resource_dir = self._config.getCfg("simulation").get("resourcedir")
+        self._nodes = [str(x.id) for x in sumolib.output.parse(
+            os.path.join(resource_dir, 'reroute.nod.xml'), ['node'])]
+        self._edges = [str(x.id) for x in sumolib.output.parse(
+            os.path.join(resource_dir, 'reroute.edg.xml'), ['edge'])]
 
         for node in self._nodes:
             self._roadNetwork["nodes"][node] = {}
@@ -43,7 +46,7 @@ class Environment(object):
         self._numberOfNodesinNetwork = len(self._nodes)
         self._numberOfEdgesinNetwork = len(self._edges)
 
-        self._net = sumolib.net.readNet(os.path.join(self._config.getCfg("simulation").get("resourcedir"), 'reroute.net.xml'))
+        self._net = sumolib.net.readNet(os.path.join(resource_dir, 'reroute.net.xml'))
 
         self._convertNodeIDtoNodeIndex = {}
         self._convertNodeIndexToNodeID = {}
@@ -79,35 +82,34 @@ class Environment(object):
             self._roadNetwork["nodes"][node]["coordinates"] = self._net.getNode(node).getCoord()
 
         for edge in self._edges:
-            self._roadNetwork["edges"][edge]["length"] = self._net.getEdge(edge).getLength()
-            self._roadNetwork["edges"][edge]["fromNode"] = str(self._net.getEdge(edge).getFromNode().getID())
-            fromNodeCoord = self._roadNetwork["nodes"][self._roadNetwork["edges"][edge]["fromNode"]]["coordinates"]
+            tmp_edge = self._roadNetwork["edges"][edge]
+            tmp_edge["length"] = self._net.getEdge(edge).getLength()
+            tmp_edge["fromNode"] = str(self._net.getEdge(edge).getFromNode().getID())
+            fromNodeCoord = self._roadNetwork["nodes"][tmp_edge["fromNode"]]["coordinates"]
 
-            self._roadNetwork["edges"][edge]["toNode"] = str(self._net.getEdge(edge).getToNode().getID())
-            toNodeCoord = self._roadNetwork["nodes"][self._roadNetwork["edges"][edge]["toNode"]]["coordinates"]
+            tmp_edge["toNode"] = str(self._net.getEdge(edge).getToNode().getID())
+            toNodeCoord = self._roadNetwork["nodes"][tmp_edge["toNode"]]["coordinates"]
 
-            self._roadNetwork["edges"][edge]["meanCoord"] = tuple(numpy.divide(numpy.add(fromNodeCoord,toNodeCoord),2))
+            tmp_edge["meanCoord"] = tuple(numpy.divide(numpy.add(fromNodeCoord,toNodeCoord), 2))
+            tmp_edge["succEdgeID"] = [str(x.getID()) for x in self._net.getEdge(edge).getToNode().getOutgoing()]
 
-            self._roadNetwork["edges"][edge]["succEdgeID"] = list(map(lambda x: str(x.getID()), self._net.getEdge(edge).getToNode().getOutgoing()))
-
-            self._roadNetwork["edges"][edge]["nodeDistanceFromEndNode"] = {}
+            tmp_edge["nodeDistanceFromEndNode"] = {}
 
             for node in self._nodes:
-
                 #TODO: discuss the relevant distance measure
                 #endNote synonym to toNote used to avoid confusion in variable names
-                lineEndNodeToNode = numpy.subtract(self._roadNetwork["edges"][edge]["meanCoord"], self._roadNetwork["nodes"][node]["coordinates"])
+                lineEndNodeToNode = numpy.subtract(tmp_edge["meanCoord"], self._roadNetwork["nodes"][node]["coordinates"])
                 #lineEndNodeToNode = numpy.subtract(toNodeCoord, self._roadNetwork["nodes"][node]["coordinates"])
-                self._roadNetwork["edges"][edge]["nodeDistanceFromEndNode"][node] = \
+                tmp_edge["nodeDistanceFromEndNode"][node] = \
                     numpy.sqrt(numpy.sum(lineEndNodeToNode**2))
 
-            self._roadNetwork["edges"][edge]["visitCount"] = {}
-            self._roadNetwork["edges"][edge]["plannedCount"] = {}
+            tmp_edge["visitCount"] = {}
+            tmp_edge["plannedCount"] = {}
 
             if edge in self._oppositeEdgeID:
-                self._roadNetwork["edges"][edge]["oppositeEdgeID"] = self._oppositeEdgeID[edge]
+                tmp_edge["oppositeEdgeID"] = self._oppositeEdgeID[edge]
             else:
-                self._roadNetwork["edges"][edge]["oppositeEdgeID"] = []
+                tmp_edge["oppositeEdgeID"] = []
 
     def loadParkingSpaces(self, p_run):
         """ Load parking spaces
@@ -120,14 +122,15 @@ class Environment(object):
         self._parkingSpaceNumber = self._config.getCfg("simulation").get("parkingspaces").get("free")
 
         l_cfgparkingspaces = self._config.getRunCfg(str(p_run)).get("parkingspaces")
-        self._allParkingSpaces = list(map(lambda v: ParkingSpace(v.get("name"),
-                                                         v.get("edgeID"),
-                                                         v.get("position"),
-                                                         available=v.get("available")),
-                              l_cfgparkingspaces.values()))
+        self._allParkingSpaces = [ParkingSpace(v.get("name"),
+                                  v.get("edgeID"),
+                                  v.get("position"),
+                                  available=v.get("available"))
+                                 for v in l_cfgparkingspaces.values()]
 
         for edge in self._edges:
-            self._roadNetwork["edges"][edge]["parkingSpaces"] = list(filter(lambda p: p.edgeID == edge, self._allParkingSpaces))
+            self._roadNetwork["edges"][edge]["parkingSpaces"] = \
+                    [p for p in self._allParkingSpaces if p.edgeID == edge]
         if self._config.getCfg("simulation").get("verbose"):
             print("  -> done.")
 
