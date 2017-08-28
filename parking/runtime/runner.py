@@ -324,7 +324,7 @@ def open_sumo(sim_config):
             closed later.
     """
     # run sumo with gui or headless, depending on the --gui flag
-    sumo_binary = checkBinary('sumo') if sim_config.get("headless") else checkBinary('sumo')
+    sumo_binary = checkBinary('sumo') if sim_config.get("headless") else checkBinary('sumo-gui')
     route_file = sim_config.get("routefile")
     resource_dir = sim_config.get("resourcedir")
     return subprocess.Popen(
