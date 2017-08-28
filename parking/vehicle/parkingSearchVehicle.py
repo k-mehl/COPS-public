@@ -23,9 +23,8 @@ class ParkingSearchVehicle(object):
                  p_run,
                  p_timestep=-1001,
                  p_destinationNodeID="",
-                 p_cooperativeRoute=[],
-                 p_individualRoute=[],
-                 p_coopRatio=1):
+                 p_cooperativeRoute=None,
+                 p_individualRoute=None):
         """ Initializer for searching vehicles, initializes vehicle attributes
 
         Args:
@@ -39,7 +38,6 @@ class ParkingSearchVehicle(object):
             p_destinationNodeID (str): Destination ID
             p_cooperativeRoute (list): predefined route
             p_individualRoute (list): predefined route
-            p_coopRatio: The fraction of cooperative drivers
         """
         self._environment = p_environment
         self._config = p_config
