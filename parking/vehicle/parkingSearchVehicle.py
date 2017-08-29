@@ -1,4 +1,3 @@
-#!usr/bin/env python
 from __future__ import print_function
 import traci
 import random
@@ -66,6 +65,8 @@ class ParkingSearchVehicle(object):
         self._currentLanePosition = -1001.0
         self._currentOppositeEdgeID = ""
 
+        self._oppositeEdgeID = None
+
         # information needed to separate search phases
         self._search_phase = 1
         self._lastEdgeBeforePhase3 = ""
@@ -86,6 +87,8 @@ class ParkingSearchVehicle(object):
         if _run_cfg is not None and _run_cfg.get("vehicles") is not None:
             l_vcfg = _run_cfg["vehicles"].get(self._name)
 
+        # TODO: move cooperation logic decision out of the vehicles it should
+        # be assigned from outside controler
         _sim_cfg = self._config.getCfg("simulation")
         if not l_vcfg or len(l_vcfg) == 0:
             self._driverCooperatesPhase2 = random.random() \
@@ -150,40 +153,30 @@ class ParkingSearchVehicle(object):
                 current opposite direction edge
             p_timestep: Information about the current simulation time
         """
-        # get all relevant information about the vehicle from SUMO via TraCI
-        # calls:
-        # get vehicle _speed
+        if self._activity == state.PARKED:
+            return
+
         self._speed = traci.vehicle.getSpeed(self._name)
-        # get ID of the edge the vehicle currently drives on
         self._currentEdgeID = traci.vehicle.getRoadID(self._name)
         self._timestep = p_timestep
+        self._currentLaneID = traci.vehicle.getLaneID(self._name)
 
-        # as long as vehicle is not parked:
-        # get information about the current lane (ID, length and vehicle
-        # position)
-        if not self._activity == state.PARKED:
-            self._currentLaneID = traci.vehicle.getLaneID(self._name)
+        # return if vehicle is currently being teleported or SUMO did other
+        # esoteric things resulting in no # information regarding current
+        # position in network
+        if self._currentLaneID is None or self._currentLaneID == "":
+            print("/!\ no information regarding {}'s position, skipping update()".format(self._name))
+            return
 
-            # return if vehicle is currently being teleported or SUMO did other
-            # esoteric things resulting in no # information regarding current
-            # position in network
-            if self._currentLaneID is None or self._currentLaneID == "":
-                print("/!\ no information regarding {}'s position, skipping update()".format(self._name))
-                return
+        self._currentLaneLength = traci.lane.getLength(self._currentLaneID)
+        self._currentLanePosition = traci.vehicle.getLanePosition(self._name)
 
-            self._currentLaneLength = traci.lane.getLength(self._currentLaneID)
-            self._currentLanePosition = traci.vehicle.getLanePosition(self._name)
-
-        # if an opposite direction lane exists, get ID of the opposite edge
-        if self._currentEdgeID in self._environment._oppositeEdgeID:
+        try:
             self._oppositeEdgeID = self._environment._oppositeEdgeID[self._currentEdgeID]
-        else:
+        except KeyError:
             self._oppositeEdgeID = ""
 
-        # get current vehicle routing from SUMO
         self._currentRoute = traci.vehicle.getRoute(self._name)
-
-        # get the sequence index of the current element within the whole route
         self._currentRouteIndex = traci.vehicle.getRouteIndex(self._name)
 
         # create a copy of the _currentRoute for further modification
@@ -191,8 +184,11 @@ class ParkingSearchVehicle(object):
         # traversed segments
         self._activeRoute = self._currentRoute[:]
         self._traversedRoute = []
+        # TODO: sumo returns -1 if vehicle has not departed solve this in a
+        # better way without this check i.e. check at the beginning of update
+        # if vehicle departed or not.
         if self._currentRouteIndex > 0:
-            self._traversedRoute.extend(self._activeRoute[:self._currentRouteIndex])
+            self._traversedRoute = self._activeRoute[:self._currentRouteIndex]
             self._activeRoute = self._activeRoute[self._currentRouteIndex:]
 
         # if the vehicle has turned due to a seen opposite parking space,
