@@ -15,12 +15,6 @@ try:
 except NameError:
     xrange = range
 
-# TODO: BUG: Vehicles dont see oposite side of the road atm. Introduced by
-# refactoring so git bisect should do the job
-
-# Main entry point for the wrapper module.
-# For now: starts repetitive simulation runs with identical parameters, and
-# presents the results afterwards.
 if __name__ == "__main__":
     l_configdir = os.path.expanduser(u"~/.parkingsearch")
     l_parser = argparse.ArgumentParser(

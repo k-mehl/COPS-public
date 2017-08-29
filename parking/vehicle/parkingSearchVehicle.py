@@ -344,16 +344,20 @@ class ParkingSearchVehicle(object):
             p_parkingSpaces: Information about all parkingSpaces in the network
             p_oppositeEdgeID: Name of the edge in opposite direction
         """
+        # TODO: maybe better check for vehicle status
+        if self._speed <= 0:
+            return ""
+
         _dist_max = self._config.getCfg("vehicle")["parking"]["distance"]["max"]
         _lane_diff = self._currentLaneLength - self._currentLanePosition
-        if self._speed <= 0.0:
-            return ""
+        _sight_diff = self._currentLaneLength - (self._currentLanePosition + _dist_max)
+
         # for all existing parking spaces, check if there is one available
         # within the assumed viewing distance of the driver
         for ps in p_parkingSpaces:
             # only consider parking spaces on the current opposite edge
             if ps.available and (ps.edgeID == p_oppositeEdgeID):
-                if ((_lane_diff + _dist_max) < ps.position < _lane_diff):
+                if (_sight_diff < ps.position < _lane_diff):
                     # if an opposite parking space has been found,
                     # insert a loop to the active route (just once back
                     # and forth)
