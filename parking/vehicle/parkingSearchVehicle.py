@@ -1,6 +1,7 @@
 from __future__ import print_function
-import traci
 import random
+
+import traci
 
 from parking.common.enum import Enum
 
