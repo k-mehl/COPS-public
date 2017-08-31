@@ -415,11 +415,6 @@ class ParkingSearchVehicle(object):
             traci.vehicle.setRoute(self._name, self._individual_route)
 
     @property
-    def current_route(self):
-        """ Current route information """
-        return self._currentRoute
-
-    @property
     def destination_edge_id(self):
         return self._destinationEdgeID
 
@@ -442,10 +437,6 @@ class ParkingSearchVehicle(object):
     @active_route.setter
     def active_route(self, activeRoute):
         self._activeRoute = activeRoute
-
-    @property
-    def name(self):
-        return self._name
 
     def __getattr__(self, name):
         class_name = "_" + name
