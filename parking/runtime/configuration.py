@@ -208,10 +208,14 @@ class Configuration(object):
 
         # phase 2: check for enough stored runs
         if len(self._runconfiguration) < sim_cfg["runs"]:
-            print("/!\ run config does not match simulation parameters. Expecting {} runs, read {} runs from config instead. ".format(sim_cfg["runs"], len(self._runconfiguration), self._runcfgfilename))
+            print("/!\ Run config does not match simulation parameters. "
+                  "Expecting {} runs, read {} runs from {} config instead. "
+                  "".format(sim_cfg["runs"], len(self._runconfiguration),
+                            self._runcfgfilename))
             return False
 
-        # phase 3: check for enough available parkingspaces in each run (i.e. #available parkingspaces >= #vehicles)
+        # phase 3: check for enough available parkingspaces in each run (i.e.
+        # #available parkingspaces >= #vehicles)
         # contains amount of runs with mismatching available parkingspaces
         tmp_vals = self._runconfiguration[str(p_runid)]["parkingspaces"].values()
         l_available = [v for v in tmp_vals if v["available"]]
@@ -219,11 +223,13 @@ class Configuration(object):
         #                 self._runconfiguration[str(p_runid)]["parkingspaces"].values())
 
         if len(l_available) < sim_cfg["vehicles"]:
-            print("/!\  run config does not match simulation parameters. Expecting at least {} available parking spaces due to {} searching vehicles. Found only {} in run {}".format(
-                sim_cfg["parkingspaces"]["free"],
-                sim_cfg["vehicles"],
-                len(l_available),
-                p_runid))
+            print("/!\ Run config does not match simulation parameters. "
+                  "Expecting at least {} available parking spaces due to {} "
+                  "searching vehicles. Found only {} in run {}"
+                  "".format(sim_cfg["parkingspaces"]["free"],
+                            sim_cfg["vehicles"],
+                            len(l_available),
+                            p_runid))
             return False
         return True
 
