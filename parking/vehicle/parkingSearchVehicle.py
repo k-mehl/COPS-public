@@ -129,7 +129,7 @@ class ParkingSearchVehicle(object):
             self._activity = l_vcfg.get("activity")
             self._isSearchingVehicle = l_vcfg.get("isSearchingVehicle")
 
-        self._currentRoute = []
+        self._current_route = []
         self._currentRouteIndex = -1
         self._activeRoute = []
         self._traversedRoute = []
@@ -177,13 +177,13 @@ class ParkingSearchVehicle(object):
         except KeyError:
             self._oppositeEdgeID = ""
 
-        self._currentRoute = traci.vehicle.getRoute(self._name)
+        self._current_route = traci.vehicle.getRoute(self._name)
         self._currentRouteIndex = traci.vehicle.getRouteIndex(self._name)
 
-        # create a copy of the _currentRoute for further modification
+        # create a copy of the _current_route for further modification
         # and divide current route into remaining segments ('active') and
         # traversed segments
-        self._activeRoute = self._currentRoute[:]
+        self._activeRoute = self._current_route[:]
         self._traversedRoute = []
         # TODO: sumo returns -1 if vehicle has not departed solve this in a
         # better way without this check i.e. check at the beginning of update
@@ -372,7 +372,7 @@ class ParkingSearchVehicle(object):
 
     def last_edge(self):
         """ Check if vehicle is on the last segment of planned route """
-        if self._currentRouteIndex == len(self._currentRoute) - 1:
+        if self._currentRouteIndex == len(self._current_route) - 1:
             if not self._search_phase == 3 and not self._lastEdgeBeforePhase3:
                 self._lastEdgeBeforePhase3 = self._currentEdgeID
             return True
