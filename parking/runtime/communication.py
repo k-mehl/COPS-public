@@ -1,6 +1,6 @@
 def mark_neighbours(vehicles, distance):
     """ Discovers neighbors for a vehicles and saves them internally into
-    vehicle objects.
+    vehicle objects. Has complexity of approx O(len(vehicles)**2/2).
 
     Args:
         vehicles (list): A list with vehicle object whose neighbors should be

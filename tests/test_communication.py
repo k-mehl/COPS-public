@@ -17,19 +17,21 @@ class Vehicle():
         Vehicle.num += 1
 
 def test_mark_neighbours():
-    vehicles = [Vehicle((0, 0)),
-                Vehicle((0, 100)),
-                Vehicle((200, 100)),
-                Vehicle((1000, 1000))]
 
+    veh0 = Vehicle((0, 0))
+    veh1 = Vehicle((0, 100))
+    veh2 = Vehicle((200, 100))
+    veh3 = Vehicle((1000, 1000))
+
+    vehicles = [veh0, veh1, veh2, veh3]
     mark_neighbours(vehicles, 500)
 
-    assert "veh1" in vehicles[0].connected_neighbors
-    assert "veh2" in vehicles[0].connected_neighbors
-    assert "veh0" in vehicles[1].connected_neighbors
-    assert "veh2" in vehicles[1].connected_neighbors
-    assert "veh0" in vehicles[2].connected_neighbors
-    assert "veh1" in vehicles[2].connected_neighbors
+    assert veh1 in vehicles[0].connected_neighbors
+    assert veh2 in vehicles[0].connected_neighbors
+    assert veh0 in vehicles[1].connected_neighbors
+    assert veh2 in vehicles[1].connected_neighbors
+    assert veh0 in vehicles[2].connected_neighbors
+    assert veh1 in vehicles[2].connected_neighbors
     assert len(vehicles[0].connected_neighbors) == 2
     assert len(vehicles[1].connected_neighbors) == 2
     assert len(vehicles[2].connected_neighbors) == 2
