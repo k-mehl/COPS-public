@@ -59,12 +59,16 @@ class ParkingSearchVehicle(object):
         # the opposite direction
         self._seenOppositeParkingSpace = ""
 
+        # neighbors who share parking information with the vehicles
+        self._connected_neighbors = []
+
         # information about the current position of a vehicle
         self._currentEdgeID = ""
         self._currentLaneID = ""
         self._currentLaneLength = -1001.0
         self._currentLanePosition = -1001.0
         self._currentOppositeEdgeID = ""
+        self._position = None  # vehicle position in (x, y)
 
         self._oppositeEdgeID = None
 
@@ -161,6 +165,7 @@ class ParkingSearchVehicle(object):
         self._currentEdgeID = traci.vehicle.getRoadID(self._name)
         self._timestep = p_timestep
         self._currentLaneID = traci.vehicle.getLaneID(self._name)
+        self._position = traci.vehicle.getPosition(self._name)
 
         # return if vehicle is currently being teleported or SUMO did other
         # esoteric things resulting in no # information regarding current
