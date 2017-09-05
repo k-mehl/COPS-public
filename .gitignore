@@ -1,6 +1,14 @@
 *
 *.*
 
+!parking/
+!parking/common/
+!parking/env/
+!parking/runtime/
+!parking/vehicle/
+!tests/
+!docs/
+
 !.gitignore
 !*.md
 !*.py
