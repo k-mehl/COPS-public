@@ -200,7 +200,8 @@ class Runtime(object):
                 searchPhases)
 
     def edgeCost(self, psv, edge):
-        """ Calculate cost for an edge for a specific search vehicle
+        """ Calculate cost of an edge for a specific parking search vehicle.
+        This is Phase 3 search strategy.
 
         Args:
             psv: parking search vehicle
@@ -209,6 +210,7 @@ class Runtime(object):
         Returns:
             float: cost of edge
         """
+        # TODO: this should be extracted to be phase 3 routing function
         env_edges = self._environment._roadNetwork["edges"]
         veh_weights = self._vehicle_config["weights"]
 
