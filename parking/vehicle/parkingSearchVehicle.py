@@ -152,10 +152,6 @@ class ParkingSearchVehicle(object):
         """ Update vehicle state in the Python representation
 
         Args:
-            p_parkingSpaces: Information about (currently all) available
-                parking spaces
-            p_oppositeEdgeID: Contains a dictionary for identification of the
-                current opposite direction edge
             p_timestep: Information about the current simulation time
         """
         if self._activity == state.PARKED:
