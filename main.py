@@ -51,6 +51,11 @@ if __name__ == "__main__":
     l_parser.add_argument("--timestamp", dest="resulttimestamped",
                           default=False, action='store_true',
                           help="create timestamped folders for output")
+    # new parser configuration for mixed traffic
+    l_parser.add_argument("--mixed_traffic", dest="mixed_traffic", nargs=3,
+                          help="run simulation with new mixed traffic. "
+                               "The ratio defines how many connected vehicles will be created."
+                               "please set additional arguments for ratio [float], coopPhase3 [bool], coopPhase2 [bool]")
 
     # if display GUI, restrict to one run (implies --run 1)
     # for more than one run, disallow use of --gui
