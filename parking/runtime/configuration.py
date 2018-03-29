@@ -100,6 +100,7 @@ class Configuration(object):
                 self._configuration["simulation"]["runconfiguration"])
 
         self._runconfiguration = self._readRunCfg(p_args)
+        self._mixed_traffic_configuration = self._configuration["simulation"]["mixed_traffic"]
 
     def getCfg(self, p_key):
         """ Get configuration
@@ -120,6 +121,14 @@ class Configuration(object):
             dict: configuration for a given key
         """
         return self._runconfiguration.get(p_key)
+
+    def getMixedTrafficCfg(self, p_key=None):
+        '''
+        get values of the mixed traffic configuration by key
+        :param p_key: key of the config
+        :return: value at config key
+        '''
+        return self._mixed_traffic_configuration[p_key]
 
     def _writeCfg(self, p_config, p_location, p_sort_keys=True, p_indent=4,
                   p_separators=(',', ' : ')):
