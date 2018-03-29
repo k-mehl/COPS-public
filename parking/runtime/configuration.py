@@ -34,6 +34,13 @@ class Configuration(object):
                 "vehicles": 5,
                 "coopratioPhase2": 1.0,
                 "coopratioPhase3": 0.0,
+                "mixed_traffic": {
+                    "ratio": -1.0,
+                    "coopPhase2": False,
+                    "coopPhase3": False,
+                    "coop_vehicles": -1,
+                    "non_coop_vehicles": -1
+                }
             },
             "vehicle": {
                 "parking": {
@@ -163,6 +170,20 @@ class Configuration(object):
         if p_args.resulttimestamped:
             self._configuration["simulation"]["resulttimestamped"] = True
 
+        if p_args.mixed_traffic is not None:
+            # split arguments
+            mixed_traffic_args = p_args.mixed_traffic
+            mixed_ratio, phase_2, phase_3 = self._convert_mixed_traffic_args(mixed_traffic_args)
+            coop_vehicles = self._calculate_num_of_coop_vehicles(mixed_ratio,
+                                                                 self._configuration["simulation"]["vehicles"])
+            non_coop_vehicles = self._configuration["simulation"]["vehicles"] - coop_vehicles
+            # set configuration with correct types
+            self._configuration["simulation"]["mixed_traffic"]["ratio"] = mixed_ratio
+            self._configuration["simulation"]["mixed_traffic"]["coopPhase2"] = phase_2
+            self._configuration["simulation"]["mixed_traffic"]["coopPhase3"] = phase_3
+            self._configuration["simulation"]["mixed_traffic"]["coop_vehicles"] = coop_vehicles
+            self._configuration["simulation"]["mixed_traffic"]["non_coop_vehicles"] = non_coop_vehicles
+
     def _sanitycheck(self):
         """ Sanity checks of the config """
         # raise exception if gui mode requested with > 1 run
@@ -188,6 +209,8 @@ class Configuration(object):
                        "--resourcedir").format(
                               self._configuration["simulation"]["resourcedir"])
             raise BaseException(message)
+
+        self._sanity_check_mixed_traffic()
 
     def existRunCfg(self):
         return len(self._runconfiguration) > 0
@@ -298,3 +321,75 @@ class Configuration(object):
         if not self._runconfiguration.get(l_run).get("vehicles"):
             self._runconfiguration[l_run]["vehicles"] = {}
         self._runconfiguration[l_run]["vehicles"][p_vcfg["name"]] = p_vcfg
+
+        # ---- helper for new mixed traffic ---- #
+
+    def _convert_mixed_traffic_args(self, mixed_traffic_args):
+        '''
+        parses the command line argument for cooperative traffic in phase 2 and phase 3
+        only if "true" or "True" was given, the cooperation with mixed traffic will work
+        :param mixed_traffic_args: parsed commandline arguments of mixed traffic
+        :return: float for ratio of mixed traffic, bool cooperate in phase2, bool cooperate in phase3
+        '''
+        # convert values
+        mixed_ratio = float(mixed_traffic_args[0])
+        m_phase2 = False
+        m_phase3 = False
+        if (mixed_traffic_args[1] == "True") or (mixed_traffic_args[1] == "true"):
+            m_phase2 = True
+        if (mixed_traffic_args[2] == "True") or (mixed_traffic_args[2] == "true"):
+            m_phase3 = True
+
+        return mixed_ratio, m_phase2, m_phase3
+
+    def _calculate_num_of_coop_vehicles(self, ratio, vehicles):
+        '''
+        Calculates the number of cooperative cars by given ratio:
+        number of cooperative vehicles = int( round(ratio * number of all vehicles))
+        :param ratio: float between 0.0 and 1.0
+        :param vehicles: total number of vehicles
+        :return: number of cooperative vehicles
+        '''
+        # vehicle type is int, ratio is float
+        num_of_vehicles_coop = 0
+        if ratio < 0.0 or ratio > 1.0:
+            return num_of_vehicles_coop  # just a dummy, not needed cause of sanity check!
+        else:
+            num_of_vehicles_coop = int(round(ratio * vehicles))
+            return num_of_vehicles_coop
+
+    def _sanity_check_mixed_traffic(self):
+        """
+        Checks if mixed traffic configuration is runnable.
+        checks:
+            - ratio is between 0.0 and 1.0 (including)
+            - if one of the coop phases are true
+            - number of cooperative / non cooperative vehicles is greater than 0
+            - number of coop + non coop is the same as total vehicles
+        :return:
+        """
+        mixed_traffic_confg = self._configuration["simulation"]["mixed_traffic"]
+        # raise exception if mixed traffic has been set but the ratio is not [0,1] and min one phase is True
+        if mixed_traffic_confg["ratio"] == -1.0:
+            print("* no use of mixed traffic")
+        else:
+            print("* use of mixed traffic")
+            if mixed_traffic_confg["ratio"] < 0.0 or mixed_traffic_confg["ratio"] > 1.0:
+                message = ("The mixed traffic ratio must be between 0.0 and 1.0. Got: {}".format(
+                    self._configuration["simulation"]["mixed_traffic"]["ratio"]))
+                raise BaseException(message)
+            if (mixed_traffic_confg["coopPhase2"] is False) and (mixed_traffic_confg["coopPhase3"] is False):
+                message = (
+                    "Phase2 = {}, Phase3 = {}. One phase must be True. Otherwise all smart cars are dump cars.".format(
+                        mixed_traffic_confg["coopPhase2"], mixed_traffic_confg["coopPhase3"]))
+                raise BaseException(message)
+            if mixed_traffic_confg["coop_vehicles"] < 0 or mixed_traffic_confg["non_coop_vehicles"] < 0:
+                message = ("got negative number of vehicles: coop = {} , non_coop = {}".format(
+                    mixed_traffic_confg["coop_vehicles"], mixed_traffic_confg["non_coop_vehicles"]))
+                raise BaseException(message)
+            if (mixed_traffic_confg["coop_vehicles"] + mixed_traffic_confg["non_coop_vehicles"]) != \
+                    self._configuration["simulation"]["vehicles"]:
+                message = ("Total number of mixed Traffic [{}] must be equal to number of vahicles [{}].".format(
+                    (mixed_traffic_confg["coop_vehicles"] + mixed_traffic_confg["non_coop_vehicles"]),
+                    self._configuration["simulation"]["vehicles"]))
+                raise BaseException(message)
