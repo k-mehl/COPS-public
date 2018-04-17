@@ -50,6 +50,8 @@ class Runtime(object):
         self._environment = Environment(self._config)
         self._vehicle_config = self._config.getCfg("vehicle")
 
+        self._vehicle_is_coop_list = None  # per default None, will be set when mixed traffic is used
+
     def run(self, i_run):
         """ Runs the simulation on both SUMO and Python layers
 
@@ -58,15 +60,13 @@ class Runtime(object):
         """
         # if there is a run configuration loaded use it to populate
         # parkingspaces in environment otherwise initialize new
-        if not self._config.getRunCfg(str(i_run)):
-            if self._sim_config.get("verbose"):
-                print("* no run cfg found. Initializing random parking spaces.")
-            self._environment.initParkingSpaces(i_run)
-
-        elif self._config.isRunCfgOk(i_run):
-            self._environment.loadParkingSpaces(i_run)
-        else:
-            return
+        print("* run static cooperative simulation")
+        # create parking spaces
+        created_parking_spaces = self._create_parking_spaces(i_run)
+        if not created_parking_spaces:
+            # instead of a return, raise exception
+            message = ("Can't create parking spaces for run #{}".format(i_run))
+            raise BaseException(message)
 
         # if --routefile flag is provided, use the file for routing, otherwise
         # generate (and overwrite if exists) route file (reroute.rou.xml) for
@@ -290,6 +290,29 @@ class Runtime(object):
         # assert routes.routes(0.0, penalty=0.2) == l_cooperativeRoutes
 
         return l_individualRoutes, l_cooperativeRoutes
+
+    # ---- methods for inheritance ---- #
+
+    def _create_parking_spaces(self, i_run):
+        '''
+        Loads the parking spaces if a file exists, otherwise initilizes new parking spaces.
+        Retruns false if neither loading of parking spaces or init of parking spaces is possible.
+        :param i_run: number of the simulation run
+        :return: true if successful parking space creation
+        '''
+        # is_created = False
+        if not self._config.getRunCfg(str(i_run)):
+            if self._sim_config.get("verbose"):
+                print("* no run cfg found. Initializing random parking spaces.")
+            self._environment.initParkingSpaces(i_run)  # if no configuration is set -> do random parking spaces
+            is_created = True
+        elif self._config.isRunCfgOk(i_run):
+            self._environment.loadParkingSpaces(i_run)  # load number of parkingspaces if avialble
+            is_created = True
+        else:
+            # just return if nothing can be loaded or is provided
+            is_created = False
+        return is_created
 
 
 def remaining_vehicles(psvList):
