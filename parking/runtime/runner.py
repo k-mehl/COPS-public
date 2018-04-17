@@ -68,15 +68,8 @@ class Runtime(object):
             message = ("Can't create parking spaces for run #{}".format(i_run))
             raise BaseException(message)
 
-        # if --routefile flag is provided, use the file for routing, otherwise
-        # generate (and overwrite if exists) route file (reroute.rou.xml) for
-        # this simulation run using the given number of parking search vehicles
-        route_file = os.path.join(self._sim_config.get("resourcedir"),
-                                  self._sim_config.get("routefile"))
-        if not (os.path.isfile(route_file) and self._sim_config.get("forceroutefile")):
-            generatePsvDemand(self._sim_config.get("vehicles"),
-                              self._sim_config.get("resourcedir"),
-                              self._sim_config.get("routefile"))
+        # create route file for vehicles in SUMO for every simulation run
+        self._create_sumo_route_file()
 
         # start sumo as a subprocess otherwise it wont work (because reasons)
         l_sumoProcess = open_sumo(self._sim_config)
@@ -313,6 +306,26 @@ class Runtime(object):
             # just return if nothing can be loaded or is provided
             is_created = False
         return is_created
+
+    def _create_sumo_route_file(self):
+        '''
+        creates the route file for SUMO with vehicles at /resources/reroute.rou.xml
+        If a file exist and the 'forceroutefile' is set, then do not generate new file
+        :return: True, if a new file has been written
+        '''
+
+        route_file = os.path.join(self._sim_config.get("resourcedir"),
+                                  self._sim_config.get("routefile"))
+
+        if not (os.path.isfile(route_file) and self._sim_config.get("forceroutefile")):
+            generatePsvDemand(self._sim_config.get("vehicles"),
+                              self._sim_config.get("resourcedir"),
+                              self._sim_config.get("routefile"))
+            return True
+        else:
+            return False
+
+    # ---- END methods for inheritance ---- #
 
 
 def remaining_vehicles(psvList):
