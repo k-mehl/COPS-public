@@ -230,21 +230,28 @@ class Runtime(object):
 
         sumo_close(l_sumoProcess)
 
+        # all information processing:
         total_parked = parked_vehicles(l_parkingSearchVehicles)
+        total_coop_parked = parked_coop_vehicles(l_parkingSearchVehicles)
+        total_non_coop_parked = parked_non_coop_vehicles(l_parkingSearchVehicles)
         searchTimes = [veh.search_time for veh in l_parkingSearchVehicles]
         searchDistances = [veh.search_distance for veh in l_parkingSearchVehicles]
         walkingTimes = [veh.walk_time for veh in l_parkingSearchVehicles]
         walkingDistances = [veh.walk_distance for veh in l_parkingSearchVehicles]
         searchPhases = [veh.search_phase for veh in l_parkingSearchVehicles]
+        is_coop_vehicle = [veh.is_coop for veh in l_parkingSearchVehicles]
 
         # TODO: this should probably just return vehicles and leave processing
         # to other instances
         return (total_parked,
+                total_coop_parked,
+                total_non_coop_parked,
                 searchTimes,
                 walkingTimes,
                 searchDistances,
                 walkingDistances,
-                searchPhases)
+                searchPhases,
+                is_coop_vehicle)
 
     def edgeCost(self, psv, edge):
         """ Calculate cost of an edge for a specific parking search vehicle.
@@ -468,6 +475,37 @@ def parked_vehicles(psvList):
         int: Number of parked vehicles
     """
     return sum(1 for psv in psvList if psv.is_parked())
+
+
+def parked_coop_vehicles(psvList):
+    '''
+    Get number of successfully parked cooperative vehicles.
+
+    Args:
+        psvList (list): List of parking search vehicle objects
+
+    Returns:
+        int: Number of parked vehicles
+    :param psvList:
+    :return:
+    '''
+    # need to checl true cause of default value None
+    return sum(1 for psv in psvList if psv.is_parked() and psv.is_coop is True)
+
+
+def parked_non_coop_vehicles(psvList):
+    '''
+     Get number of successfully parked non cooperative vehicles.
+
+     Args:
+         psvList (list): List of parking search vehicle objects
+
+     Returns:
+         int: Number of parked vehicles
+     :param psvList:
+     :return:
+     '''
+    return sum(1 for psv in psvList if psv.is_parked() and psv.is_coop is False)
 
 def open_sumo(sim_config):
     """ Start a sumo binary in the background.
