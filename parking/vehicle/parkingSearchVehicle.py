@@ -24,8 +24,10 @@ class ParkingSearchVehicle(object):
                  p_timestep=-1001,
                  p_destinationNodeID="",
                  p_cooperativeRoute=None,
-                 p_individualRoute=None):
+                 p_individualRoute=None, is_coop=None):
         """ Initializer for searching vehicles, initializes vehicle attributes
+
+        The init is called while the run() method in a simulation step. No vehicles of this type exits before this step.
 
         Args:
             p_name: Corresponds to the vehicle ID obtained from the route XML
@@ -38,7 +40,9 @@ class ParkingSearchVehicle(object):
             p_destinationNodeID (str): Destination ID
             p_cooperativeRoute (list): predefined route
             p_individualRoute (list): predefined route
+            is_coop: boolean if the car is a coop car in new realization
         """
+
         self._environment = p_environment
         self._config = p_config
 
@@ -54,6 +58,7 @@ class ParkingSearchVehicle(object):
 
         # information about the lane position of a found parking space
         self._assignedParkingPosition = -1001
+        self._assignedParkingEdge = ""
 
         # information about the edge of an eventually found parking space in
         # the opposite direction
@@ -86,20 +91,43 @@ class ParkingSearchVehicle(object):
         self._cooperative_route = p_cooperativeRoute
         self._individual_route = p_individualRoute
 
+        self._is_coop = is_coop
+
         # information about the vehicle
         l_vcfg = {}
         _run_cfg = self._config.getRunCfg(str(p_run))
         if _run_cfg is not None and _run_cfg.get("vehicles") is not None:
+            # reads the runcofiguration from config.runs.json.gz
             l_vcfg = _run_cfg["vehicles"].get(self._name)
 
         # TODO: move cooperation logic decision out of the vehicles it should
         # be assigned from outside controler
         _sim_cfg = self._config.getCfg("simulation")
-        if not l_vcfg or len(l_vcfg) == 0:
-            self._driverCooperatesPhase2 = random.random() \
-                    <= _sim_cfg["coopratioPhase2"]
-            self._driverCooperatesPhase3 = random.random() \
-                    <= _sim_cfg["coopratioPhase3"]
+        # if not (l_vcfg or lenght(l_vcfg) == 0) ->
+        if not l_vcfg or len(l_vcfg) == 0:  # no vehicle cfg exists
+
+            # old initial vehicle settings (by using mixed traffic argument)
+            if self._config.getMixedTrafficCfg("ratio") == -1.0 and self._is_coop is None:
+                self._driverCooperatesPhase2 = random.random() \
+                                               <= _sim_cfg["coopratioPhase2"]
+                self._driverCooperatesPhase3 = random.random() \
+                                               <= _sim_cfg["coopratioPhase3"]
+            else:
+                # new initial vehicle config
+                if self._is_coop is True:
+                    if self._config.getMixedTrafficCfg("coopPhase2"):
+                        self._driverCooperatesPhase2 = True
+                    else:
+                        self._driverCooperatesPhase2 = False
+
+                    if self._config.getMixedTrafficCfg("coopPhase3"):
+                        self._driverCooperatesPhase3 = True
+                    else:
+                        self._driverCooperatesPhase3 = False
+                else:
+                    self._driverCooperatesPhase2 = False
+                    self._driverCooperatesPhase3 = False
+
             # information about vehicle _activity status, initially vehicle
             # cruises without searching ("phase 1")
             self._activity = state.CRUISING
@@ -114,6 +142,7 @@ class ParkingSearchVehicle(object):
                 "activity": self._activity,
                 "coopPhase2": self._driverCooperatesPhase2,
                 "coopPhase3": self._driverCooperatesPhase3,
+                "is_coop": self._is_coop
             }
             self._config.updateRunCfgVehicle(p_run, l_initialvcfg)
 
@@ -133,12 +162,34 @@ class ParkingSearchVehicle(object):
             self._activity = l_vcfg.get("activity")
             self._isSearchingVehicle = l_vcfg.get("isSearchingVehicle")
 
+            self._is_coop = l_vcfg.get("is_coop")
+
+        # set the route
+        # this can be done better, but i used the existing implementation
         self._current_route = []
         self._currentRouteIndex = -1
         self._activeRoute = []
         self._traversedRoute = []
-        if self._driverCooperatesPhase2:
-            traci.vehicle.setRoute(self._name, self._cooperative_route)
+
+        if self._is_coop is not None:  # my realization
+            # This is for phase2
+            if self._is_coop is True and self._config.getMixedTrafficCfg("coopPhase2") is True:
+                # only set cooperative route if coop phase 2 is wished
+                traci.vehicle.setRoute(self._name, self._cooperative_route)
+                self._destinationEdgeID = self._cooperative_route[-1]
+            else:
+                traci.vehicle.setRoute(self._name, self._individual_route)
+                self._destinationEdgeID = self._individual_route[-1]
+
+            # this is for phase 3
+            if self._is_coop is True and self._config.getMixedTrafficCfg("coopPhase3") is True:
+                # set the weights done like old version:
+                self._driverCooperatesPhase3 = True  # True
+            else:
+                self._driverCooperatesPhase3 = False  # False
+
+        elif self._driverCooperatesPhase2:
+            traci.vehicle.setRoute(self._name, self._cooperative_route)  # changes the vehicle route to given edges list
             self._destinationEdgeID = self._cooperative_route[-1]
         else:
             traci.vehicle.setRoute(self._name, self._individual_route)

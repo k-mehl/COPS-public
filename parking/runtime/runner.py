@@ -130,14 +130,28 @@ class Runtime(object):
             l_departedVehicles = (x for x in dep_list if x not in arr_list)
 
             # TODO: from one debugging session I got the order of
-            # parkinSearchVehicles = [veh0, veh1, veh3, veh2, veh4]
-            # probably arr_list is not given in order...
-            l_parkingSearchVehicles.extend(
+            # create a new vehicle by using all information which was generated before simulation start.
+            # all ever spawned vehicles are stored in this list with their information.
+            # check which realization is used
+            if self._config.getMixedTrafficCfg("ratio") == -1.0:
+                # do old realization
+                l_parkingSearchVehicles.extend(
                     ParkingSearchVehicle(vehID, self._environment,
-                        self._config, i_run, step,
-                        self._environment._net.getEdge(l_individualRoutes[vehID][-1]).getToNode().getID(),
-                        l_cooperativeRoutes[vehID],
-                        l_individualRoutes[vehID])
+                                         self._config, i_run, step,
+                                         self._environment._net.getEdge(
+                                             l_individualRoutes[vehID][-1]).getToNode().getID(),
+                                         l_cooperativeRoutes[vehID],
+                                         l_individualRoutes[vehID])
+                    for vehID in l_departedVehicles)  # this is the first call of the vehicle class
+            else:
+                # mixed traffic: sets vehicle type (coop or not)
+                l_parkingSearchVehicles.extend(
+                    ParkingSearchVehicle(vehID, self._environment,
+                                         self._config, i_run, step,
+                                         self._environment._net.getEdge(
+                                             l_individualRoutes[vehID][-1]).getToNode().getID(),
+                                         l_cooperativeRoutes[vehID],
+                                         l_individualRoutes[vehID], is_coop=self._vehicle_is_coop_list[vehID])
                     for vehID in l_departedVehicles)
 
             # update status of all vehicles
