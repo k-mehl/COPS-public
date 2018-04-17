@@ -46,7 +46,10 @@ class Phase2Routes(object):
         self.allOriginNodeIndices = []
         self.allDestinationNodeIndices = []
 
-        for trip in sumolib.output.parse_fast( \
+        # new vehicle type definition: True if coop vehicle
+        self.vehicle_is_coop_type = {}
+
+        for trip in sumolib.output.parse_fast(
                 os.path.join(self._config.getCfg("simulation").get("resourcedir"), self._routefile), 'trip', ['id','from','to']):
             self.allVehicleIDs.append(trip.id)
             self.vehicleOriginNode[trip.id] =  \
@@ -59,6 +62,17 @@ class Phase2Routes(object):
                 self._environment.nodes.index(self.vehicleDestinationNode[trip.id])
             self.allOriginNodeIndices.append(self.vehicleOriginNodeIndex[trip.id])
             self.allDestinationNodeIndices.append(self.vehicleDestinationNodeIndex[trip.id])
+
+    def set_vehicle_type(self, is_coop_list):
+        """
+        creates a dictionary with vehicle id and  true, f this vehicle is a coop vehicle (bool: true)
+        :param is_coop_list: list of bool, true if coop vehicle
+        :return: dictionary with vehicle id and is coop
+        """
+        if len(self.allVehicleIDs) == len(is_coop_list):
+            for index in xrange(len(self.allVehicleIDs)):
+                self.vehicle_is_coop_type[self.allVehicleIDs[index]] = is_coop_list[index]
+        return self.vehicle_is_coop_type
 
     def cooperativeRoutes(self, penalty, **kwargs):
         """ Cooperative routes that are currently optimized.
@@ -177,5 +191,55 @@ class Phase2Routes(object):
 
         routes = {}
         routes.update(coop_routes)
+        routes.update(non_coop_routes)
+        return routes
+
+    def routes_mixed_traffic(self, is_coop_dict, penalty):
+        """
+        calculates the routes for coop and non coop vehicles.
+        Two lists with origins, destinations and vehicle id's for each type (coop and non coop) are necessary
+        The correct routes are joined together in to routes. this represents all routes without knowing of the type.
+        :param is_coop_dict: dictionary with vehicle id : bool if coop or not
+        :param penalty: float penalty of modified dijkstra
+        :return: dictionary with vehicle id and route edge list
+        """
+        # create lists for coop and non coop vehicles
+        all_vehicle_ids = self.allVehicleIDs
+        all_origins = self.allOriginNodeIndices
+        all_destinations = self.allDestinationNodeIndices
+
+        coop_origins = []
+        coop_destinations = []
+        coop_vehicle_ids = []
+
+        non_coop_origins = []
+        non_coop_destinations = []
+        non_coop_vehicle_ids = []
+
+        for vehicle_id in all_vehicle_ids:
+            index = all_vehicle_ids.index(vehicle_id)
+            origin = all_origins[index]
+            destination = all_destinations[index]
+            if is_coop_dict[vehicle_id]:
+                coop_origins.append(origin)
+                coop_destinations.append(destination)
+                coop_vehicle_ids.append(vehicle_id)
+            else:
+                non_coop_origins.append(origin)
+                non_coop_destinations.append(destination)
+                non_coop_vehicle_ids.append(vehicle_id)
+
+        coop_routes = self.cooperativeRoutes(
+            penalty, origin_node_ind=coop_origins,
+            destination_node_ind=coop_destinations,
+            vehicle_IDs=coop_vehicle_ids)
+
+        non_coop_routes = self.individualRoutes(
+            origin_node_ind=non_coop_origins,
+            destination_node_ind=non_coop_destinations,
+            vehicle_IDs=non_coop_vehicle_ids)
+
+        routes = {}
+        routes.update(coop_routes)  # adds dictionary dict2's key-values pairs in to dict.
         routes.update(non_coop_routes)
         return routes

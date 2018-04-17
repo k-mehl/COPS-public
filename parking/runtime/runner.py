@@ -52,6 +52,14 @@ class Runtime(object):
 
         self._vehicle_is_coop_list = None  # per default None, will be set when mixed traffic is used
 
+    def set_vehicle_is_coop_list(self, vehicle_list):
+        '''
+        sets the member vehicle is coop list:
+        entry is true if this entry in list is cooperative vehicle
+        :param vehicle_list: list of vehicle is cooperative type
+        '''
+        self._vehicle_is_coop_list = vehicle_list
+
     def run(self, i_run):
         """ Runs the simulation on both SUMO and Python layers
 
@@ -84,7 +92,19 @@ class Runtime(object):
         l_parkingSearchVehicles = []
 
         # compute phase 2 routing information (individual and cooperative)
-        l_individualRoutes, l_cooperativeRoutes = self.computePhase2Routings()
+        if self._config.getMixedTrafficCfg("ratio") == -1.0:
+            # base (old) computation
+            l_individualRoutes, l_cooperativeRoutes = self.computePhase2Routings()
+        else:
+            # mixed traffic calculation
+            random_vehicle_type = self.allocate_is_coop_to_random_vehicles()
+            l_individualRoutes, l_cooperativeRoutes = self.createPhase2Routings_mixed_traffic(
+                is_coop_vehicle_type=random_vehicle_type)
+
+            # check if route has been created for every vehicle:
+            if (l_individualRoutes is None) and (l_cooperativeRoutes is None) and (self._vehicle_is_coop_list is None):
+                message = "got problems to define psv and routes"
+                raise BaseException(message)
 
         self.initPOI()
         self.updatePOIColors()
@@ -283,6 +303,71 @@ class Runtime(object):
         # assert routes.routes(0.0, penalty=0.2) == l_cooperativeRoutes
 
         return l_individualRoutes, l_cooperativeRoutes
+
+    def allocate_is_coop_to_random_vehicles(self):
+        '''
+        Crates a list with length = # vehicles and all vehicles don't cooperate.
+        Random entries of the list will be set to true till # of cooperative vihicles is reached
+        :return: list with random True entries for cooperative cars
+        '''
+        # we got different number of coop cars and non coop
+        num_coop = self._config.getMixedTrafficCfg("coop_vehicles")
+        num_non_coop = self._config.getMixedTrafficCfg("non_coop_vehicles")
+        is_coop_vehicle_type = [False for _ in xrange(self._sim_config.get("vehicles"))]
+
+        # this is just for testing: this can be moved to phase2.py????
+        # due to the sanity check the number of vehicles are right:
+        # build list for vehicles # init List with False
+        while num_coop != 0:
+            index = random.randint(0, len(is_coop_vehicle_type) - 1)
+            if is_coop_vehicle_type[index] is False:
+                is_coop_vehicle_type[index] = True
+                num_coop -= 1
+
+        return is_coop_vehicle_type
+
+    def createPhase2Routings_mixed_traffic(self, is_coop_vehicle_type):
+        '''
+        calculates both routes for every vehicle and sets the member _vehicle_is_coop_list, if successful
+        vehicle type allocation.
+        Returns cooperative routes and individual routes for each vehicle.
+        If the allocation of the types fails, return None.
+
+        If the mixed traffic ratio is 1.0, then the individual routes are cooperative routes.
+        If mixed traffic is 0.0 then the cooperative routes are individual routes.
+        Else the routes for coop and non coop will be calculated separate, but wrapped up into cooperative routes and
+        the individual routes are calculated for every vehicle, too. In this case the cooperative routes are all routes,
+        this includes coop and non coop.
+        :param is_coop_vehicle_type: list of bool where true is coop
+        :return: individual routes and cooperative routes for every vehicle
+        '''
+        routes = Phase2Routes(self)
+
+        # set vehicle type
+        veh_is_coop_list = routes.set_vehicle_type(is_coop_vehicle_type)
+        if len(veh_is_coop_list):
+
+            if self._config.getMixedTrafficCfg("ratio") == 1.0:
+                # only cooperative cars
+                l_cooperativeRoutes = routes.cooperativeRoutes(penalty=0.2)
+                l_individualRoutes = l_cooperativeRoutes
+            elif self._config.getMixedTrafficCfg("ratio") == 0.0:
+                # only non cooperative cars
+                l_individualRoutes = routes.individualRoutes()
+                l_cooperativeRoutes = l_individualRoutes
+            else:
+                # real mixed traffic:
+                all_routes = routes.routes_mixed_traffic(veh_is_coop_list, penalty=0.2)
+                # routes are all routes for every vehicle - this includes coop and non coop
+                l_cooperativeRoutes = all_routes
+                l_individualRoutes = routes.individualRoutes()
+
+            # allocate to member:
+            self.set_vehicle_is_coop_list(veh_is_coop_list)
+            return l_individualRoutes, l_cooperativeRoutes
+        else:
+            print("- !!!!! failed to create vehicle type: {} !!!!!!!".format(routes.vehicle_is_coop_type))
+            return None, None
 
     # ---- methods for inheritance ---- #
 
