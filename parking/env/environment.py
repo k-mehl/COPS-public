@@ -24,22 +24,30 @@ class Environment(object):
     """ Environment class """
 
     def __init__(self, p_config):
+        # initialization just creates a network representation: no vehicles or parking spaces!
         self._config = p_config
+        self._destination_edges = []
+        self._origin_edges = []
+        self._exit_edges = []
 
         resource_dir = self._config.getCfg("simulation").get("resourcedir")
-        reroute_nodes = os.path.join(resource_dir, 'reroute.nod.xml')
-        reroute_edges = os.path.join(resource_dir, 'reroute.edg.xml')
-        self._nodes = [str(x.id) for x in sumolib.output.parse(reroute_nodes, ['node'])]
-        self._edges = [str(x.id) for x in sumolib.output.parse(reroute_edges, ['edge'])]
+        reroute_nodes = os.path.join(resource_dir, 'reroute.nod.xml')  # creates path to node.xml file
+        reroute_edges = os.path.join(resource_dir, 'reroute.edg.xml')  # creates path to edge.xml file
+
+        self._nodes = [str(x.id) for x in
+                       sumolib.output.parse(reroute_nodes, ['node'])]  # create array with all nodes IDs from file
+        self._edges = [str(x.id) for x in
+                       sumolib.output.parse(reroute_edges, ['edge'])]  # create array with all edges IDs from file
 
         # TODO: make a proper object from this and then finish refactoring this
         # class
         self._roadNetwork = {"nodes": {node: {} for node in self._nodes},
-                             "edges": {edge: {} for edge in self._edges}}
+                             "edges": {edge: {} for edge in self._edges}}  # create dictionary for edges and nodes
+        # "edges" : {"edge_id" : {} , ...}, "nodes:" : {"node_id": {}}
 
-
-        reroute_network = os.path.join(resource_dir, 'reroute.net.xml')
-        self._net = sumolib.net.readNet(reroute_network)
+        reroute_network = os.path.join(resource_dir, 'reroute.net.xml')  # path to net.xml
+        self._net = sumolib.net.readNet(
+            reroute_network)  # parses the net (generated network -> representation of shapes)
 
         # temporary functions to get id of nodes from edge
         def edg_to_id(edge):
@@ -50,26 +58,31 @@ class Environment(object):
 
         # create and fill adjacency matrices
         num_nodes = len(self._nodes)
+        # creates (empty) matrix with mat[num_nodes x num_nodes]:
         self._adjacencyMatrix = [[0] * num_nodes for _ in xrange(num_nodes)]
         self._adjacencyEdgeID = [[""] * num_nodes for _ in xrange(num_nodes)]
+
+        # converts generator xrange to list - mult with 2 = iterate list like nested for loop for i and j
         for i, j in itertools.product(*[xrange(num_nodes)] * 2):
             from_id = self._nodes[i]
             to_id = self._nodes[j]
             for edge in self._edges:
-                if (edg_from_id(edge) == from_id and edg_to_id(edge) == to_id):
+                if edg_from_id(edge) == from_id and edg_to_id(edge) == to_id:
                     e = self._net.getEdge(edge)
                     self._adjacencyMatrix[i][j] = e.getLength()
                     self._adjacencyEdgeID[i][j] = str(e.getID())
 
-        self._oppositeEdgeID = dict(filter(
+        self._oppositeEdgeID = dict(filter(  # filter selects values of dictionary based on lambda fct
             lambda x: (edg_to_id(x[0]) == edg_from_id(x[1])
-                       and edg_from_id(x[0]) == edg_to_id(x[1])),
-            itertools.permutations(self._edges, 2)))
+                       and edg_from_id(x[0]) == edg_to_id(x[1])),  # logical statement, end lambda
+            itertools.permutations(self._edges,
+                                   2)))  # list to iterate. permutations is the permutation for 2 elements in _edges
 
         for node in self._nodes:
             self._roadNetwork["nodes"][node]["coordinates"] = self._net.getNode(node).getCoord()
 
         for edge in self._edges:
+            # e is a reference to the road network. all changes and asignment will be saved
             e = self._roadNetwork["edges"][edge]
             e["length"] = self._net.getEdge(edge).getLength()
             e["fromNode"] = str(edg_from_id(edge))
@@ -77,17 +90,19 @@ class Environment(object):
             e["toNode"] = str(edg_to_id(edge))
             toNodeCoord = self._roadNetwork["nodes"][e["toNode"]]["coordinates"]
             e["meanCoord"] = tuple(numpy.divide(numpy.add(fromNodeCoord, toNodeCoord), 2))
-            e["succEdgeID"] = [str(x.getID()) 
-                    for x in self._net.getEdge(edge).getToNode().getOutgoing()]
+            e["succEdgeID"] = [str(x.getID())
+                               for x in self._net.getEdge(
+                    edge).getToNode().getOutgoing()]  # = 'toNode' from edge and get all outgoing edges from this node
             e["nodeDistanceFromEndNode"] = {}
 
             for node in self._nodes:
-                #TODO: discuss the relevant distance measure
-                #endNote synonym to toNote used to avoid confusion in variable names
+                # TODO: discuss the relevant distance measure
+                # endNote synonym to toNote used to avoid confusion in variable names
                 lineEndNodeToNode = numpy.subtract(e["meanCoord"], self._roadNetwork["nodes"][node]["coordinates"])
-                #lineEndNodeToNode = numpy.subtract(toNodeCoord, self._roadNetwork["nodes"][node]["coordinates"])
-                e["nodeDistanceFromEndNode"][node] = numpy.sqrt(numpy.sum(lineEndNodeToNode**2))
+                # lineEndNodeToNode = numpy.subtract(toNodeCoord, self._roadNetwork["nodes"][node]["coordinates"])
+                e["nodeDistanceFromEndNode"][node] = numpy.sqrt(numpy.sum(lineEndNodeToNode ** 2))
 
+            e["selfVisitCount"] = {}
             e["visitCount"] = {}
             e["plannedCount"] = {}
 
@@ -95,6 +110,20 @@ class Environment(object):
                 e["oppositeEdgeID"] = self._oppositeEdgeID[edge]
             else:
                 e["oppositeEdgeID"] = []
+
+        for edge in sumolib.output.parse(
+                os.path.join(self._config.getCfg("simulation").get("resourcedir"), "reroute.edg.xml", ),
+                ['edge']):
+            # if the edge ID contains "entry": use it as origin only,
+            # if entry-point is first node, else use it as exit node
+            # otherwise: use it as destination only
+            if "entry" in str(edge.id):
+                if str(edge.id)[0].isdigit():
+                    self._exit_edges.append(str(edge.id))
+                else:
+                    self._origin_edges.append(str(edge.id))
+            else:
+                self._destination_edges.append(str(edge.id))
 
     def loadParkingSpaces(self, p_run):
         """ Load parking spaces
