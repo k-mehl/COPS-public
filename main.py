@@ -107,6 +107,17 @@ if __name__ == "__main__":
     l_externalVisit = l_config.getCfg("vehicle").get("weights").get("coop").get("externalvisit")
     l_selfVisit = l_config.getCfg("vehicle").get("weights").get("coop").get("selfvisit")
 
+    # get new mixed traffic values:
+    l_ratioMixedTraffic = l_config.getMixedTrafficCfg("ratio")
+    l_phase2MixedTraffic = l_config.getMixedTrafficCfg("coopPhase2")
+    l_phase3MixedTraffic = l_config.getMixedTrafficCfg("coopPhase3")
+    l_coopVehicles = l_config.getMixedTrafficCfg("coop_vehicles")
+    l_nonCoopVehicles = l_config.getMixedTrafficCfg("non_coop_vehicles")
+
+    l_mixedTraffic = False
+    if l_ratioMixedTraffic != -1.0:
+        l_mixedTraffic = True
+
     l_runtime = runner.Runtime(l_config)
 
     l_mainresultdir = "results"
