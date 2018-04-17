@@ -157,38 +157,58 @@ class Runtime(object):
             # update status of all vehicles
             for psv in (v for v in l_parkingSearchVehicles if v.is_parked() is False):
                 psv.update(step)
+                # update of all edges: planned and visited count
                 env_edges = self._environment._roadNetwork["edges"]
                 for edge in env_edges:
+                    # get opposite edges of all edges
                     oppositeEdgeID = env_edges[edge]["oppositeEdgeID"]
+
+                    # calculate visit count for this vehicle using the traversed route
                     visitCount = (psv.traversed_route.count(str(edge)) +
-                                  psv.traversed_route.count(oppositeEdgeID))
+                                  psv.traversed_route.count(oppositeEdgeID))  # edges of vehicle that were visited
+                    # always update self visits:
+                    env_edges[edge]["selfVisitCount"][psv.name] = visitCount
+
+                    # calculate planned count for this vehicle using the active route
                     plannedCount = (psv.active_route.count(str(edge)) +
-                                    psv.active_route.count(oppositeEdgeID))
-                    env_edges[edge]["visitCount"][psv.name] = visitCount
-                    env_edges[edge]["plannedCount"][psv.name] = plannedCount
+                                    psv.active_route.count(oppositeEdgeID))  # next edges of the route
+                    if self._config.getMixedTrafficCfg("ratio") != -1.0:
+                        if psv.is_coop:
+                            env_edges[edge]["visitCount"][psv.name] = visitCount
+                            env_edges[edge]["plannedCount"][psv.name] = plannedCount
+
+                    else:
+                        # still hold old implementation
+                        env_edges[edge]["visitCount"][psv.name] = visitCount
+                        env_edges[edge]["plannedCount"][psv.name] = plannedCount
 
                 # if last edge, choose next possible edges to continue
                 if psv.last_edge():
                     lastSegment = psv.current_route[-1]
+
+                    # get all successor edges of last node
                     succEdges = self._environment._net.getEdge(lastSegment).getToNode().getOutgoing()
 
                     # calculate costs for every edge except opposite direction
                     # of current edge
                     succEdgeCost = {}
                     for edge in succEdges:
-                        # consider all successor edges, BUT if no opposite edge
-                        # exists, don't try to exclude it.
-                        if lastSegment in self._environment._oppositeEdgeID:
-                            if len(succEdges) == 1:
+                        # ignore exit edges
+                        if "entry" not in str(edge.getID()):
+                            # consider all successor edges, BUT if no opposite edge
+                            # exists, don't try to exclude it.
+                            if lastSegment in self._environment._oppositeEdgeID:
+                                if len(succEdges) == 1:
+                                    succEdgeCost[str(edge.getID())] = self.edgeCost(psv, edge)
+                                elif not str(edge.getID()) == self._environment._oppositeEdgeID[lastSegment]:
+                                    succEdgeCost[str(edge.getID())] = self.edgeCost(psv, edge)
+                                    # TODO: there is missing else here?
+                            else:
                                 succEdgeCost[str(edge.getID())] = self.edgeCost(psv, edge)
-                            elif not str(edge.getID()) == self._environment._oppositeEdgeID[lastSegment]:
-                                succEdgeCost[str(edge.getID())] = self.edgeCost(psv, edge)
-                            # TODO: there is missing else here?
-                        else:
-                            succEdgeCost[str(edge.getID())] = self.edgeCost(psv, edge)
 
                     # calculate minima of succEdgeCost
                     minValue = min(succEdgeCost.values())
+                    # if more edges have min cost
                     minKeys = [key for key in succEdgeCost if succEdgeCost[key] == minValue]
 
                     # choose randomly if costs are equal
@@ -198,7 +218,7 @@ class Runtime(object):
                     else:
                         next_link = random.choice(minKeys)
 
-                    psv.append_route(next_link)
+                    psv.append_route(next_link)  # add next edge to route (includes traci update for this vehicle)
 
             # break the while-loop if all SUMO vehicles have parked
             if remaining_vehicles(l_parkingSearchVehicles) == 0:
